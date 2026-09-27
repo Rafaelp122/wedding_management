@@ -64,6 +64,11 @@ export function LoginForm() {
                   onClick: () => navigate(`/verify-email-pending?email=${encodeURIComponent(data.email)}`),
                 },
               });
+            } else if (code === "account_locked") {
+              toast.error(message, {
+                duration: 8000,
+                description: "Por motivos de segurança, aguarde o tempo indicado antes de tentar novamente.",
+              });
             } else {
               toast.error(message);
             }
@@ -97,6 +102,7 @@ export function LoginForm() {
                 <FormControl>
                   <Input
                     type="email"
+                    autoComplete="username"
                     className="text-xs border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-900 rounded-xl placeholder-zinc-400 focus-visible:ring-aura-500/30 focus-visible:border-aura-500 font-medium"
                     placeholder="helena@simaceito.com"
                     {...field}
@@ -125,6 +131,8 @@ export function LoginForm() {
                 </div>
                 <FormControl>
                   <PasswordInput
+                    autoComplete="current-password"
+                    maxLength={128}
                     placeholder="••••••••"
                     {...field}
                   />

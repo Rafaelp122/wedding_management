@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema para reenvio do e-mail de verificação.
+ */
 export interface ResendVerificationIn {
   email: string;
 }

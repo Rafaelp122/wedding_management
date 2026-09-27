@@ -6,6 +6,7 @@ from pydantic import UUID4
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.logistics.models.item import Item
 from apps.logistics.schemas import (
+    ItemDiscardIn,
     ItemIn,
     ItemOut,
     ItemPatchIn,
@@ -30,10 +31,12 @@ def list_items(
     status: str | None = None,
     search: str | None = None,
     contract_id: UUID4 | None = None,
+    scope_status: str | None = None,
+    delivery_status: str | None = None,
 ) -> QuerySet[Item]:
     """
     Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-    Permite filtrar por casamento, status de aquisição, busca textual e contrato.
+    Permite filtrar por casamento, status de aquisição, busca textual, contrato, escopo e entrega.
     """
     user = request.user
     return item_list_selector(
@@ -42,6 +45,8 @@ def list_items(
         status=status,
         search=search,
         contract_id=contract_id,
+        scope_status=scope_status,
+        delivery_status=delivery_status,
     )
 
 
@@ -121,3 +126,119 @@ def transition_item_status(
         instance=item,
         new_status=payload.acquisition_status,
     )
+
+
+@items_router.post(
+    "/{uuid:uuid}/start/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_start",
+)
+def start_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Inicia a aquisição do item logístico, transitando para EM ANDAMENTO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.start(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/complete/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_complete",
+)
+def complete_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Conclui a aquisição do item logístico, transitando para CONCLUÍDO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.complete(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/reopen/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_reopen",
+)
+def reopen_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Reabre um item logístico concluído, transitando de volta para EM ANDAMENTO.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.reopen(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/revert-to-pending/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_revert_to_pending",
+)
+def revert_item_to_pending(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Reverte o item logístico de volta para PENDENTE.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.revert_to_pending(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/discard/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_discard",
+)
+def discard_item(request: AuthRequest, uuid: UUID4, payload: ItemDiscardIn) -> Item:
+    """
+    Descarta um item do escopo registrando compulsoriamente a justificativa (RF-15).
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.discard(
+        company=user.company,
+        instance=item,
+        reason=payload.rejection_reason,
+    )
+
+
+@items_router.post(
+    "/{uuid:uuid}/include/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_include",
+)
+def include_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Reintegra um item previamente descartado de volta ao escopo aprovado do evento.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.include(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/deliver/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_deliver",
+)
+def deliver_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Registra a conferência física e entrega do material no local do evento (RF-15).
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.deliver(company=user.company, instance=item)
+
+
+@items_router.post(
+    "/{uuid:uuid}/return/",
+    response={200: ItemOut, **MUTATION_ERROR_RESPONSES},
+    operation_id="logistics_items_return",
+)
+def return_item(request: AuthRequest, uuid: UUID4) -> Item:
+    """
+    Registra a devolução física do material após o término do evento.
+    """
+    user = request.user
+    item = item_get_selector(company=user.company, uuid=uuid)
+    return ItemService.mark_returned(company=user.company, instance=item)

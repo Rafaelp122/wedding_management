@@ -82,7 +82,7 @@ const EventRenderer = memo(function EventRenderer({
 
 interface SchedulerCalendarProps {
   events: EventOut[];
-  weddingsByUuid: Map<string, string>;
+  weddingsByUuid?: Map<string, string>;
   onSelectEvent: (event: EventOut) => void;
   onSelectSlot: (startTime: Date) => void;
 }
@@ -93,7 +93,6 @@ const CALENDAR_COMPONENTS = {
 
 export const SchedulerCalendar = memo(function SchedulerCalendar({
   events,
-  weddingsByUuid,
   onSelectEvent,
   onSelectSlot,
 }: SchedulerCalendarProps) {
@@ -108,7 +107,7 @@ export const SchedulerCalendar = memo(function SchedulerCalendar({
           ? new Date(event.end_time)
           : new Date(start.getTime() + 60 * 60 * 1000);
         const weddingLabel =
-          weddingsByUuid.get(event.wedding) ?? event.wedding.slice(0, 8);
+          event.wedding_name ?? event.wedding.slice(0, 8);
 
         return {
           title: `${event.title} (${weddingLabel})`,
@@ -118,7 +117,7 @@ export const SchedulerCalendar = memo(function SchedulerCalendar({
           resource: event,
         };
       }),
-    [events, weddingsByUuid],
+    [events],
   );
 
   const eventPropGetter = useCallback(

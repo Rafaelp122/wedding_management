@@ -1,48 +1,68 @@
 """
 Fachada pública (Interface) do Bounded Context de Logística.
-Centraliza operações síncronas invocadas por outros contextos (ex: finances).
+Centraliza operações síncronas invocadas por outros contextos (ex: finances, contracts).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-
-from apps.core.shortcuts import resolve_tenant_resource
-from apps.logistics.models import Contract
 
 
 if TYPE_CHECKING:
     from apps.tenants.models import Company
 
 
-def get_contract_for_company(
+def create_item_for_contract(
     *,
     company: Company,
-    contract_uuid_or_id: UUID | str | Contract,
-    select_related: list[str] | None = None,
-) -> Contract:
-    """
-    Recupera uma instância de Contract validando a posse pelo tenant.
+    payload: Any,
+    contract_uuid: UUID | str | None = None,
+    wedding_uuid: UUID | str | None = None,
+) -> Any:
+    """Cria um item de suprimento vinculado a um contrato.
 
     Args:
         company: O tenant atual para isolamento de dados.
-        contract_uuid_or_id: UUID, ID inteiro ou instância de Contract.
-        select_related: Relacionamentos adicionais a carregar via JOIN.
+        payload: Schema de entrada com os dados do item.
+        contract_uuid: UUID do contrato ao qual o item será associado.
+        wedding_uuid: UUID do casamento ao qual o item será associado.
 
     Returns:
-        Instância de Contract validada e pertencente ao tenant.
+        Instância do item criado.
     """
-    return resolve_tenant_resource(
-        Contract,
-        company,
-        contract_uuid_or_id,
-        select_related=select_related,
-        detail="Contrato inválido ou acesso negado.",
-        code="contract_not_found_or_denied",
+    from apps.logistics.schemas import ItemIn
+    from apps.logistics.services.item_service import ItemService
+
+    if isinstance(payload, ItemIn):
+        data = payload.model_dump()
+    elif hasattr(payload, "model_dump"):
+        data = payload.model_dump()
+    elif hasattr(payload, "dict"):
+        data = payload.dict()
+    elif isinstance(payload, dict):
+        data = payload.copy()
+    else:
+        data = {
+            "name": getattr(payload, "name", ""),
+            "quantity": getattr(payload, "quantity", 1),
+            "description": getattr(payload, "description", ""),
+        }
+
+    raw_c = contract_uuid or data.get("contract")
+    raw_w = wedding_uuid or data.get("wedding")
+    c_uuid = UUID(str(raw_c)) if raw_c else None
+    w_uuid = UUID(str(raw_w)) if raw_w else None
+    item_in = ItemIn(
+        name=data["name"],
+        quantity=data.get("quantity", 1),
+        description=data.get("description", ""),
+        contract=c_uuid,
+        wedding=w_uuid,
     )
+    return ItemService.create(company=company, payload=item_in)
 
 
 __all__ = [
-    "get_contract_for_company",
+    "create_item_for_contract",
 ]

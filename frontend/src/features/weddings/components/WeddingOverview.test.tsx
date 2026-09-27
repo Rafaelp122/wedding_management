@@ -199,4 +199,37 @@ describe("WeddingOverview", () => {
     await userEvent.click(financesBtn);
     expect(onNavigateToFinances).toHaveBeenCalledTimes(1);
   });
+
+  it("renders PlannerContractSection with contract data and responds to edit click", async () => {
+    const onEditContract = vi.fn();
+    const weddingWithContract = createMockWedding({
+      ...mockWedding,
+      planner_contract: {
+        uuid: "pc-1",
+        service_tier: "COMPLETA",
+        effective_amount: "9000.00",
+        installments_count: 3,
+        signed_date: "2025-01-10",
+        status: "SIGNED",
+        created_at: "2025-01-01T00:00:00Z",
+        updated_at: "2025-01-01T00:00:00Z",
+      },
+    });
+
+    const { container } = render(
+      <WeddingOverview
+        wedding={weddingWithContract}
+        overview={null}
+        onEditContract={onEditContract}
+      />,
+    );
+
+    expect(screen.getByText("Contrato de Assessoria")).toBeInTheDocument();
+    expect(screen.getByText("Assessoria Completa")).toBeInTheDocument();
+    expect(container.textContent).toContain("9.000");
+
+    const editBtn = screen.getByTitle("Editar contrato de assessoria");
+    await userEvent.click(editBtn);
+    expect(onEditContract).toHaveBeenCalledTimes(1);
+  });
 });

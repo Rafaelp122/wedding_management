@@ -1,13 +1,13 @@
-# Topologia Geral de Domínios e Bounded Contexts (MOC)
+# Topologia Geral de Domínios e Bounded Contexts
 
 > **Categoria:** Arquitetura de Domínios (Bounded Contexts)
-> **Relacionados:** [Visão Geral do Sistema](../concepts/system-overview.md) · [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md) · [Padrão Service Layer](../concepts/service-layer-pattern.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-009: Multi-Tenancy](../adr/009-multitenancy.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md)
+> **Relacionados:** [RFC-001: Redesenho de Domínios](../rfc/001-macro-architecture-and-domain-redesign.md) · [Visão Geral do Sistema](../concepts/system-overview.md) · [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md) · [Padrão Service Layer](../concepts/service-layer-pattern.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)
 
 ---
 
 ## 1. Visão Geral da Topologia de Domínios
 
-O **Wedding Management System** é estruturado segundo os princípios do *Domain-Driven Design* (DDD), particionado em **10 Bounded Contexts** coesos e desacoplados. Cada domínio possui sua própria camada de persistência (`models/`), lógica de mutação encapsulada (`services/`), consultas otimizadas para leitura (`selectors/`) e adaptadores de entrada HTTP (`api/`).
+O **Wedding Management System** é estruturado segundo os princípios do *Domain-Driven Design* (DDD), particionado em Bounded Contexts coesos e desacoplados, consolidados pela [RFC-001](../rfc/001-macro-architecture-and-domain-redesign.md). Cada domínio possui sua própria camada de persistência (`models/`), lógica de mutação encapsulada (`services/`), consultas otimizadas para leitura (`selectors/`) e adaptadores de entrada HTTP (`api/`).
 
 As fronteiras entre os domínios garantem isolamento multi-tenant estrito por empresa (`Company`), validação de integridade por casamento (`Wedding`) e integridade referencial com proteções de deleção em cascata controladas (`PROTECT` vs `CASCADE`).
 
@@ -15,7 +15,7 @@ As fronteiras entre os domínios garantem isolamento multi-tenant estrito por em
 
 ## 2. Mapa de Dependências e Fluxos Trans-Domínio
 
-O diagrama a seguir ilustra a topologia de relacionamento entre os 10 domínios, evidenciando o fluxo de dados, as dependências de orquestração síncrona e as integrações assíncronas:
+O diagrama a seguir ilustra a topologia de relacionamento entre os domínios, evidenciando o fluxo de dados, as dependências de orquestração síncrona e a esteira de tarefas assíncronas:
 
 ```mermaid
 flowchart TD
@@ -26,13 +26,16 @@ flowchart TD
     end
 
     subgraph CoreDomain["Domínio Central de Negócio"]
-        WEDDINGS["Weddings Domain<br/>(Wedding, Lifecycle, Templates)"]
+        CLIENTS["Clients Domain<br/>(Client, SSOT Contatos & Signatários)"]
+        WEDDINGS["Weddings Domain<br/>(Wedding, WeddingClient, Lifecycle)"]
     end
 
     subgraph Operations["Operações & Execução do Casamento"]
         FINANCES["Finances Domain<br/>(Budget, Category, Expense, Installment)"]
-        LOGISTICS["Logistics Domain<br/>(Supplier, Contract, Item, Storage R2)"]
-        SCHEDULER["Scheduler Domain<br/>(Event, Task, Recurrence, Template Engine)"]
+        SUPPLIERS["Suppliers Domain<br/>(Supplier, CNPJ Módulo 11)"]
+        CONTRACTS["Contracts Domain<br/>(Contract, ContractAddendum, Storage R2)"]
+        LOGISTICS["Logistics Domain<br/>(SupplyItem, 3 Dimensões de Suprimentos)"]
+        SCHEDULER["Scheduler Domain<br/>(Event, ChecklistItem, Template Engine)"]
     end
 
     subgraph Intelligence["Inteligência, Agregação & Comunicação"]
@@ -49,59 +52,74 @@ flowchart TD
 
     %% Dependências do Casamento
     WEDDINGS --> FINANCES
+    WEDDINGS --> CONTRACTS
     WEDDINGS --> LOGISTICS
     WEDDINGS --> SCHEDULER
 
-    %% Interações Trans-Domínio Operacionais
-    LOGISTICS -.->|"Contrato vincula Expense (1:1 / SET_NULL)"| FINANCES
-    FINANCES -.->|"Parcela gera Evento de Pagamento (BR-S01)"| SCHEDULER
-    WEDDINGS -.->|"Gera marcos via Template Engine (BR-W02)"| SCHEDULER
+    %% Interações Trans-Domínio Operacionais Síncronas (interfaces.py)
+    CONTRACTS -.->|"create_expense_from_contract()"| FINANCES
+    CONTRACTS -.->|"add_expense_adjustment_from_addendum()"| FINANCES
+    FINANCES -.->|"create_payment_events_for_installments()"| SCHEDULER
+    WEDDINGS -.->|"apply_wedding_schedule_template()"| SCHEDULER
 
-    %% Agregações para Dashboard e Reporting
+    %% Agregações para Dashboard e Reporting (CQRS Neutro)
     FINANCES --> DASHBOARD
+    CONTRACTS --> DASHBOARD
     LOGISTICS --> DASHBOARD
     SCHEDULER --> DASHBOARD
     WEDDINGS --> DASHBOARD
 
     FINANCES --> REPORTING
+    CONTRACTS --> REPORTING
     LOGISTICS --> REPORTING
     SCHEDULER --> REPORTING
     WEDDINGS --> REPORTING
 
-    %% Alertas e Notificações Assíncronas
-    FINANCES -.->|"Parcelas a Vencer/Atrasadas"| NOTIFICATIONS
-    LOGISTICS -.->|"Contratos Expirando"| NOTIFICATIONS
-    SCHEDULER -.->|"Prazos de Tarefas / Checklist"| NOTIFICATIONS
+    %% Eventos de Domínio Assíncronos (transaction.on_commit + django.tasks)
+    WEDDINGS ==>|"WeddingActivated / GuestCountChanged"| SCHEDULER & NOTIFICATIONS & CONTRACTS
+    CONTRACTS ==>|"ContractSigned / AddendumSigned"| LOGISTICS & NOTIFICATIONS & DASHBOARD
+    FINANCES ==>|"InstallmentOverdue"| NOTIFICATIONS & DASHBOARD
+    LOGISTICS ==>|"SupplyItemDelivered"| DASHBOARD
 ```
 
 ---
 
-## 3. Matriz dos 10 Bounded Contexts
+## 3. Matriz dos Bounded Contexts e Interfaces Públicas
 
-| Bounded Context | Especificação | Agregado Raiz / Entidades Principais | Responsabilidade Primária | Dependências Upstream | Consumidores Downstream |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Core** | [core-domain](core-domain.md) | `BaseModel`, `WeddingOwnedMixin` | Base models, exceções de domínio, validadores, shortcuts e healthchecks. | Framework / Django | Todos os domínios |
-| **Tenants** | [tenants-domain](tenants-domain.md) | `Company`, `TenantModel` | Isolamento lógico por assessoria/empresa e provisionamento de workspaces. | `Core` | Todos os domínios |
-| **Users** | [users-domain](users-domain.md) | `User` | Autenticação JWT, login social Google, verificação de e-mail e perfis. | `Tenants`, `Core` | Todos os domínios |
-| **Weddings** | [weddings-domain](weddings-domain.md) | `Wedding` | Ciclo de vida do casamento, dados do casal, convidados e orquestração de templates. | `Tenants`, `Core` | `Finances`, `Logistics`, `Scheduler`, `Dashboard`, `Reporting` |
-| **Finances** | [finances-domain](finances-domain.md) | `Budget`, `BudgetCategory`, `Expense`, `Installment` | Teto orçamentário, categorias de gastos, despesas e parcelas com Tolerância Zero. | `Weddings`, `Tenants`, `Logistics` (opcional) | `Scheduler`, `Dashboard`, `Reporting`, `Notifications` |
-| **Logistics** | [logistics-domain](logistics-domain.md) | `Supplier`, `Contract`, `Item` | Catálogo de fornecedores, contratos com aditivos, anexos em Cloudflare R2 e itens. | `Weddings`, `Tenants` | `Finances`, `Dashboard`, `Reporting`, `Notifications` |
-| **Scheduler** | [scheduler-domain](scheduler-domain.md) | `Event`, `Task` | Agenda de compromissos, checklist operacional, recorrência e eventos de pagamento. | `Weddings`, `Tenants`, `Finances` | `Dashboard`, `Reporting`, `Notifications` |
-| **Dashboard** | [dashboard-domain](dashboard-domain.md) | Agregações e Projeções | Visão executiva em tempo real com KPIs consolidados e queries anti-N+1. | `Weddings`, `Finances`, `Logistics`, `Scheduler` | Frontend (UI Dashboard) |
-| **Reporting** | [reporting-domain](reporting-domain.md) | `WeddingReportDataDTO` | Diagramação e exportação de relatórios executivos em PDF (ReportLab) e Excel (.xlsx). | `Weddings`, `Finances`, `Logistics`, `Scheduler` | Frontend (Downloads) |
-| **Notifications** | [notifications-domain](notifications-domain.md) | `Notification` | Centralização de alertas in-app, persistência e despacho assíncrono via `django.tasks`. | `Tenants`, `Users` | Frontend (Sino/UI) |
+| Bounded Context | Especificação | Entidades Principais | Responsabilidade Primária & Capacidades | Interface Pública Trans-Domínio (ADR-031 / RFC-001) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Core** | [core-domain](core-domain.md) | `BaseModel`, `TenantModel`, `WeddingOwnedMixin` | Base models, exceções de domínio, validadores e shortcuts multi-tenant. | `apps.core.shortcuts`, `apps.core.exceptions` |
+| **Tenants** | [tenants-domain](tenants-domain.md) | `Company` | Isolamento lógico por assessoria/empresa e gestão de planos/tenancy. | `apps.tenants.managers.TenantQuerySet` |
+| **Users** | [users-domain](users-domain.md) | `User` | Autenticação JWT, login social Google, RBAC e perfis de assessores. | `apps.users.services`, `AuthRequest` |
+| **Clients** | [clients-domain](clients-domain.md) | `Client`, `WeddingClient` | Única Fonte da Verdade (SSOT) de pessoas físicas, noivos, contratantes financeiros e signatários. | `apps.clients.interfaces` (`get_or_create_client_for_proposal`) |
+| **Weddings** | [weddings-domain](weddings-domain.md) | `Wedding`, `WeddingClient` | Ciclo de vida (`PROPOSTA` $\to$ `PLANEJAMENTO` $\to$ `EM_ANDAMENTO` $\to$ `CONCLUIDO`), noivos, contratantes e ancoragem temporal. | `apps.weddings.interfaces` |
+| **Finances** | [finances-domain](finances-domain.md) | `Budget`, `BudgetCategory`, `Expense`, `Installment` | Teto orçamentário, despesas, parcelas com Tolerância Zero e métricas analíticas. | `apps.finances.interfaces` (`create_expense_from_contract`, `freeze_budget_baseline_for_wedding`) |
+| **Contracts** | [contracts-domain](contracts-domain.md) | `Contract`, `ContractAddendum` | Governança jurídica de contratos (fornecedores e honorários `PLANNER`), aditivos acíclicos e guarda no R2. | `apps.contracts.interfaces` (`get_planner_contract_for_wedding`, `save_planner_contract_for_wedding`) |
+| **Suppliers** | [suppliers-domain](suppliers-domain.md) | `Supplier` | Catálogo corporativo de parceiros comerciais no tenant com validação de CNPJ (Módulo 11). | `apps.suppliers.interfaces` |
+| **Logistics** | [logistics-domain](logistics-domain.md) | `SupplyItem` | Materiais físicos, entregáveis, 3 dimensões (escopo com motivo de descarte, cotação e entrega física). | `apps.logistics.interfaces` |
+| **Scheduler** | [scheduler-domain](scheduler-domain.md) | `Event`, `ChecklistItem`, `ScheduleTemplate` | Agenda, checklist de ações operacionais, detecção de conflitos (*soft overlap*) e recorrência. | `apps.scheduler.interfaces` (`apply_wedding_schedule_template`, `create_payment_events_for_installments`) |
+| **Dashboard** | [dashboard-domain](dashboard-domain.md) | Projeções Analíticas CQRS | Quatro eixos analíticos, KPIs macro/micro, séries temporais e Anti-Data-Stitching. | `apps.reporting.selectors.dashboard_selectors` |
+| **Reporting** | [reporting-domain](reporting-domain.md) | `WeddingReportDataDTO` | Diagramação e exportação de relatórios executivos em PDF (ReportLab) e Excel (.xlsx). | `apps.reporting.services.ReportGenerationService` |
+| **Notifications** | [notifications-domain](notifications-domain.md) | `Notification` | Centralização de alertas in-app e despacho assíncrono não-bloqueante. | `apps.notifications.interfaces`, `dispatch_async_notification_task` |
 
 ---
 
-## 4. Padrões de Comunicação e Fronteiras Trans-Domínio
+## 4. Padrões de Comunicação Híbrida e Fronteiras Trans-Domínio
 
-Para manter o acoplamento baixo entre os módulos sem sacrificar a integridade relacional do banco PostgreSQL, a arquitetura adota as seguintes regras de fronteira:
+Para manter o acoplamento baixo sem abrir mão da integridade referencial do PostgreSQL, a arquitetura combina dois modelos complementares ([ADR-031](../adr/031-inter-module-communication.md) e [RFC-001](../rfc/001-macro-architecture-and-domain-redesign.md)):
 
-### A. Relações Fortes vs Desacoplamento Estrutural
-1. **Pertença ao Casamento (`WeddingOwnedMixin`):** Modelos pertencentes ao evento vinculam-se a `Wedding` via FK com `CASCADE` (apagar o casamento remove o evento e suas ramificações) ou com `PROTECT` nos contratos para evitar perda acidental de documentos assinados.
-2. **Integração Logística-Financeira (`Contract` ↔ `Expense`):** A relação é de `OneToOneField(on_delete=models.SET_NULL, null=True, blank=True)`. Um contrato assinado pode gerar uma despesa correspondente, mas ambos mantêm ciclos de vida independentes.
-3. **Integração Financeiro-Agenda (`Installment` ↔ `Event`):** Eventos de pagamento no Scheduler armazenam uma FK opcional `source_installment` (`on_delete=models.SET_NULL`). O Scheduler trata esses registros como somente leitura (`read-only`), delegando qualquer mutação para o `InstallmentService`.
-4. **Despacho Assíncrono para Notificações:** Serviços operacionais (Finances, Logistics, Scheduler) não persistem notificações de forma acoplada; utilizam tarefas em background (`dispatch_async_notification_task`) para garantir que falhas no envio de notificações não revertam transações financeiras.
+### 4.1. Camada Síncrona Transacional (Interfaces Públicas)
+1. **Pertença ao Casamento (`WeddingOwnedMixin`):** Modelos pertencentes ao evento vinculam-se a `Wedding` via FK com `CASCADE` ou com `PROTECT` nos contratos para evitar perda acidental de documentos assinados.
+2. **Fachadas Públicas Canônicas (`apps.<contexto>.interfaces`):** Toda mutação síncrona trans-domínio que exige consistência atômica imediata (`@transaction.atomic`) passa exclusivamente pela fachada canônica exposta em `interfaces.py`.
+3. **Integração Contratos-Finanças:** A assinatura de contrato aciona `apps.finances.interfaces.create_expense_from_contract()`, garantindo a criação simultânea de contrato e despesa.
+4. **Integração Finanças-Agenda:** Parcelas criam eventos de pagamento somente leitura via `apps.scheduler.interfaces.create_payment_events_for_installments()`.
+
+### 4.2. Camada Assíncrona Orientada a Eventos de Domínio (EDA)
+5. **Publicação Pós-Commit (`transaction.on_commit`):** Todos os efeitos secundários, notificações in-app, atualizações de dashboards e reações operacionais são emitidos como **Eventos de Domínio** pelos Aggregate Roots e processados assincronamente pelo `django.tasks`:
+   - `WeddingActivatedEvent`: Dispara geração assíncrona de `ChecklistItems` do cronograma.
+   - `WeddingGuestCountChangedEvent`: Notifica a assessoria para avaliar termos aditivos em contratos sensíveis.
+   - `ContractSignedEvent`: Habilita os `SupplyItems` correspondentes para conferência física de entrega.
+   - `InstallmentOverdueEvent`: Dispara notificações de inadimplência e badges de alerta financeiro.
 
 ---
 
@@ -134,13 +152,16 @@ sequenceDiagram
     actor Planner as Assessor de Eventos
     participant API as Weddings API (weddings/api.py)
     participant WedSvc as WeddingService (weddings)
+    participant SchedFacade as apps.scheduler.interfaces (apply_wedding_schedule_template)
     participant SchedSvc as EventService (scheduler)
     participant DB as PostgreSQL
 
     Planner->>API: POST /api/v1/weddings/ (payload com template="classico")
     API->>WedSvc: WeddingService.create(company, payload)
     WedSvc->>DB: INSERT INTO weddings (...)
-    WedSvc->>SchedSvc: _apply_template_events(company, wedding, template_name)
+    Note over WedSvc,SchedFacade: Comunicação via Fachada Pública (ADR-031)
+    WedSvc->>SchedFacade: apply_wedding_schedule_template(company, wedding, template_name)
+    SchedFacade->>SchedSvc: EventService.create(..., _allow_historical_start=True)
     Note over SchedSvc: Calcula offsets em dias relativos à data do casamento
     SchedSvc->>DB: INSERT INTO events (marcos e reuniões prévias)
     WedSvc-->>API: Wedding criado com cronograma inicial
@@ -153,19 +174,27 @@ sequenceDiagram
     autonumber
     actor Planner as Assessor de Eventos
     participant ContractSvc as ContractService (logistics)
+    participant FinFacade as apps.finances.interfaces (create_expense_from_contract)
     participant ExpenseSvc as ExpenseService (finances)
     participant InstallmentSvc as InstallmentService (finances)
-    participant EventSvc as EventService (scheduler)
+    participant SchedFacade as apps.scheduler.interfaces (create_payment_events_for_installments)
+    participant SchedSvc as EventService (scheduler)
     participant DB as PostgreSQL
 
-    Planner->>ContractSvc: create_contract_with_expense(company, data, pdf_file)
+    Planner->>ContractSvc: create_full_from_payload(company, payload)
     ContractSvc->>DB: INSERT INTO contracts (status="SIGNED", ...)
-    ContractSvc->>ExpenseSvc: ExpenseService.create(company, expense_data)
+    ContractSvc->>DB: INSERT INTO items (...)
+    Note over ContractSvc,FinFacade: Fachada Pública Finances (ADR-031)
+    ContractSvc->>FinFacade: create_expense_from_contract(company, payload, contract_uuid)
+    FinFacade->>ExpenseSvc: ExpenseService.create(company, expense_payload)
     ExpenseSvc->>DB: INSERT INTO expenses (contract_id, ...)
-    ExpenseSvc->>InstallmentSvc: auto_generate_installments(...)
+    ExpenseSvc->>InstallmentSvc: InstallmentService.generate_installments(...)
     InstallmentSvc->>DB: INSERT INTO installments (...)
-    InstallmentSvc->>EventSvc: EventService.create(event_type="pagamento", source_installment=...)
-    EventSvc->>DB: INSERT INTO events (...)
+    Note over InstallmentSvc,SchedFacade: Fachada Pública Scheduler (ADR-031)
+    InstallmentSvc->>SchedFacade: create_payment_events_for_installments(company, expense, installments)
+    SchedFacade->>SchedSvc: EventService.create(event_type="pagamento", _caller_internal=True)
+    SchedSvc->>DB: INSERT INTO events (eventos read-only vinculados à parcela)
+    ContractSvc-->>Planner: Contrato criado com despesa e agenda sincronizadas
 ```
 
 ---
@@ -180,8 +209,8 @@ api.add_router("/auth/", auth_router, auth=None)
 api.add_router("/weddings/", weddings_router)
 api.add_router("/dashboard/", dashboard_router)
 api.add_router("/reports/", reports_router)
-api.add_router("/logistics/suppliers/", suppliers_router)
-api.add_router("/logistics/contracts/", contracts_router)
+api.add_router("/logistics/suppliers/", suppliers_router)  # código em apps.contracts.api
+api.add_router("/contracts/", contracts_router)
 api.add_router("/logistics/items/", items_router)
 api.add_router("/finances/budgets/", budgets_router)
 api.add_router("/finances/categories/", budget_categories_router)
@@ -202,9 +231,12 @@ Consulte a especificação detalhada de cada Bounded Context:
 - [Core Domain](core-domain.md) — Modelos base, auditoria, validadores e infraestrutura transversal.
 - [Tenants Domain](tenants-domain.md) — Isolamento de empresas, tenancy e provisionamento.
 - [Users Domain](users-domain.md) — Autenticação, autorização JWT, OAuth2 e gestão de perfis.
+- [Clients Domain](clients-domain.md) — Fonte da Verdade (SSOT) de clientes, participantes e signatários.
 - [Weddings Domain](weddings-domain.md) — Gestão do ciclo de vida de casamentos e templates.
 - [Finances Domain](finances-domain.md) — Orçamento, despesas, parcelamentos e tolerância zero.
-- [Logistics Domain](logistics-domain.md) — Fornecedores, contratos, aditivos e anexos R2.
+- [Contracts Domain](contracts-domain.md) — Contratos de assessoria e fornecedores, aditivos e guarda digital no Cloudflare R2.
+- [Suppliers Domain](suppliers-domain.md) — Catálogo corporativo compartilhado de parceiros com validação de CNPJ.
+- [Logistics Domain](logistics-domain.md) — Suprimentos operacionais (`SupplyItem`), escopo, cotação e entregáveis.
 - [Scheduler Domain](scheduler-domain.md) — Agenda, tarefas, recorrência e marcos temporais.
 - [Dashboard Domain](dashboard-domain.md) — Métricas consolidadas, KPIs e otimizações anti-N+1.
 - [Reporting Domain](reporting-domain.md) — Exportações analíticas em PDF (ReportLab) e Excel (.xlsx).

@@ -53,20 +53,32 @@ classDiagram
 
 ---
 
-## 3. Tabela de Entidades, Mixins e Invariantes de Persistência
+## 3. Matriz Canônica de Invariantes Core (SSOT)
 
-| Componente Core | Tipo / Papel | Campos / Assinatura | Invariantes de Persistência & Regras de Arquitetura |
-| :--- | :--- | :--- | :--- |
-| **`BaseModel`** | Classe Abstrata (`models.Model`) | `id` (bigint PK), `uuid` (UUID4 único), `created_at`, `updated_at` | Executa obrigatoriamente `self.full_clean()` antes de persistir (`save()`), garantindo validação de schemas em qualquer ponto do sistema (ADR-011). O campo `uuid` é imutável (`editable=False`) e indexado para lookup seguro. |
-| **`TenantModel`** | Classe Abstrata (`apps.tenants.models`) | `company` (`ForeignKey` para `tenants.Company`) | Garante que todo registro pertença a um tenant explícito. Configura o `TenantManager` como manager padrão com suporte ao método `.for_tenant(company)`. Possui índice composto `["company", "uuid"]`. |
-| **`WeddingOwnedMixin`** | Mixin Abstrato (`apps.core.mixins`) | `wedding` (`ForeignKey` para `weddings.Wedding`) | **Blindagem Vertical:** Valida se `self.company_id == self.wedding.company_id`.<br/>**Blindagem Horizontal:** Itera sobre todas as FKs do modelo que referenciam outros agregados do casamento e valida se pertencem exatamente ao mesmo `wedding_id`. |
-| **`MaxFileSizeValidator`** | Validador de I/O (`apps.core.validators`) | `max_size` (em bytes) | Valida o tamanho máximo de uploads (ex: 10MB para PDFs de contrato). Trata graciosamente exceções de `OSError` para tolerância a falhas de storage externo. |
-| **`ApplicationError`** | Exceção Base (`apps.core.exceptions`) | `detail`, `code`, `status_code` | Raiz de todas as exceções de negócio da Service Layer. Permite tratamento desacoplado de códigos HTTP sem vazar detalhes de infraestrutura. |
-| **`HealthCheck`** | Endpoint `/health` (`config/api.py`) | Retorna status da aplicação e ping no DB | Executa `connection.ensure_connection()` no Neon PostgreSQL. Retorna HTTP 200 `{"status": "healthy", "database": "up"}` ou HTTP 503 `{"status": "unhealthy", "database": "down"}`. |
+| ID | Regra / Invariante | Descrição & Comportamento | Entidades / Camadas | Referência Canônica |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BR-C01`** | **Chaves Híbridas (ID + UUID)** | `id` bigint sequencial para chave primária interna e joins rápidos no PostgreSQL; `uuid` v4 único, indexado e imutável exposto nas URLs e APIs públicas. | `BaseModel` | [ADR-007](../adr/007-hybrid-keys.md) · [core-models.md](../../reference/models/core-models.md) |
+| **`BR-C02`** | **Execução Compulsória de Invariantes** | Todo `BaseModel` executa compulsoriamente `self.full_clean()` dentro de `save()` (a menos de flag defensiva `skip_clean=True`), assegurando que nenhuma linha inconsistente chegue ao banco. | `BaseModel`, `TenantModel` | [ADR-011](../adr/011-basemodel-save-full-clean.md) · [ADR-030](../adr/030-rich-domain-model-service-layer.md) |
+| **`BR-C03`** | **Blindagem Multi-Tenant Transversal** | `WeddingOwnedMixin` valida em `clean()` a coerência vertical (`self.company_id == self.wedding.company_id`) e a coerência horizontal entre todas as FKs de entidades do mesmo casamento. | `WeddingOwnedMixin` | [ADR-016](../adr/016-pragmatic-multi-tenancy.md) · [tenant-isolation-guard.md](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) |
+| **`BR-C04`** | **Envelopamento Semântico de Exceções** | Toda exceção de domínio descende de `ApplicationError`, carregando código de máquina (`code`), detalhe e status HTTP tipado, serializada pelo handler central do Django Ninja. | `ApplicationError`, `exceptions.py` | [error-envelope-spec.md](../../reference/api/error-envelope-spec.md) · [ADR-013](../adr/013-migrate-drf-to-ninja.md) |
 
 ---
 
-## 4. Implementação no Código-Fonte Real
+## 4. Arquitetura Fullstack e Implementação no Código-Fonte
+
+### Backend (`backend/apps/core/`)
+- **Modelos Base & Mixins:** `BaseModel` (`models.py`) e `WeddingOwnedMixin` (`mixins.py`).
+- **Exceções Globais:** `exceptions.py` com mapeamento para status HTTP e serialização RFC 7807 no Django Ninja (`config/api.py`).
+- **Shortcuts & Tenant Guard:** `shortcuts.py` (`get_object_or_404_for_tenant`, `resolve_tenant_resource`) e `tenant.py` (`validate_tenant_ownership`).
+- **Validações de I/O:** `validators.py` (`MaxFileSizeValidator`) com tolerância a falhas de storage externo.
+- **Suíte de Guard-Rails Automatizados:** `test_atomic_service_audit.py`, `test_cascade_delete_safety.py`, `test_concurrency_locks.py`, `test_error_envelope_consistency.py`, `test_api_architecture.py`.
+
+### Frontend (`frontend/src/`)
+- **Cliente HTTP & Interceptadores:** `src/api/client.ts` com injeção automática de Bearer JWT, captura de tenant ativo e tratamento universal de envelopes de erro.
+- **Átomos de UI (shadcn/ui):** `src/components/ui/` (`Button`, `Dialog`, `Sheet`, `Table`, `Input`, `Toaster`).
+- **Formatadores Globais Puros:** `src/lib/utils.ts` (`formatCurrency`, `formatDate`, `cn`).
+
+### Trechos Canônicos de Implementação
 
 - **Modelo Base:** [`BaseModel`](../../../backend/apps/core/models.py)
 - **Mixin de Casamento:** [`WeddingOwnedMixin`](../../../backend/apps/core/mixins.py)
@@ -74,7 +86,7 @@ classDiagram
 - **Resolução de Tenant:** [`get_object_or_404_for_tenant()`](../../../backend/apps/core/shortcuts.py)
 - **Validador de Uploads:** [`MaxFileSizeValidator`](../../../backend/apps/core/validators.py)
 
-### A. Modelo Base com Validação de Invariantes (`BaseModel`)
+#### A. Modelo Base com Validação de Invariantes (`BaseModel`)
 
 ```python
 class BaseModel(models.Model):
@@ -92,7 +104,7 @@ class BaseModel(models.Model):
         super().save(*args, **kwargs)
 ```
 
-### B. Mixin de Isolamento Transversal (`WeddingOwnedMixin`)
+#### B. Mixin de Isolamento Transversal (`WeddingOwnedMixin`)
 
 ```python
 class WeddingOwnedMixin(models.Model):
@@ -116,7 +128,7 @@ class WeddingOwnedMixin(models.Model):
                     raise ValidationError({field.name: "Este recurso pertence a outro casamento."})
 ```
 
-### C. Hierarquia de Exceções de Domínio (`ApplicationError`)
+#### C. Hierarquia de Exceções de Domínio (`ApplicationError`)
 
 ```python
 class ApplicationError(Exception):
@@ -137,7 +149,7 @@ class DomainIntegrityError(ApplicationError):
     default_code = "domain_integrity_error"
 ```
 
-### D. Atalhos de Resolução Segura de Tenant (`shortcuts.py`)
+#### D. Atalhos de Resolução Segura de Tenant (`shortcuts.py`)
 
 ```python
 def get_object_or_404_for_tenant[ModelT: models.Model](
@@ -157,7 +169,7 @@ def get_object_or_404_for_tenant[ModelT: models.Model](
         raise ObjectNotFoundError(detail=_get_not_found_detail(model_cls, detail), code=code) from e
 ```
 
-### E. Validador de Tamanho de Uploads (`MaxFileSizeValidator`)
+#### E. Validador de Tamanho de Uploads (`MaxFileSizeValidator`)
 
 ```python
 class MaxFileSizeValidator:
@@ -177,27 +189,28 @@ class MaxFileSizeValidator:
 
 ---
 
-## 5. Mapeamento de Camadas (Fullstack)
+## 5. Integrações & Interfaces Públicas (ADR-031)
 
-### Camada de Backend (`backend/apps/core/`)
-- **Base Models:** `BaseModel` (`models.py`) e `WeddingOwnedMixin` (`mixins.py`).
-- **Exceções Globais:** `exceptions.py` com integração aos exception handlers de `config/api.py`.
-- **Shortcuts & Tenant Guard:** `shortcuts.py` (`get_object_or_404_for_tenant`, `resolve_tenant_resource`) e `tenant.py` (`validate_tenant_ownership`).
-- **Suíte de Testes de Guard-Rails:** `tests/test_atomic_service_audit.py`, `tests/test_cascade_delete_safety.py`, `tests/test_concurrency_locks.py`, `tests/test_error_envelope_consistency.py`, `tests/test_api_architecture.py`.
-
-### Camada de Frontend (`frontend/src/`)
-- **Cliente HTTP Axios:** `src/api/client.ts` com injeção automática de Bearer JWT, extração do tenant ativo e interceptador unificado de envelopes de erro.
-- **Componentes Primitivos (shadcn/ui):** `src/components/ui/` (`Button`, `Dialog`, `Sheet`, `Table`, `Input`, `Toaster`).
-- **Formatadores Globais:** `src/lib/utils.ts` (`formatCurrency`, `formatDate`, `cn`).
+A fundação Core expõe os utilitários e contratos estruturais consumidos obrigatoriamente por todos os demais 9 Bounded Contexts:
+- `apps.core.shortcuts.get_object_or_404_for_tenant`: Busca defensiva com escopo de tenant e 404 semântico.
+- `apps.core.tenant.validate_tenant_ownership`: Guard de integridade para serviços que orquestram agregados de múltiplos módulos.
+- `apps.core.mixins.WeddingOwnedMixin`: Validador de integridade vertical e horizontal em models vinculados a casamentos.
+- `apps.core.validators.MaxFileSizeValidator`: Validador de limite de anexos para storage.
+- `apps.core.exceptions.ApplicationError`: Raiz hierárquica para exceções de domínio padronizadas.
 
 ---
 
-## 6. Links e Referências Cruzadas
+## 6. Aprofundamento & Referências
 
+### Decisões Arquiteturais (ADRs)
+- [ADR-007: Chaves Híbridas (ID + UUID)](../adr/007-hybrid-keys.md)
+- [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md)
+- [ADR-013: Migração para Django Ninja](../adr/013-migrate-drf-to-ninja.md)
+- [ADR-016: Multi-Tenancy Pragmático](../adr/016-pragmatic-multi-tenancy.md)
+- [ADR-030: Rich Domain Model & Service Layer](../adr/030-rich-domain-model-service-layer.md)
+
+### Especificações Técnicas
 - [Suíte de Guard-Rails Arquiteturais](../concepts/architectural-guard-rails-suite.md)
 - [Padrão Service Layer](../concepts/service-layer-pattern.md)
-- [Estratégia de Multi-Tenancy](../concepts/multi-tenancy-strategy.md)
 - [Especificação de Modelos Core](../../reference/models/core-models.md)
-- [Especificação do Envelope de Erros HTTP](../../reference/api/error-envelope-spec.md)
-- [ADR-007: Chaves Híbridas](../adr/007-hybrid-keys.md)
-- [ADR-011: BaseModel save com full_clean](../adr/011-basemodel-save-full-clean.md)
+- [Envelope de Erros da API](../../reference/api/error-envelope-spec.md)

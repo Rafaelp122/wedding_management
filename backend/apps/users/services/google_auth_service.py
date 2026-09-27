@@ -70,6 +70,7 @@ class GoogleAuthService:
             refresh=str(refresh),
             user=UserDataOut(
                 id=user.id,
+                uuid=user.uuid,
                 email=user.email,
                 first_name=user.first_name,
                 last_name=user.last_name,
@@ -112,8 +113,7 @@ class GoogleAuthService:
                     code="invalid_credentials",
                 )
             if not user.is_email_verified and user_info.email_verified:
-                user.is_email_verified = True
-                user.email_verified_at = timezone.now()
+                user.verify_email()
                 user.save(update_fields=["is_email_verified", "email_verified_at"])
         else:
             logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")

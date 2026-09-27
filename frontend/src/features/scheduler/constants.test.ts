@@ -4,6 +4,7 @@ import {
   RECURRENCE_OPTIONS,
   EVENT_LABELS,
   EVENT_COLORS,
+  TASK_PRIORITY_OPTIONS,
 } from "./constants";
 
 describe("Scheduler Constants", () => {
@@ -85,6 +86,17 @@ describe("Scheduler Constants", () => {
       const labelKeys = Object.keys(EVENT_LABELS).sort();
       const colorKeys = Object.keys(EVENT_COLORS).sort();
       expect(labelKeys).toEqual(colorKeys);
+    });
+  });
+
+  describe("TASK_PRIORITY_OPTIONS", () => {
+    it("should be defined and contain LOW, MEDIUM, HIGH, URGENT", () => {
+      expect(TASK_PRIORITY_OPTIONS).toEqual([
+        { value: "LOW", label: "Baixa" },
+        { value: "MEDIUM", label: "Média" },
+        { value: "HIGH", label: "Alta" },
+        { value: "URGENT", label: "Urgente" },
+      ]);
     });
   });
 });

@@ -1,6 +1,6 @@
 import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
-type WeddingStatusBadgeVariant = "default" | "secondary" | "destructive";
+type WeddingStatusBadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
 interface WeddingStatusInfo {
   label: string;
@@ -22,12 +22,24 @@ interface WeddingStatusAvatarStyle {
 const DEFAULT_WEDDING_STATUS = WeddingStatusEnum.IN_PROGRESS;
 
 const WEDDING_STATUS_INFO: Record<WeddingStatusEnum, WeddingStatusInfo> = {
+  [WeddingStatusEnum.PROPOSAL]: { label: "Proposta", variant: "outline" },
+  [WeddingStatusEnum.PLANNING]: { label: "Planejamento", variant: "default" },
   [WeddingStatusEnum.IN_PROGRESS]: { label: "Em Andamento", variant: "default" },
   [WeddingStatusEnum.COMPLETED]: { label: "Concluído", variant: "secondary" },
   [WeddingStatusEnum.CANCELED]: { label: "Cancelado", variant: "destructive" },
 };
 
 const WEDDING_STATUS_BADGE_STYLES: Record<WeddingStatusEnum, WeddingStatusBadgeStyle> = {
+  [WeddingStatusEnum.PROPOSAL]: {
+    className:
+      "bg-aura-50 text-aura-700 border-aura-200 dark:bg-aura-500/10 dark:text-aura-400 dark:border-aura-500/20",
+    dotClassName: "bg-aura-500",
+  },
+  [WeddingStatusEnum.PLANNING]: {
+    className:
+      "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
+    dotClassName: "bg-indigo-500",
+  },
   [WeddingStatusEnum.IN_PROGRESS]: {
     className:
       "bg-aura-50 text-aura-700 border-aura-200 dark:bg-aura-500/10 dark:text-aura-400 dark:border-aura-500/20",
@@ -46,6 +58,16 @@ const WEDDING_STATUS_BADGE_STYLES: Record<WeddingStatusEnum, WeddingStatusBadgeS
 };
 
 const WEDDING_STATUS_AVATAR_STYLES: Record<WeddingStatusEnum, WeddingStatusAvatarStyle> = {
+  [WeddingStatusEnum.PROPOSAL]: {
+    bg: "bg-aura-100 dark:bg-aura-900/40",
+    border: "border-aura-200 dark:border-aura-800/50",
+    text: "text-aura-700 dark:text-aura-300",
+  },
+  [WeddingStatusEnum.PLANNING]: {
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    border: "border-indigo-200 dark:border-indigo-800/50",
+    text: "text-indigo-700 dark:text-indigo-300",
+  },
   [WeddingStatusEnum.IN_PROGRESS]: {
     bg: "bg-aura-100 dark:bg-aura-900/40",
     border: "border-aura-200 dark:border-aura-800/50",
@@ -69,78 +91,6 @@ const WEDDING_STATUS_AVATAR_STYLES: Record<WeddingStatusEnum, WeddingStatusAvata
  * @param {WeddingStatusEnum} [status] O status do casamento.
  * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
  */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
-/**
- * Retorna as informações do status do casamento (label e variante do badge).
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusInfo} Um objeto contendo a label e a variante do badge correspondente.
- */
 export function getWeddingStatusInfo(status?: WeddingStatusEnum): WeddingStatusInfo {
   if (!status) {
     return WEDDING_STATUS_INFO[DEFAULT_WEDDING_STATUS];
@@ -148,78 +98,6 @@ export function getWeddingStatusInfo(status?: WeddingStatusEnum): WeddingStatusI
   return WEDDING_STATUS_INFO[status] ?? WEDDING_STATUS_INFO[DEFAULT_WEDDING_STATUS];
 }
 
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
-/**
- * Retorna o rótulo legível (label) associado ao status do casamento.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {string} A label legível correspondente ao status.
- */
 /**
  * Retorna o rótulo legível (label) associado ao status do casamento.
  *
@@ -236,78 +114,6 @@ export function getWeddingStatusLabel(status?: WeddingStatusEnum): string {
  * @param {WeddingStatusEnum} [status] O status do casamento.
  * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
  */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind e ícone/indicador) para o badge de status.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusBadgeStyle} O estilo CSS correspondente ao status.
- */
 export function getWeddingStatusBadgeStyle(status?: WeddingStatusEnum): WeddingStatusBadgeStyle {
   if (!status) {
     return WEDDING_STATUS_BADGE_STYLES[DEFAULT_WEDDING_STATUS];
@@ -315,78 +121,6 @@ export function getWeddingStatusBadgeStyle(status?: WeddingStatusEnum): WeddingS
   return WEDDING_STATUS_BADGE_STYLES[status] ?? WEDDING_STATUS_BADGE_STYLES[DEFAULT_WEDDING_STATUS];
 }
 
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
-/**
- * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
- *
- * @param {WeddingStatusEnum} [status] O status do casamento.
- * @return {WeddingStatusAvatarStyle} O estilo CSS correspondente ao status.
- */
 /**
  * Retorna o estilo CSS (classes do Tailwind para fundo, borda e texto) para o avatar.
  *
@@ -407,90 +141,6 @@ export function getWeddingAvatarStyle(status?: WeddingStatusEnum): WeddingStatus
  * @param {string} brideName O nome da noiva.
  * @return {string} As iniciais formatadas.
  */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
-/**
- * Gera as iniciais formatadas a partir dos nomes dos noivos (ex: R&A).
- *
- * @param {string} groomName O nome do noivo.
- * @param {string} brideName O nome da noiva.
- * @return {string} As iniciais formatadas.
- */
 export function getWeddingInitials(groomName: string, brideName: string): string {
   const first = groomName.trim().charAt(0).toUpperCase();
   const second = brideName.trim().charAt(0).toUpperCase();
@@ -499,90 +149,6 @@ export function getWeddingInitials(groomName: string, brideName: string): string
 
 export type WeddingStatusFilter = "all" | WeddingStatusEnum;
 
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
-/**
- * Calcula a porcentagem de conclusão de uma lista de tarefas.
- *
- * @param {number} completed O número de tarefas concluídas.
- * @param {number} total O número total de tarefas.
- * @return {number} A porcentagem arredondada de tarefas concluídas.
- */
 /**
  * Calcula a porcentagem de conclusão de uma lista de tarefas.
  *

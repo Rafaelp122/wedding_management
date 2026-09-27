@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor } from "@/test-utils";
 import { EditExpenseDialog } from "@/features/finances/components/expenses/EditExpenseDialog";
 import { createMockExpense } from "@/test-data";
 import { server } from "@/mocks/server";
@@ -59,7 +59,7 @@ describe("EditExpenseDialog", () => {
     });
   });
 
-  it("blocks amount fields when has paid installments", () => {
+  it("blocks actual_amount but keeps estimated_amount enabled when has paid installments", () => {
     render(
       <EditExpenseDialog
         expense={createMockExpense({ paid_installments_count: 2 })}
@@ -70,10 +70,10 @@ describe("EditExpenseDialog", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Valor Estimado")).toBeDisabled();
+    expect(screen.getByLabelText("Valor Estimado")).not.toBeDisabled();
     expect(screen.getByLabelText("Valor Realizado")).toBeDisabled();
     expect(
-      screen.getByText(/valores e parcelamento bloqueados/i),
+      screen.getByText(/valor realizado bloqueado/i),
     ).toBeInTheDocument();
   });
 
@@ -135,40 +135,6 @@ describe("EditExpenseDialog", () => {
 
     await waitFor(() => {
       expect(requestBody).toEqual({ name: "Novo Nome" });
-    });
-  });
-
-  it("sends num_installments when changed", async () => {
-    let requestBody: Record<string, unknown>;
-    const { http, HttpResponse } = await import("msw");
-    server.use(
-      http.patch(
-        "*/api/v1/finances/expenses/:uuid/",
-        async ({ request }) => {
-          requestBody = (await request.json()) as Record<string, unknown>;
-          return HttpResponse.json({ ...mockExpense });
-        },
-      ),
-    );
-
-    render(
-      <EditExpenseDialog
-        expense={mockExpense}
-        weddingUuid="w-1"
-        open={true}
-        onOpenChange={vi.fn()}
-        onSuccess={vi.fn()}
-      />,
-    );
-
-    const user = userEvent.setup();
-    const installmentsInput = screen.getByLabelText("Nº de Parcelas");
-    fireEvent.change(installmentsInput, { target: { value: "5" } });
-
-    await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
-
-    await waitFor(() => {
-      expect(requestBody).toHaveProperty("num_installments", 5);
     });
   });
 });

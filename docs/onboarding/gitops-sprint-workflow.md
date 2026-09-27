@@ -1,6 +1,6 @@
 # Tutorial: Fluxo de Trabalho por Sprints, Branches e GitOps
 
-> **Módulo:** [tutorials](../index.md)
+> **Módulo:** Onboarding & Tutoriais | [onboarding-quickstart](onboarding-quickstart.md)
 > **Relacionados:** [onboarding-quickstart](onboarding-quickstart.md) | [ci-cd-pipeline-flow](../architecture/concepts/ci-cd-pipeline-flow.md) | [ADR-025](../architecture/adr/025-terraform-iac-architecture.md) | [ADR-026](../architecture/adr/026-gitops-branching-and-deployment-strategy.md)
 
 ---

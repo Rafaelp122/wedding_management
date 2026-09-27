@@ -25,6 +25,7 @@ describe("SocialButtons", () => {
       refresh: "refresh-token-google",
       user: {
         id: 2,
+        uuid: "00000000-0000-0000-0000-000000000002",
         first_name: "GoogleUser",
         last_name: "Test",
         email: "googleuser@test.com",

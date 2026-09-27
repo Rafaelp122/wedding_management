@@ -190,5 +190,50 @@ describe("EditEventDialog", () => {
 
       expect(screen.queryByText("Editar Evento")).not.toBeInTheDocument();
     });
+
+    it("displays conflict alert and retries with force_overlap on confirm", async () => {
+      const { http, HttpResponse } = await import("msw");
+      server.use(
+        http.patch("*/api/v1/scheduler/events/:uuid/", async ({ request, params }) => {
+          expect(params.uuid).toBe("ev-mtg-1");
+          const body = (await request.json()) as { force_overlap?: boolean };
+          if (!body.force_overlap) {
+            return HttpResponse.json(
+              {
+                code: "event_schedule_conflict",
+                message: "Existe outro compromisso agendado para este horário no casamento.",
+              },
+              { status: 422 },
+            );
+          }
+          return HttpResponse.json(
+            { uuid: "ev-mtg-1", title: "Reunião Conflitante", event_type: "reuniao" },
+            { status: 200 },
+          );
+        }),
+      );
+
+      render(
+        <EditEventDialog
+          event={meetingEvent}
+          open={true}
+          onOpenChange={onOpenChange}
+          onSuccess={onSuccess}
+        />,
+      );
+
+      await userEvent.clear(screen.getByLabelText("Título"));
+      await userEvent.type(screen.getByLabelText("Título"), "Reunião Conflitante");
+      await userEvent.click(screen.getByRole("button", { name: /salvar/i }));
+
+      expect(await screen.findByText("Conflito de Horário Detectado")).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: /confirmar sobreposição/i }));
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("Evento atualizado com sucesso!");
+      });
+      expect(onSuccess).toHaveBeenCalled();
+    });
   });
 });

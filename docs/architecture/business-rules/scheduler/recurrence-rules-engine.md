@@ -1,5 +1,5 @@
 ---
-title: "Motor de Regras de Recorrência e Agendamentos"
+title: "Motor de Regras de Recorrência e Agendamentos (BR-S02)"
 domain: scheduler
 type: business-rule
 source_code:
@@ -16,31 +16,34 @@ tests:
 # Motor de Regras de Recorrência e Agendamentos
 
 > **Categoria:** Regra de Negócio (Domínio de Cronograma e Tarefas)
-> **Relacionados:** [Proteção Somente-Leitura de Pagamentos](payment-event-readonly-guard.md) · [Templates de Cronograma](../weddings/wedding-schedule-templates.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Detecção e Validação de Conflito de Agenda](schedule-conflict-validation.md) · [Proteção Somente-Leitura de Pagamentos](payment-event-readonly-guard.md) · [Templates de Cronograma](../weddings/wedding-schedule-templates.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Scheduler](../../domains/scheduler-domain.md)
 
 ---
 
 ## 1. Contexto e Invariantes do Domínio
 
-O motor do módulo `scheduler` orquestra dois pilares fundamentais da assessoria de casamentos: **Compromissos de Calendário** (`Event`) e o **Checklist Operacional de Tarefas** (`Task`). O motor garante consistência temporal, parametrização de recorrência periódica e configuração de lembretes preventivos.
+O motor do módulo `scheduler` orquestra dois pilares fundamentais da assessoria de casamentos: **Compromissos de Calendário** (`Event`) e o **Checklist Operacional de Tarefas** (`ChecklistItem`). O motor garante consistência temporal, parametrização de recorrência periódica e configuração de lembretes preventivos.
 
 ### Invariantes Fundamentais:
 1. **Regras de Recorrência Parametrizadas (`RecurrenceChoices`):** Eventos suportam frequência definida em português:
    - `none`: Não recorrente (pontual).
-   - `semanal`: Recorrência a cada 7 dias ($\Delta t = 7\text{ dias}$).
-   - `quinzenal`: Recorrência a cada 14 dias ($\Delta t = 14\text{ dias}$).
-   - `mensal`: Recorrência a cada 30 dias / 1 mês ($\Delta t = 30\text{ dias}$).
+   - `semanal`: Recorrência a cada 7 dias (\(\Delta t = 7\text{ dias}\)).
+   - `quinzenal`: Recorrência a cada 14 dias (\(\Delta t = 14\text{ dias}\)).
+   - `mensal`: Recorrência a cada 30 dias / 1 mês (\(\Delta t = 30\text{ dias}\)).
 2. **Invariante de Data Futura na Criação Manual (BR-VAL02):** A data/hora de início (`start_time`) não pode ser anterior à data corrente (`timezone.localdate()`) na criação manual via API (`EventService.create`), disparando `BusinessRuleViolation('event_start_time_in_past')`.
 3. **Exceção de Marcos Retroativos (`_allow_historical_start=True`):** Apenas o provisionamento automatizado de templates de casamento (`WeddingService`) pode persistir eventos com datas relativas retroativas.
 4. **Motor de Lembretes Preventivos:** Suporta ativação booleana (`reminder_enabled = True`) e antecedência configurável em minutos (`reminder_minutes_before = 60` por padrão).
-5. **Checklist e Prazos de Tarefas (`Task`):** As tarefas possuem controle atômico de conclusão (`is_completed = True/False`) e ordenação canônica por pendência e vencimento: `ordering = ["is_completed", "due_date", "created_at"]`.
+5. **Checklist e Prazos de Tarefas (`ChecklistItem`):** Os itens do checklist possuem controle atômico de conclusão (`is_completed = True/False`) e ordenação canônica por pendência e vencimento: `ordering = ["is_completed", "due_date", "created_at"]`.
 
 ### Fórmulas Matemáticas de Recorrência e Lembrete:
 Para um evento base agendado no instante $t_0$, as ocorrências recorrentes $k \in \{1, 2, \dots\}$ e o instante de disparo do lembrete $t_{\text{reminder}}$ são calculados por:
 
-$$t_k = t_0 + k \cdot \Delta t_{\text{frequência}}, \quad \Delta t \in \{7, 14, 30\}\text{ dias}$$
-
-$$t_{\text{reminder}} = t_0 - \Delta t_{\text{minutos\_antes}}$$
+\[
+t_k = t_0 + k \cdot \Delta t_{\text{frequência}}, \quad \Delta t \in \{7, 14, 30\}\text{ dias}
+\]
+\[
+t_{\text{reminder}} = t_0 - \Delta t_{\text{minutos\_antes}}
+\]
 
 ---
 
@@ -76,7 +79,7 @@ graph TD
 | **BR-S02-A** | **Data Inicial no Futuro** | `start_time` no passado com `_allow_historical_start=False`. | `BusinessRuleViolation` (`event_start_time_in_past`) | Bloqueia agendamento de eventos retroativos na criação manual. |
 | **BR-S02-B** | **Edição com Data Passada** | Atualização parcial via `EventService.update` para ajuste histórico. | Nenhuma (Permitido) | Permite reprogramação e correções cadastrais de eventos passados. |
 | **BR-S02-C** | **Recorrência Canônica** | Seleção de `recurrence_rule`. | `ValidationError` se fora dos choices | Aplica intervalos padronizados (`semanal`, `quinzenal`, `mensal`). |
-| **BR-S02-D** | **Ordenação de Tarefas** | Consulta via `TaskQuerySet`. | Nenhuma | Prioriza tarefas não concluídas (`is_completed=False`) e mais próximas do vencimento. |
+| **BR-S02-D** | **Ordenação de Tarefas do Checklist** | Consulta via `ChecklistItemQuerySet` (ou `TaskQuerySet`). | Nenhuma | Prioriza tarefas não concluídas (`is_completed=False`) e mais próximas do vencimento. |
 
 ---
 
@@ -88,8 +91,9 @@ A parametrização de recorrência, prazos e integridade temporal está encapsul
 Implementado em [`Event`](../../../../backend/apps/scheduler/models/event.py):
 - `RecurrenceChoices`: Suporta intervalos canônicos (`none`, `semanal`, `quinzenal`, `mensal`).
 - `TypeChoices`: Classificação de eventos (`reuniao`, `pagamento`, `visita`, `degustacao`, `outro`).
-- Invariante de horário em `clean()`: Garante que `end_time >= start_time`.
-- Propriedades de conveniência: `is_recurrent`, `is_payment_event`, `duration`.
+- Invariante de horário em `clean()`: Garante que `end_time >= start_time` e protege eventos do tipo `pagamento` contra mutação indevida.
+- Propriedade semântica de domínio: `is_payment_event` (avalia se `event_type == TypeChoices.PAYMENT`).
+- Métodos de domínio: `reschedule(start_time, end_time)`, `enable_reminder(minutes_before)`, `disable_reminder()`.
 
 ### B. Validação Cronológica no Serviço de Eventos (`EventService.create`)
 Implementado em [`EventService.create`](../../../../backend/apps/scheduler/services/events.py):
@@ -104,8 +108,8 @@ if (
     )
 ```
 
-### C. Modelo de Tarefas do Checklist (`Task`)
-Implementado em [`Task`](../../../../backend/apps/scheduler/models/task.py):
+### C. Modelo de Tarefas do Checklist (`ChecklistItem`)
+Implementado em [`ChecklistItem`](../../../../backend/apps/scheduler/models/task.py) (alias legado `Task` mantido):
 - Ordenação canônica: `ordering = ["is_completed", "due_date", "created_at"]`.
 - Métodos semânticos de ciclo de vida: `complete()`, `reopen()`.
 - Propriedades temporais: `is_overdue`, `days_overdue`.

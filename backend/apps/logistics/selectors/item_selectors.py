@@ -10,7 +10,7 @@ from apps.tenants.models import Company
 
 
 if TYPE_CHECKING:
-    from apps.logistics.models import Contract
+    from apps.contracts.models import Contract
     from apps.weddings.models import Wedding
 
 
@@ -20,6 +20,8 @@ def item_list_selector(
     status: str | None = None,
     search: str | None = None,
     contract_id: UUID | str | Contract | None = None,
+    scope_status: str | None = None,
+    delivery_status: str | None = None,
 ) -> ItemQuerySet:
     """
     Lista os itens de logística pertencentes ao tenant com filtros aplicados.
@@ -30,6 +32,8 @@ def item_list_selector(
         status: Status de aquisição do item (ex: PENDING, IN_PROGRESS, DONE).
         search: Termo para busca parcial no nome do item.
         contract_id: Identificador único do contrato associado ou instância de Contract.
+        scope_status: Filtro por dimensão de escopo (DESIRED, INCLUDED, DISCARDED).
+        delivery_status: Filtro por entrega física (PENDING, DELIVERED, RETURNED).
 
     Returns:
         ItemQuerySet contendo os itens filtrados com relacionamentos carregados.
@@ -39,6 +43,10 @@ def item_list_selector(
         qs = qs.for_wedding(wedding_id)
     if status:
         qs = qs.by_status(status)
+    if scope_status:
+        qs = qs.filter(scope_status=scope_status)
+    if delivery_status:
+        qs = qs.filter(delivery_status=delivery_status)
     if search:
         qs = qs.search(search)
     if contract_id:

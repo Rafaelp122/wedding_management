@@ -37,7 +37,7 @@ describe("DeleteBudgetCategoryDialog", () => {
   it("disables delete button when category has expenses", () => {
     render(
       <DeleteBudgetCategoryDialog
-        category={createMockBudgetCategory({ total_spent: "1500.00" })}
+        category={createMockBudgetCategory({ total_spent: "1500.00", expenses_count: 2 })}
         open={true}
         onOpenChange={vi.fn()}
         onSuccess={vi.fn()}
@@ -46,7 +46,7 @@ describe("DeleteBudgetCategoryDialog", () => {
 
     expect(screen.getByRole("button", { name: /remover/i })).toBeDisabled();
     expect(
-      screen.getByText(/esta categoria possui/i),
+      screen.getByText(/esta categoria possui 2 despesas vinculadas/i),
     ).toBeInTheDocument();
   });
 

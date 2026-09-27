@@ -8,14 +8,16 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrencyBRCompact } from "@/lib/formatters";
-import { useFinancesBudgetsList } from "@/api/generated/v1/endpoints/finances/finances";
+import type { BudgetOut } from "@/api/generated/v1/models/budgetOut";
 
 interface WeddingFinancesSummaryCardsProps {
+  budget?: BudgetOut | null;
   totalEstimated: number;
   totalSpent: number;
 }
 
 export function WeddingFinancesSummaryCards({
+  budget,
   totalEstimated,
   totalSpent,
 }: WeddingFinancesSummaryCardsProps) {
@@ -23,33 +25,11 @@ export function WeddingFinancesSummaryCards({
     totalEstimated > 0 ? Math.round((totalSpent / totalEstimated) * 100) : 0;
   const clampedBudgetUsage = Math.min(100, Math.max(0, budgetUsage));
 
-  const { data: budgetsListResponse, isLoading: budgetsLoading } = useFinancesBudgetsList();
-  const budgets = budgetsListResponse?.data?.items || [];
-  const validBudgets = budgets.filter((b) => Number(b.total_estimated) > 0);
-  const hasEnoughData = validBudgets.length >= 2;
-
-  let diffPercentage = 0;
-  let isBudgetGreater = false;
-  let isBudgetEqual = false;
-
-  if (hasEnoughData) {
-    const totalOfBudgets = validBudgets.reduce(
-      (sum, b) => sum + Number(b.total_estimated),
-      0
-    );
-    const averageBudget = totalOfBudgets / validBudgets.length;
-    if (averageBudget > 0) {
-      if (totalEstimated > averageBudget) {
-        diffPercentage = Math.round(((totalEstimated - averageBudget) / averageBudget) * 100);
-        isBudgetGreater = true;
-      } else if (totalEstimated < averageBudget) {
-        diffPercentage = Math.round(((averageBudget - totalEstimated) / averageBudget) * 100);
-        isBudgetGreater = false;
-      } else {
-        isBudgetEqual = true;
-      }
-    }
-  }
+  const compPct = budget?.comparison_percentage;
+  const hasEnoughData = compPct != null;
+  const isBudgetEqual = hasEnoughData && compPct === 0;
+  const isBudgetGreater = hasEnoughData && compPct > 0;
+  const diffPercentage = hasEnoughData ? Math.abs(compPct) : 0;
 
   // Definição do status dinâmico do Total Gasto
   let spentStatusText = "Dentro do planejado";
@@ -88,12 +68,7 @@ export function WeddingFinancesSummaryCards({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {budgetsLoading ? (
-            <div className="flex items-center gap-1 text-xs">
-              <div className="w-3 h-3 rounded-full bg-muted animate-pulse" />
-              <div className="h-3 w-36 bg-muted rounded animate-pulse" />
-            </div>
-          ) : hasEnoughData ? (
+          {hasEnoughData ? (
             <div
               className={`flex items-center gap-1 text-xs font-medium ${
                 isBudgetEqual
@@ -102,6 +77,11 @@ export function WeddingFinancesSummaryCards({
                   ? "text-green-600 dark:text-green-400"
                   : "text-blue-600 dark:text-blue-400"
               }`}
+              title={
+                budget?.tenant_average_budget
+                  ? `Média: ${formatCurrencyBRCompact(Number(budget.tenant_average_budget))}`
+                  : undefined
+              }
             >
               {isBudgetEqual ? (
                 <TrendingDown className="w-3 h-3" />

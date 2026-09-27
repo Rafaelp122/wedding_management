@@ -15,11 +15,12 @@
   - _Nível 1 (Entrada / Sintaxe)_: Pydantic Schemas (`schemas.py`) tratam tipos, strings (`str_strip_whitespace=True`) e limites numéricos (Fail-Fast HTTP 422).
   - _Nível 2 (Invariantes de Domínio)_: Django Models (`models.py`) tratam regras intrínsecas, transições de estado e `clean()`.
   - _Nível 3 (Caso de Uso / Orquestração)_: Services (`services.py`) orquestram `@transaction.atomic`, multi-tenancy (`validate_tenant_ownership`), dependências entre agregados e efeitos colaterais.
-- **Isolamento de Bounded Contexts & Interfaces (ADR-031)**: PROIBIDO importar `models.py`, `services.py` ou `managers.py` de outros domínios diretamente. Toda comunicação síncrona transacional entre módulos passa exclusivamente por `apps.<contexto>.interfaces`. Efeitos secundários utilizam tarefas assíncronas coordenadas (`django.tasks`) enfileiradas pós-commit (`transaction.on_commit`). Consultas analíticas compostas multi-domínio residem exclusivamente em `apps/reporting`. Toda dependência é auditada pelo `import-linter` (`just lint-imports`).
+- **Isolamento de Bounded Contexts & Interfaces (ADR-031)**: PROIBIDO importar `models.py`, `services.py` ou `managers.py` de outros domínios diretamente. Toda comunicação síncrona transacional entre módulos passa exclusivamente por `apps.<contexto>.interfaces`. Efeitos secundários utilizam tarefas assíncronas coordenadas (`django.tasks`) enfileiradas pós-commit (`transaction.on_commit`). Consultas analíticas compostas multi-domínio residem exclusivamente em `apps/reporting`. Toda dependência é auditada pelo `Tach` (`tach check` / `just lint-imports` / `just arch`).
 - **Service Layer & CQRS**: Rotas de mutação (`POST`, `PUT`, `PATCH`, `DELETE`) em `api.py` delegam para `services/`. Rotas `GET` delegam para `selectors/` e `managers.py` (`TenantQuerySet`), retornando querysets lazy e chainable. PROIBIDO métodos de leitura pura em `services.py`.
 - **Multi-Tenancy (ADR-009, ADR-016, ADR-019)**: Todo service/selector aceita `company` e filtra via `Model.objects.for_tenant(company)`. Use `validate_tenant_ownership` em services e `get_object_or_404_for_tenant` ou `*_get_selector` para lookups individuais.
 - **Data Integrity & Typing**: Modelos herdam `BaseModel` (`full_clean()` no `save()`). Tipagem estrita `mypy` obrigatória.
 - **Router Endpoints**: `operation_id` obrigatório em todos os endpoints de router.
+- **YAGNI & Outside-In Domain Modeling (Anti-Código Morto)**: É ESTRITAMENTE PROIBIDO criar métodos, propriedades (`@property`) ou utilitários em modelos Django de forma preventiva ou especulativa ("para o futuro"). Todo método ou propriedade adicionado a um model DEVE ter um consumidor de produção imediato e obrigatório (um Service de caso de uso, um Seletor analítico, um Schema de API Ninja ou uma invariante no `clean()`). Código coberto apenas por `test_models.py` sem chamador em produção é considerado violação de YAGNI e débito técnico.
 
 ### Frontend (ADR-012, ADR-024)
 
@@ -42,7 +43,7 @@
 
 ### Documentation & Comments
 
-- **Diátaxis & Atomic Notes**: Follow **Diátaxis** and **Atomic Notes** in `docs/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). Cross-link atomic notes without text duplication. Run `just check-docs` (or `uv run --project backend python scripts/validate_docs_links.py`).
+- **MkDocs-First & Hubs de Domínio Ricos**: Seguir o modelo **MkDocs-First** com **Hubs de Domínio** em `docs/architecture/domains/` e notas atômicas de regras em `docs/architecture/business-rules/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). O `mkdocs.yml` é a Única Fonte da Verdade para navegação (proibidos MOCs burocráticos intermediários). Executar `just check-docs` (ou `uv run --project backend python scripts/validate_docs_links.py`).
 - **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
 - **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 

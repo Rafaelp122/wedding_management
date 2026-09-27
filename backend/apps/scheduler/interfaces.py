@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from datetime import datetime, time, timedelta
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from django.db import transaction
 from django.utils import timezone
@@ -122,9 +123,26 @@ def apply_wedding_schedule_template(
         )
 
 
+def enqueue_wedding_checklist_generation(
+    *,
+    company_id: int | str,
+    wedding_uuid: UUID | str,
+    template: str | None = None,
+) -> None:
+    """Enfileira a geração assíncrona do checklist operacional inicial (RFC-001 / ADR-017)."""
+    from apps.scheduler.tasks import generate_checklist_from_template_task
+
+    generate_checklist_from_template_task.enqueue(
+        company_id,
+        str(wedding_uuid),
+        template,
+    )
+
+
 __all__ = [
     "apply_wedding_schedule_template",
     "create_payment_events_for_installments",
     "delete_payment_event_for_installment",
     "delete_payment_events_for_expense",
+    "enqueue_wedding_checklist_generation",
 ]

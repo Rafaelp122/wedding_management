@@ -142,7 +142,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API success for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return new HttpResponse(null, { status: 204 });
       })
     );
@@ -172,7 +172,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API failure for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
       })
     );
@@ -202,7 +202,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API failure for DELETE returning 500 and no body
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return new HttpResponse(null, { status: 500 });
       })
     );
@@ -280,5 +280,37 @@ describe("WeddingVendorsTable", () => {
 
     expect(screen.getByText(/R\$\s*7\.500,00/)).toBeInTheDocument();
     expect(screen.queryByText(/aditivo/i)).toBeNull();
+  });
+
+  it("opens CancelContractDialog and handles cancellation when Cancelar Contrato is clicked in dropdown", async () => {
+    const onRefresh = vi.fn();
+    const contract = createMockContract({ status: "SIGNED" });
+
+    server.use(
+      http.post("*/api/v1/contracts/:uuid/transition/", () => {
+        return HttpResponse.json({ ...contract, status: "CANCELED" });
+      }),
+    );
+
+    const { container } = render(
+      <WeddingVendorsTable
+        contracts={[contract]}
+        onRefresh={onRefresh}
+      />,
+    );
+
+    const user = userEvent.setup();
+    await user.click(container.querySelector("button")!);
+    await user.click(await screen.findByText("Cancelar Contrato"));
+
+    expect(screen.getByRole("heading", { name: "Cancelar Contrato" })).toBeInTheDocument();
+
+    const confirmBtn = screen.getByRole("button", { name: "Confirmar Cancelamento" });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith("Contrato cancelado com sucesso!");
+      expect(onRefresh).toHaveBeenCalled();
+    });
   });
 });

@@ -42,7 +42,7 @@ def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
 
 @pytest.mark.django_db
 class TestNotificationServiceCreate:
-    """Testes para o método create_notification e notify."""
+    """Testes para o método create_notification."""
 
     def test_create_notification_success(self, user: Any) -> None:
         notification = NotificationService.create_notification(
@@ -63,17 +63,6 @@ class TestNotificationServiceCreate:
         assert notification.link == "/scheduler/tasks"
         assert notification.is_read is False
         assert notification.read_at is None
-
-    def test_notify_alias_success(self, user: Any) -> None:
-        notification = NotificationService.notify(
-            company=user.company,
-            user=user,
-            title="Título Notify",
-            message="Mensagem notify",
-            notification_type=NotificationType.GENERAL,
-        )
-        assert notification.id is not None
-        assert notification.title == "Título Notify"
 
     def test_create_notification_with_target_fields(self, user: Any) -> None:
         target_uuid = uuid4()
@@ -113,6 +102,15 @@ class TestNotificationServiceCreate:
         )
         assert notification_by_uuid.company == user.company
         assert notification_by_uuid.user == user
+
+    def test_create_notification_failure_invalid_company_id(self, user: Any) -> None:
+        with pytest.raises(Company.DoesNotExist):
+            NotificationService.create_notification(
+                company=999999,
+                user=user,
+                title="Título",
+                message="Mensagem",
+            )
 
     def test_create_notification_failure_invalid_user_id(self, user: Any) -> None:
         with pytest.raises(User.DoesNotExist):

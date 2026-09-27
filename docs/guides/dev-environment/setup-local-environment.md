@@ -1,17 +1,46 @@
 # Como Configurar o Ambiente de Desenvolvimento Local
 
-> **Categoria:** [dev-environment](index.md) | [task-runner-just](task-runner-just.md) | [database-migrations](database-migrations.md) | [seed-database](../backend/seed-database.md)
+> **Categoria:** Ambiente de Desenvolvimento & Serviços Locais
+> **Relacionados:** [Guia do Task Runner Just](task-runner-just.md) · [Migrações de Banco de Dados](database-migrations.md) · [Como Popular o Banco](../backend/seed-database.md) · [Troubleshooting de Locks](../ops-troubleshooting/db-connection-locks.md)
 > **Comandos Principais:** `just setup`, `just up`, `just dev`, `just frontend-dev`, `just seed-db`
 
 ---
 
 ## Visão Geral
 
-Este guia prático orienta a configuração passo a passo do ambiente de desenvolvimento local do **Wedding Management System (WMS)**. O sistema suporta duas modalidades de execução:
-1. **Modalidade Híbrida (Recomendada):** Banco de dados e Backend isolados em **Docker Compose**, com Frontend SPA e Landing Page rodando no **Host**.
+Este guia prático orienta a configuração passo a passo do ambiente de desenvolvimento local do **Wedding Management System (WMS)**. O sistema adota uma arquitetura híbrida e otimizada para produtividade:
+1. **Modalidade Híbrida (Recomendada):** Banco de dados e Backend isolados em **Docker Compose** (`db` com PostgreSQL e `backend` com Django Ninja), com Frontend SPA e Landing Page rodando diretamente no **Host** para Hot Module Replacement (HMR) instantâneo sem overhead de I/O.
 2. **Modalidade Host Local Puro:** Todos os serviços rodando diretamente na máquina local via gerenciadores de pacotes rápidos (`uv` para Python e `pnpm` para Node.js).
 
-Você pode orquestrar todas as operações utilizando o task runner **`just`** ou executar diretamente os **comandos nativos** das ferramentas subjacentes.
+```mermaid
+graph TD
+    subgraph Host ["Máquina do Desenvolvedor (Host Local)"]
+        SPA["Frontend SPA (React 19 + Vite)<br/>http://localhost:5173"]
+        Landing["Landing Page (Astro 7)<br/>http://localhost:4321"]
+        Docs["MkDocs Material (Docs Dev)<br/>http://localhost:8001"]
+        TaskRunner["Task Runner Just / Trilha Nativa<br/>(just up, dev, sync-api, test)"]
+    end
+
+    subgraph DockerCompose ["Docker Compose (docker-compose.yml)"]
+        BackendContainer["Container: wedding_backend<br/>Django Ninja API (0.0.0.0:8000)"]
+        DBContainer["Container: wedding_db<br/>PostgreSQL 17 (0.0.0.0:5432)"]
+    end
+
+    SPA -- "API REST / JWT (HTTP 8000)" --> BackendContainer
+    Landing -. "Redirecionamento Auth" .-> SPA
+    BackendContainer -- "SQL (TCP 5432)" --> DBContainer
+    TaskRunner -. "docker compose exec / run" .-> BackendContainer
+```
+
+### Tabela de Portas e Serviços Locais
+
+| Serviço | URL Local | Porta Host | Atalho Just | Comando Nativo Direto | Descrição |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Backend & Swagger API** | [`http://localhost:8000/api/v1/docs`](http://localhost:8000/api/v1/docs) | `8000` | `just up` / `just dev` | `docker compose up -d backend` | Documentação OpenAPI interativa do Django Ninja |
+| **Frontend SPA** | [`http://localhost:5173`](http://localhost:5173) | `5173` | `just frontend-dev` | `cd frontend && pnpm run dev` | Interface SPA React 19 para casais e cerimonialistas |
+| **Landing Page Comercial** | [`http://localhost:4321`](http://localhost:4321) | `4321` | `just landing-dev` | `cd landing && pnpm run dev` | Portal público estático em Astro com ilhas React |
+| **Documentação Técnica** | [`http://localhost:8001`](http://localhost:8001) | `8001` | `just docs-dev` | `uv run --project backend --group docs mkdocs serve -a 0.0.0.0:8001` | Portal MkDocs Material com live-reload |
+| **PostgreSQL Database** | `localhost:5432` | `5432` | `just up` | `docker compose up -d db` | Banco de dados relacional principal |
 
 ---
 

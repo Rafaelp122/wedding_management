@@ -6,6 +6,7 @@ from uuid import UUID
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 
+from apps.contracts.interfaces import get_contract_for_company
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
@@ -15,7 +16,6 @@ from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
-from apps.logistics.interfaces import get_contract_for_company
 from apps.tenants.models import Company
 
 
@@ -76,7 +76,11 @@ class ExpenseService:
             "name": (
                 contract.name
                 or contract.description
-                or f"Despesa - {contract.supplier.name}"
+                or (
+                    f"Despesa - {contract.supplier.name}"
+                    if contract.supplier
+                    else "Despesa de Contrato"
+                )
             ),
             "description": contract.description or "",
             "contract": str(contract.uuid),
@@ -210,15 +214,19 @@ class ExpenseService:
         """
         effective_contract = instance.contract
         effective_amount = data.get("actual_amount", instance.actual_amount)
-        if effective_contract and effective_amount != effective_contract.total_amount:
-            raise BusinessRuleViolation(
-                detail=(
-                    f"BR-F02: O valor da despesa (R${effective_amount}) "
-                    f"deve ser igual ao valor do contrato "
-                    f"(R${effective_contract.total_amount})."
-                ),
-                code="br_f02_violation",
+        if effective_contract:
+            expected_amount = getattr(
+                effective_contract, "effective_amount", effective_contract.total_amount
             )
+            if effective_amount != expected_amount:
+                raise BusinessRuleViolation(
+                    detail=(
+                        f"BR-F02: O valor da despesa (R${effective_amount}) "
+                        f"deve ser igual ao valor do contrato "
+                        f"(R${expected_amount})."
+                    ),
+                    code="br_f02_violation",
+                )
 
     @staticmethod
     def _resolve_contract(
@@ -300,17 +308,15 @@ class ExpenseService:
         if contract_changed or amount_changed:
             ExpenseService._validate_br_f02(instance, data)
 
-        num_installments = data.pop("num_installments", None)
-        first_due_date = data.pop("first_due_date", None)
-
         # Atualização dinâmica dos campos
         for field, value in data.items():
             setattr(instance, field, value)
             updated_fields.add(field)
 
-        if amount_changed and num_installments is None:
-            # Auto-redistribute: usa mesmo número de parcelas com novo valor
-            if instance.installments.filter(status="PAID").exists():
+        if amount_changed:
+            # Auto-redistribute: ajusta o valor das parcelas existentes
+            # para o novo valor total (BR-F01)
+            if instance.has_paid_installments:
                 raise BusinessRuleViolation(
                     detail=(
                         "Não é possível alterar o valor total pois existem "
@@ -322,18 +328,7 @@ class ExpenseService:
                 company=company,
                 expense=instance,
                 num_installments=instance.installments.count(),
-                first_due_date=(
-                    first_due_date
-                    or getattr(
-                        instance.installments.order_by("due_date").first(),
-                        "due_date",
-                        date.today(),
-                    )
-                ),
-            )
-        elif num_installments is not None:
-            ExpenseService._handle_redistribute(
-                company, instance, num_installments, first_due_date
+                first_due_date=(instance.first_due_date or date.today()),
             )
 
         if updated_fields:
@@ -383,34 +378,40 @@ class ExpenseService:
         )
 
     @staticmethod
-    def _handle_redistribute(
+    @transaction.atomic
+    def renegotiate_installments(
         company: Company,
         expense: Expense,
         num_installments: int,
-        first_due_date: date | None,
-    ) -> None:
-        """Gerencia o processo de redistribuição de parcelas de uma despesa.
+        first_due_date: date | None = None,
+    ) -> Expense:
+        """Renegocia e redistribui as parcelas de uma despesa.
+
+        Remove as parcelas anteriores e gera um novo cronograma com a quantidade
+        de parcelas informada e data de primeiro vencimento.
 
         Args:
             company: O tenant atual para isolamento de dados.
-            expense: A despesa associada que terá as parcelas redistribuídas.
+            expense: A despesa associada.
             num_installments: Novo número total de parcelas.
-            first_due_date: Data de vencimento da primeira parcela.
+            first_due_date: Data de vencimento da primeira parcela (opcional).
+
+        Returns:
+            Expense: A despesa com parcelas renegociadas.
 
         Raises:
-            BusinessRuleViolation: Se o número de parcelas for menor que 1.
+            BusinessRuleViolation: Se o número de parcelas for menor que 1 ou
+                se houver parcelas já pagas.
         """
+        validate_tenant_ownership(company, expense)
+
         if num_installments < 1:
             raise BusinessRuleViolation(
                 detail="O número de parcelas deve ser pelo menos 1.",
                 code="invalid_installment_number",
             )
 
-        if first_due_date:
-            first_due = first_due_date
-        else:
-            first_inst = expense.installments.order_by("due_date").first()
-            first_due = first_inst.due_date if first_inst else date.today()
+        first_due = first_due_date or expense.first_due_date or date.today()
 
         InstallmentService.redistribute(
             company=company,
@@ -418,3 +419,4 @@ class ExpenseService:
             num_installments=num_installments,
             first_due_date=first_due,
         )
+        return expense

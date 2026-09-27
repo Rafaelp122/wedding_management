@@ -20,6 +20,12 @@ class Company(BaseModel):
         ordering = ["name"]
         db_table = "companies"
 
+    def clean(self) -> None:
+        """Sanitiza o slug para garantir consistência e evitar problemas de URL."""
+        super().clean()
+        if self.slug:
+            self.slug = self.slug.strip().lower()
+
     def __str__(self) -> str:
         return self.name
 

@@ -5,9 +5,11 @@ Consultas otimizadas e encapsuladas de leitura para Event.
 
 from __future__ import annotations
 
-from datetime import date
-from typing import TYPE_CHECKING
+from datetime import date, timedelta
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
+
+from django.utils import timezone
 
 from apps.core.shortcuts import get_object_or_404_for_tenant
 from apps.scheduler.managers import EventQuerySet
@@ -66,3 +68,31 @@ def event_get_selector(*, company: Company, uuid: UUID | str) -> Event:
         select_related=["wedding", "company"],
         code="event_not_found_or_denied",
     )
+
+
+def scheduler_summary_selector(*, company: Company) -> dict[str, Any]:
+    """
+    Retorna contagens e métricas consolidadas dos eventos do tenant.
+
+    Args:
+        company: O tenant atual para isolamento de dados.
+
+    Returns:
+        Dicionário com total, upcoming_7_days e with_reminder.
+    """
+    today = timezone.localdate()
+    end_7_days = today + timedelta(days=7)
+    tenant_events = Event.objects.for_tenant(company)
+
+    total = tenant_events.count()
+    upcoming_7_days = tenant_events.filter(
+        start_time__date__gte=today,
+        start_time__date__lte=end_7_days,
+    ).count()
+    with_reminder = tenant_events.filter(reminder_enabled=True).count()
+
+    return {
+        "total": total,
+        "upcoming_7_days": upcoming_7_days,
+        "with_reminder": with_reminder,
+    }

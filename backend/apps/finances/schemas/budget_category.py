@@ -1,7 +1,7 @@
 """Schemas Pydantic/Ninja para a entidade de Categoria de Orçamento (BudgetCategory)."""
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from ninja import Field, Schema
 from pydantic import UUID4, ConfigDict
@@ -42,6 +42,8 @@ class BudgetCategoryOut(Schema):
     description: str | None = None
     allocated_budget: Decimal
     total_spent: Decimal = Field(default=Decimal("0.00"))
+    budget_utilization_percent: int = 0
+    expenses_count: int = 0
 
     @staticmethod
     def resolve_wedding(obj: "BudgetCategory") -> UUID4:
@@ -60,3 +62,23 @@ class BudgetCategoryOut(Schema):
         if val is not None:
             return cast(Decimal, val)
         return obj.total_spent
+
+    @staticmethod
+    def resolve_expenses_count(obj: "BudgetCategory") -> int:
+        """Resolve a contagem de despesas da categoria."""
+        val = getattr(obj, "_expenses_count", None)
+        if val is not None:
+            return int(val)
+        return obj.expenses_count
+
+    @staticmethod
+    def resolve_budget_utilization_percent(obj: Any) -> int:
+        """Resolve o percentual de utilização do orçamento."""
+        val = getattr(obj, "budget_utilization_percent", None)
+        if val is not None:
+            return int(val)
+        alloc = getattr(obj, "allocated_budget", None)
+        spent = getattr(obj, "total_spent", None) or getattr(obj, "_total_spent", None)
+        if alloc and alloc > Decimal("0.00") and spent:
+            return int((spent / alloc) * 100)
+        return 0

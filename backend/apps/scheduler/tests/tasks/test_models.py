@@ -141,3 +141,69 @@ class TestTaskRichDomainModel:
         )
         assert task_no_date.is_overdue is False
         assert task_no_date.days_overdue == 0
+
+    def test_update_details(self, user: Any) -> None:
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, title="Antigo", description="Desc Antiga")
+        new_due = date.today() + timedelta(days=10)
+
+        task.update_details(
+            title="Novo", description="Nova Desc", due_date=new_due, priority="URGENT"
+        )
+        assert task.title == "Novo"
+        assert task.description == "Nova Desc"
+        assert task.due_date == new_due
+        assert task.priority == "URGENT"
+
+    def test_completed_at_timestamp(self, user: Any) -> None:
+        """complete() deve registrar completed_at e reopen() deve limpar."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding, is_completed=False)
+        assert task.completed_at is None
+
+        task.complete()
+        assert task.is_completed is True
+        assert task.completed_at is not None
+
+        task.reopen()
+        assert task.is_completed is False
+        assert task.completed_at is None
+
+    def test_default_priority(self, user: Any) -> None:
+        """Prioridade padrão deve ser MEDIUM."""
+        wedding = WeddingFactory(user_context=user)
+        task = TaskFactory(wedding=wedding)
+        assert task.priority == "MEDIUM"
+
+
+@pytest.mark.django_db
+class TestTimelineCompressionSelector:
+    """Testes do selector get_wedding_timeline_compression_selector."""
+
+    def test_compressed_timeline_under_90_days(self, user: Any) -> None:
+        from apps.scheduler.selectors import get_wedding_timeline_compression_selector
+
+        today = date.today()
+        wedding = WeddingFactory(user_context=user, date=today + timedelta(days=45))
+
+        diag = get_wedding_timeline_compression_selector(
+            company=user.company,
+            wedding_uuid=wedding.uuid,
+        )
+        assert diag["is_timeline_compressed"] is True
+        assert diag["days_until_wedding"] == 45
+        assert "Atenção: Cronograma comprimido" in diag["compressed_timeline_message"]
+
+    def test_not_compressed_timeline_over_90_days(self, user: Any) -> None:
+        from apps.scheduler.selectors import get_wedding_timeline_compression_selector
+
+        today = date.today()
+        wedding = WeddingFactory(user_context=user, date=today + timedelta(days=180))
+
+        diag = get_wedding_timeline_compression_selector(
+            company=user.company,
+            wedding_uuid=wedding.uuid,
+        )
+        assert diag["is_timeline_compressed"] is False
+        assert diag["days_until_wedding"] == 180
+        assert diag["compressed_timeline_message"] is None

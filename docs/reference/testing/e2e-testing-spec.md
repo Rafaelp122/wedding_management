@@ -1,6 +1,6 @@
 # Especificação Técnica: Padrões de Teste E2E (`Playwright`)
 
-> **Módulo:** [testing](index.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
+> **Módulo:** Testes | [frontend-testing-spec](frontend-testing-spec.md) | [ci-cd-pipeline-flow](../../architecture/concepts/ci-cd-pipeline-flow.md)
 > **Camada:** Frontend E2E (`Playwright`)
 
 ---

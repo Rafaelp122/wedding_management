@@ -1,8 +1,8 @@
 import logging
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Sum
 
 from apps.core.exceptions import (
     BusinessRuleViolation,
@@ -19,64 +19,36 @@ from apps.weddings.models import Wedding
 logger = logging.getLogger(__name__)
 
 
-def _validate_budget_cap(
-    company: Company, category: BudgetCategory, budget: Budget
-) -> None:
-    """Valida se a soma do allocated_budget das categorias não excede o teto.
-
-    Executada dentro de um select_for_update() para evitar TOCTOU.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        category: A categoria de orçamento sendo validada.
-        budget: O orçamento mestre associado.
-
-    Raises:
-        BusinessRuleViolation: Se o limite do orçamento estimado for excedido.
-    """
-    siblings_agg = (
-        BudgetCategory.objects.for_tenant(company)
-        .filter(budget=budget)
-        .exclude(pk=category.pk)
-        .aggregate(total=Sum("allocated_budget"))
-    )
-    allocated_siblings = siblings_agg["total"] or Decimal("0.00")
-    if allocated_siblings + category.allocated_budget > budget.total_estimated:
-        raise BusinessRuleViolation(
-            detail=(
-                f"A soma das categorias alocadas "
-                f"({allocated_siblings + category.allocated_budget}) "
-                f"excede o teto do orçamento ({budget.total_estimated})."
-            ),
-            code="budget_cap_exceeded",
-        )
-
-
 class BudgetCategoryService:
-    """Camada de serviço para mutações e orquestração de categorias de orçamento.
+    """Camada de serviço para gestão de categorias orçamentárias (BudgetCategory).
 
-    Validação de teto financeiro (_validate_budget_cap) executada com
-    select_for_update() para evitar TOCTOU (Time-of-Check to Time-of-Use).
+    Responsável por orquestrar a criação, atualização e exclusão de categorias,
+    garantindo o isolamento multi-tenant e a conservação do teto financeiro
+    (BR-F04) sob lock concorrente (select_for_update).
     """
 
     @staticmethod
     @transaction.atomic
-    def create(company: Company, payload: BudgetCategoryIn) -> BudgetCategory:
-        """Cria uma nova categoria de orçamento.
+    def create(
+        company: Company,
+        payload: BudgetCategoryIn,
+    ) -> BudgetCategory:
+        """Cria uma nova categoria orçamentária vinculada a um orçamento mestre.
 
-        Realiza o bloqueio do orçamento mestre correspondente para evitar
-        condições de corrida (TOCTOU) ao validar o teto.
+        Obtém lock pessimista no orçamento mestre para evitar condição de corrida
+        (TOCTOU) e delega a validação de conservação do teto ao BudgetCategory.clean()
+        via BaseModel.save().
 
         Args:
             company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação da categoria.
+            payload: Dados de entrada validados para a categoria.
 
         Returns:
-            BudgetCategory: A instância da categoria criada.
+            BudgetCategory: A instância persistida da categoria criada.
 
         Raises:
-            BusinessRuleViolation: Se exceder o teto do orçamento mestre.
             ObjectNotFoundError: Se o orçamento mestre não for encontrado.
+            BusinessRuleViolation: Se a soma das categorias exceder o orçamento.
         """
         logger.info(
             f"Iniciando criação de Categoria de Orçamento para company_id={company.id}"
@@ -94,7 +66,7 @@ class BudgetCategoryService:
             code="budget_not_found_or_denied",
         )
 
-        # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de ler soma das categorias
+        # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de persistir
         budget = (
             Budget.objects.for_tenant(company).select_for_update().get(pk=budget.pk)
         )
@@ -103,10 +75,13 @@ class BudgetCategoryService:
             company=company, wedding=budget.wedding, budget=budget, **data
         )
 
-        category.full_clean()
-        _validate_budget_cap(company, category, budget)
-
-        category.save(skip_clean=True)
+        try:
+            category.save()
+        except DjangoValidationError as e:
+            detail = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
+            raise BusinessRuleViolation(
+                detail=detail, code="budget_cap_exceeded"
+            ) from e
 
         logger.info(f"Categoria de Orçamento criada com sucesso: uuid={category.uuid}")
         return category
@@ -121,7 +96,7 @@ class BudgetCategoryService:
         """Atualiza uma categoria de orçamento existente.
 
         Garante o isolamento do tenant e re-valida o teto do orçamento mestre
-        sob lock (select_for_update).
+        sob lock (select_for_update) através do BaseModel.save().
 
         Args:
             company: O tenant atual para isolamento de dados.
@@ -152,18 +127,19 @@ class BudgetCategoryService:
             updated_fields.add(field)
 
         # TRAVA DE SEGURANÇA (TOCTOU): lock no budget antes de re-validar teto
-        budget = (
-            Budget.objects.for_tenant(company)
-            .select_for_update()
-            .get(pk=instance.budget.pk)
+        Budget.objects.for_tenant(company).select_for_update().get(
+            pk=instance.budget.pk
         )
-
-        instance.full_clean()
-        _validate_budget_cap(company, instance, budget)
 
         if updated_fields:
             updated_fields.add("updated_at")
-            instance.save(skip_clean=True, update_fields=list(updated_fields))
+            try:
+                instance.save(update_fields=list(updated_fields))
+            except DjangoValidationError as e:
+                detail = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
+                raise BusinessRuleViolation(
+                    detail=detail, code="budget_cap_exceeded"
+                ) from e
 
         logger.info(f"Categoria uuid={instance.uuid} atualizada com sucesso.")
         return instance
@@ -225,15 +201,6 @@ class BudgetCategoryService:
             wedding: A instância do casamento correspondente.
             budget: A instância do orçamento mestre associado.
         """
-        DEFAULT_CATEGORIES = [
-            "Espaço e Buffet",
-            "Decoração e Flores",
-            "Fotografia e Vídeo",
-            "Música e Iluminação",
-            "Assessoria",
-            "Trajes e Beleza",
-        ]
-
         logger.info(f"Gerando categorias padrão para o casamento {wedding.uuid}")
 
         existing_names = set(
@@ -242,7 +209,7 @@ class BudgetCategoryService:
             .values_list("name", flat=True)
         )
 
-        new_names = [n for n in DEFAULT_CATEGORIES if n not in existing_names]
+        new_names = [n for n in BudgetCategory.DEFAULT_NAMES if n not in existing_names]
         if not new_names:
             logger.info(f"Categorias padrão já existem para budget={budget.uuid}")
             return

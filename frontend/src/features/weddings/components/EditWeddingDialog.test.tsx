@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, userEvent, waitFor } from "@/test-utils";
+import { render, screen, userEvent, waitFor, fireEvent } from "@/test-utils";
 import { EditWeddingDialog } from "@/features/weddings/components/EditWeddingDialog";
 import { server } from "@/mocks/server";
 import { createMockWedding } from "@/test-data";
@@ -107,4 +107,67 @@ describe("EditWeddingDialog", () => {
       expect(toast.error).toHaveBeenCalled();
     });
   });
+
+  it("restricts status options strictly to allowed_transitions and current status", async () => {
+    const weddingWithRestrictedTransitions = createMockWedding({
+      status: "IN_PROGRESS",
+      allowed_transitions: ["CANCELED"],
+    });
+
+    render(
+      <EditWeddingDialog
+        wedding={weddingWithRestrictedTransitions}
+        open={true}
+        onOpenChange={vi.fn()}
+        onSuccess={vi.fn()}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const statusTrigger = screen.getByRole("combobox");
+    await user.click(statusTrigger);
+
+    expect(screen.getByRole("option", { name: "Em Andamento" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Cancelado" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "Concluído" })).not.toBeInTheDocument();
+  });
+
+  it("opens GuestCountChangeNoticeDialog when expected_guests is changed", async () => {
+    const onSuccess = vi.fn();
+    const onOpenChange = vi.fn();
+    const weddingWith100Guests = createMockWedding({
+      expected_guests: 100,
+    });
+
+    render(
+      <EditWeddingDialog
+        wedding={weddingWith100Guests}
+        open={true}
+        onOpenChange={onOpenChange}
+        onSuccess={onSuccess}
+      />,
+    );
+
+    const user = userEvent.setup();
+    const guestsInput = screen.getByLabelText(/convidados/i);
+    fireEvent.change(guestsInput, { target: { value: "200" } });
+
+    await user.click(
+      screen.getByRole("button", { name: /salvar alterações/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Alteração no Número de Convidados"),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("100")).toBeInTheDocument();
+    expect(screen.getByText("200")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Entendido" }));
+
+    expect(onSuccess).toHaveBeenCalled();
+  });
 });
+

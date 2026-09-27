@@ -68,6 +68,11 @@ class TestCompanyModel:
         assert company.created_at is not None
         assert company.updated_at is not None
 
+    def test_clean_sanitizes_slug(self) -> None:
+        company = Company(name="Empresa Teste", slug="  Empresa-Slug  ")
+        company.clean()
+        assert company.slug == "empresa-slug"
+
 
 @pytest.mark.django_db
 class TestCompanyFactory:

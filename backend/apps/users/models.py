@@ -204,6 +204,22 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Retorna o nome completo."""
         return f"{self.first_name} {self.last_name}".strip()
 
-    def get_short_name(self) -> str:
-        """Retorna apenas o primeiro nome."""
-        return self.first_name
+    def clean(self) -> None:
+        """Valida e normaliza as invariantes do usuário."""
+        super().clean()
+        if self.email:
+            self.email = self.email.strip().lower()
+
+    def activate(self) -> None:
+        """Ativa a conta do usuário para acesso ao sistema."""
+        self.is_active = True
+
+    def verify_email(self, verified_at: Any | None = None) -> None:
+        """Marca o e-mail do usuário como verificado e registra o timestamp.
+
+        Args:
+            verified_at: Timestamp opcional da verificação.
+                Se omitido, usa timezone.now().
+        """
+        self.is_email_verified = True
+        self.email_verified_at = verified_at or timezone.now()

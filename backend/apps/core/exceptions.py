@@ -7,7 +7,17 @@ class ApplicationError(Exception):
     default_detail = "Ocorreu um erro na aplicação."
     default_code = "application_error"
 
-    def __init__(self, detail: str | None = None, code: str | None = None) -> None:
+    def __init__(
+        self,
+        detail: str | None = None,
+        code: str | None = None,
+        *,
+        message: str | None = None,
+    ) -> None:
+        if message is not None:
+            if code is None and detail is not None:
+                code = detail
+            detail = message
         self.detail = detail if detail is not None else self.default_detail
         self.code = code if code is not None else self.default_code
         super().__init__(self.detail)
@@ -64,3 +74,11 @@ class PermissionDeniedError(ApplicationError):
     status_code = 403
     default_detail = "Acesso negado."
     default_code = "unauthorized_sa"
+
+
+class AccountLockedError(ApplicationError):
+    """Status 429: Bloqueio temporário por excesso de tentativas incorretas."""
+
+    status_code = 429
+    default_detail = "Muitas tentativas com erro. Tente novamente mais tarde."
+    default_code = "account_locked"

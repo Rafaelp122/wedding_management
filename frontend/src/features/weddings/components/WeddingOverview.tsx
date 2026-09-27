@@ -7,7 +7,7 @@ import {
   Clock,
   ArrowRight,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import type { WeddingDashboardOut } from "@/api/generated/v1/models/weddingDashboardOut";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,12 +19,25 @@ import { formatDateBR } from "@/lib/formatters";
 import { ExportReportDropdown } from "@/features/reporting/components/ExportReportDropdown";
 import { UrgentTasksList } from "./UrgentTasksList";
 import { UpcomingInstallmentsList } from "./UpcomingInstallmentsList";
+import { PlannerContractSection } from "./PlannerContractSection";
+import { PlannerContractDialog } from "./PlannerContractDialog";
+import { WeddingParticipantsSection } from "./WeddingParticipantsSection";
+import { AddParticipantDialog } from "./AddParticipantDialog";
+import {
+  useRemoveWeddingParticipant,
+  getWeddingsReadQueryKey,
+  getWeddingsListQueryKey,
+} from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import type { WeddingParticipantOut } from "@/api/generated/v1/models/weddingParticipantOut";
 
 interface WeddingOverviewProps {
   wedding: WeddingOut;
   overview?: WeddingDashboardOut | null;
   onNavigateToPlanning?: () => void;
   onNavigateToFinances?: () => void;
+  onEditContract?: () => void;
 }
 
 export function WeddingOverview({
@@ -32,11 +45,47 @@ export function WeddingOverview({
   overview,
   onNavigateToPlanning,
   onNavigateToFinances,
+  onEditContract,
 }: WeddingOverviewProps) {
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
   const statusInfo = getWeddingStatusInfo(wedding.status);
+
+  const removeParticipantMutation = useRemoveWeddingParticipant({
+    mutation: {
+      onSuccess: () => {
+        toast.success("Participante desvinculado com sucesso.");
+        queryClient.invalidateQueries({
+          queryKey: getWeddingsReadQueryKey(wedding.uuid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: getWeddingsListQueryKey(),
+        });
+      },
+      onError: () => {
+        toast.error("Erro ao remover participante.");
+      },
+    },
+  });
+
+  const handleRemoveParticipant = (participant: WeddingParticipantOut) => {
+    removeParticipantMutation.mutate({
+      uuid: wedding.uuid,
+      participantUuid: participant.uuid,
+    });
+  };
 
   const urgentTasks = overview?.urgent_tasks ?? [];
   const upcomingInstallments = overview?.upcoming_installments ?? [];
+
+  const handleEditContract = () => {
+    if (onEditContract) {
+      onEditContract();
+    } else {
+      setContractDialogOpen(true);
+    }
+  };
 
   const formattedDate = useMemo(
     () => formatDateBR(wedding.date, { day: "2-digit", month: "long", year: "numeric" }),
@@ -159,6 +208,20 @@ export function WeddingOverview({
         </Card>
       </div>
 
+      {/* Contrato de Assessoria */}
+      <PlannerContractSection
+        contract={wedding.planner_contract}
+        onEditContract={handleEditContract}
+      />
+
+      {/* Participantes & Contratantes do Evento */}
+      <WeddingParticipantsSection
+        participants={wedding.participants}
+        onAddParticipant={() => setParticipantDialogOpen(true)}
+        onRemoveParticipant={handleRemoveParticipant}
+        isRemoving={removeParticipantMutation.isPending}
+      />
+
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="flex flex-col">
@@ -195,6 +258,23 @@ export function WeddingOverview({
           </CardContent>
         </Card>
       </div>
+
+      {contractDialogOpen && (
+        <PlannerContractDialog
+          weddingUuid={wedding.uuid}
+          contract={wedding.planner_contract}
+          open={contractDialogOpen}
+          onOpenChange={setContractDialogOpen}
+        />
+      )}
+
+      {participantDialogOpen && (
+        <AddParticipantDialog
+          weddingUuid={wedding.uuid}
+          open={participantDialogOpen}
+          onOpenChange={setParticipantDialogOpen}
+        />
+      )}
     </div>
   );
 }

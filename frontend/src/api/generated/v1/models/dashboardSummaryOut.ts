@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { CriticalWeddingOut } from './criticalWeddingOut';
+import type { DashboardContractDetailOut } from './dashboardContractDetailOut';
+import type { DashboardInstallmentDetailOut } from './dashboardInstallmentDetailOut';
+import type { DashboardTaskDetailOut } from './dashboardTaskDetailOut';
 
 /**
  * Resumo consolidado de indicadores importantes para o dashboard da empresa.
@@ -16,4 +19,8 @@ export interface DashboardSummaryOut {
   overdue_installments_count: number;
   pending_contracts_count: number;
   critical_weddings: CriticalWeddingOut[];
+  upcoming_installments?: DashboardInstallmentDetailOut[];
+  overdue_installments?: DashboardInstallmentDetailOut[];
+  urgent_tasks?: DashboardTaskDetailOut[];
+  pending_contracts?: DashboardContractDetailOut[];
 }

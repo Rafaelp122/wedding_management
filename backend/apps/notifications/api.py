@@ -1,10 +1,10 @@
-from typing import Any
-
+from django.db.models import QuerySet
 from ninja.pagination import paginate
 from ninja_extra import Router
 from pydantic import UUID4
 
 from apps.core.constants import MUTATION_ERROR_RESPONSES
+from apps.notifications.models import Notification
 from apps.notifications.schemas import (
     BulkNotificationIdsIn,
     BulkOperationOut,
@@ -13,7 +13,6 @@ from apps.notifications.schemas import (
     UnreadCountOut,
 )
 from apps.notifications.selectors import (
-    notification_get_selector,
     notification_list_selector,
     notification_unread_count_selector,
 )
@@ -30,7 +29,9 @@ notifications_router = Router(tags=["Notifications"])
     operation_id="notifications_list",
 )
 @paginate
-def list_notifications(request: AuthRequest, is_read: bool | None = None) -> Any:
+def list_notifications(
+    request: AuthRequest, is_read: bool | None = None
+) -> QuerySet[Notification]:
     """Lista as notificações do usuário logado no tenant atual."""
     user = request.user
     qs = notification_list_selector(
@@ -116,14 +117,11 @@ def clear_all(request: AuthRequest) -> BulkOperationOut:
     response={200: NotificationOut, **MUTATION_ERROR_RESPONSES},
     operation_id="notifications_mark_as_read",
 )
-def mark_as_read(request: AuthRequest, notification_id: UUID4) -> Any:
+def mark_as_read(request: AuthRequest, notification_id: UUID4) -> Notification:
     """Marca uma notificação específica como lida."""
     user = request.user
-    NotificationService.mark_as_read(
+    return NotificationService.mark_as_read(
         company=user.company, user=user, notification_id=notification_id
-    )
-    return notification_get_selector(
-        company=user.company, user=user, uuid=notification_id
     )
 
 

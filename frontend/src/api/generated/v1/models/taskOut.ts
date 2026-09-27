@@ -15,5 +15,9 @@ export interface TaskOut {
   title: string;
   description?: string | null;
   due_date?: string | null;
+  priority?: string;
   is_completed: boolean;
+  completed_at?: string | null;
+  is_overdue?: boolean;
+  days_overdue?: number;
 }

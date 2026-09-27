@@ -24,13 +24,19 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ConvertToPlanningIn,
   ErrorResponse,
   PagedWeddingOut,
+  PlannerContractIn,
+  PlannerContractOut,
   WeddingByMonthOut,
   WeddingIn,
   WeddingLookupOut,
   WeddingOut,
+  WeddingParticipantIn,
+  WeddingParticipantOut,
   WeddingPatchIn,
+  WeddingProposalIn,
   WeddingsByMonthParams,
   WeddingsListParams
 } from '../../models';
@@ -403,6 +409,71 @@ export function useWeddingsByMonth<TData = Awaited<ReturnType<typeof weddingsByM
 
 
 /**
+ * Cria uma proposta de casamento com status inicial PROPOSAL.
+ * @summary Create Wedding Proposal
+ */
+export const createWeddingProposal = (
+    weddingProposalIn: WeddingProposalIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/proposals/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: weddingProposalIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCreateWeddingProposalMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWeddingProposal>>, TError,{data: WeddingProposalIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof createWeddingProposal>>, TError,{data: WeddingProposalIn}, TContext> => {
+
+const mutationKey = ['createWeddingProposal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createWeddingProposal>>, {data: WeddingProposalIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createWeddingProposal(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateWeddingProposalMutationResult = NonNullable<Awaited<ReturnType<typeof createWeddingProposal>>>
+    export type CreateWeddingProposalMutationBody = WeddingProposalIn
+    export type CreateWeddingProposalMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create Wedding Proposal
+ */
+export const useCreateWeddingProposal = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWeddingProposal>>, TError,{data: WeddingProposalIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createWeddingProposal>>,
+        TError,
+        {data: WeddingProposalIn},
+        TContext
+      > => {
+      return useMutation(getCreateWeddingProposalMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Retrieve Wedding
  */
 export const weddingsRead = (
@@ -620,4 +691,455 @@ export const useWeddingsDelete = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getWeddingsDeleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Caso de uso: Conclui um casamento existente garantindo data válida.
+ * @summary Complete Wedding
+ */
+export const weddingsComplete = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/complete/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsCompleteMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsComplete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsComplete>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsComplete(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsComplete>>>
+
+    export type WeddingsCompleteMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Complete Wedding
+ */
+export const useWeddingsComplete = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsComplete>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsComplete>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsCompleteMutationOptions(options), queryClient);
+    }
+    /**
+ * Caso de uso: Cancela um casamento em andamento.
+ * @summary Cancel Wedding
+ */
+export const weddingsCancel = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/cancel/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsCancelMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsCancel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsCancel>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsCancel(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsCancelMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsCancel>>>
+
+    export type WeddingsCancelMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Cancel Wedding
+ */
+export const useWeddingsCancel = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsCancel>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsCancel>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsCancelMutationOptions(options), queryClient);
+    }
+    /**
+ * Caso de uso: Reabre um casamento cancelado voltando para em andamento.
+ * @summary Reopen Wedding
+ */
+export const weddingsReopen = (
+    uuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/reopen/`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getWeddingsReopenMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext> => {
+
+const mutationKey = ['weddingsReopen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof weddingsReopen>>, {uuid: string}> = (props) => {
+          const {uuid} = props ?? {};
+
+          return  weddingsReopen(uuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type WeddingsReopenMutationResult = NonNullable<Awaited<ReturnType<typeof weddingsReopen>>>
+
+    export type WeddingsReopenMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Reopen Wedding
+ */
+export const useWeddingsReopen = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof weddingsReopen>>, TError,{uuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof weddingsReopen>>,
+        TError,
+        {uuid: string},
+        TContext
+      > => {
+      return useMutation(getWeddingsReopenMutationOptions(options), queryClient);
+    }
+    /**
+ * Cria ou atualiza o contrato de honorários da assessoria para o casamento.
+ * @summary Save Planner Contract Endpoint
+ */
+export const savePlannerContract = (
+    uuid: string,
+    plannerContractIn: PlannerContractIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<PlannerContractOut>(
+      {url: `/api/v1/weddings/${uuid}/planner-contract/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: plannerContractIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSavePlannerContractMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePlannerContract>>, TError,{uuid: string;data: PlannerContractIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof savePlannerContract>>, TError,{uuid: string;data: PlannerContractIn}, TContext> => {
+
+const mutationKey = ['savePlannerContract'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof savePlannerContract>>, {uuid: string;data: PlannerContractIn}> = (props) => {
+          const {uuid,data} = props ?? {};
+
+          return  savePlannerContract(uuid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SavePlannerContractMutationResult = NonNullable<Awaited<ReturnType<typeof savePlannerContract>>>
+    export type SavePlannerContractMutationBody = PlannerContractIn
+    export type SavePlannerContractMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Save Planner Contract Endpoint
+ */
+export const useSavePlannerContract = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof savePlannerContract>>, TError,{uuid: string;data: PlannerContractIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof savePlannerContract>>,
+        TError,
+        {uuid: string;data: PlannerContractIn},
+        TContext
+      > => {
+      return useMutation(getSavePlannerContractMutationOptions(options), queryClient);
+    }
+    /**
+ * Converte uma proposta em planejamento ativo gerando as despesas de honorários.
+ * @summary Convert To Planning Endpoint
+ */
+export const convertWeddingToPlanning = (
+    uuid: string,
+    convertToPlanningInNull?: ConvertToPlanningIn | null,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingOut>(
+      {url: `/api/v1/weddings/${uuid}/convert-to-planning/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: convertToPlanningInNull, signal
+    },
+      options);
+    }
+
+
+
+
+export const getConvertWeddingToPlanningMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof convertWeddingToPlanning>>, TError,{uuid: string;data?: ConvertToPlanningIn | null}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof convertWeddingToPlanning>>, TError,{uuid: string;data?: ConvertToPlanningIn | null}, TContext> => {
+
+const mutationKey = ['convertWeddingToPlanning'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof convertWeddingToPlanning>>, {uuid: string;data?: ConvertToPlanningIn | null}> = (props) => {
+          const {uuid,data} = props ?? {};
+
+          return  convertWeddingToPlanning(uuid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConvertWeddingToPlanningMutationResult = NonNullable<Awaited<ReturnType<typeof convertWeddingToPlanning>>>
+    export type ConvertWeddingToPlanningMutationBody = ConvertToPlanningIn | null | undefined
+    export type ConvertWeddingToPlanningMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Convert To Planning Endpoint
+ */
+export const useConvertWeddingToPlanning = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof convertWeddingToPlanning>>, TError,{uuid: string;data?: ConvertToPlanningIn | null}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof convertWeddingToPlanning>>,
+        TError,
+        {uuid: string;data?: ConvertToPlanningIn | null},
+        TContext
+      > => {
+      return useMutation(getConvertWeddingToPlanningMutationOptions(options), queryClient);
+    }
+    /**
+ * Adiciona um cliente como participante vinculado a um casamento.
+ * @summary Add Wedding Participant Endpoint
+ */
+export const addWeddingParticipant = (
+    uuid: string,
+    weddingParticipantIn: WeddingParticipantIn,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<WeddingParticipantOut>(
+      {url: `/api/v1/weddings/${uuid}/participants/`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: weddingParticipantIn, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAddWeddingParticipantMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addWeddingParticipant>>, TError,{uuid: string;data: WeddingParticipantIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof addWeddingParticipant>>, TError,{uuid: string;data: WeddingParticipantIn}, TContext> => {
+
+const mutationKey = ['addWeddingParticipant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addWeddingParticipant>>, {uuid: string;data: WeddingParticipantIn}> = (props) => {
+          const {uuid,data} = props ?? {};
+
+          return  addWeddingParticipant(uuid,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddWeddingParticipantMutationResult = NonNullable<Awaited<ReturnType<typeof addWeddingParticipant>>>
+    export type AddWeddingParticipantMutationBody = WeddingParticipantIn
+    export type AddWeddingParticipantMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Add Wedding Participant Endpoint
+ */
+export const useAddWeddingParticipant = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addWeddingParticipant>>, TError,{uuid: string;data: WeddingParticipantIn}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addWeddingParticipant>>,
+        TError,
+        {uuid: string;data: WeddingParticipantIn},
+        TContext
+      > => {
+      return useMutation(getAddWeddingParticipantMutationOptions(options), queryClient);
+    }
+    /**
+ * Remove um participante vinculado a um casamento.
+ * @summary Remove Wedding Participant Endpoint
+ */
+export const removeWeddingParticipant = (
+    uuid: string,
+    participantUuid: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<void>(
+      {url: `/api/v1/weddings/${uuid}/participants/${participantUuid}/`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+
+export const getRemoveWeddingParticipantMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeWeddingParticipant>>, TError,{uuid: string;participantUuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeWeddingParticipant>>, TError,{uuid: string;participantUuid: string}, TContext> => {
+
+const mutationKey = ['removeWeddingParticipant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeWeddingParticipant>>, {uuid: string;participantUuid: string}> = (props) => {
+          const {uuid,participantUuid} = props ?? {};
+
+          return  removeWeddingParticipant(uuid,participantUuid,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveWeddingParticipantMutationResult = NonNullable<Awaited<ReturnType<typeof removeWeddingParticipant>>>
+
+    export type RemoveWeddingParticipantMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Remove Wedding Participant Endpoint
+ */
+export const useRemoveWeddingParticipant = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeWeddingParticipant>>, TError,{uuid: string;participantUuid: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeWeddingParticipant>>,
+        TError,
+        {uuid: string;participantUuid: string},
+        TContext
+      > => {
+      return useMutation(getRemoveWeddingParticipantMutationOptions(options), queryClient);
     }

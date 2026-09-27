@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+/**
+ * Schema para validação do token de e-mail.
+ */
 export interface VerifyEmailIn {
   uid: string;
   token: string;

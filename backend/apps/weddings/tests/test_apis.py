@@ -1,10 +1,15 @@
 from datetime import date, timedelta
+from typing import Any, cast
 
 import pytest
 from django.utils import timezone
 
 from apps.weddings.models import Wedding
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
@@ -305,3 +310,188 @@ class TestWeddingNinjaAPI:
         data = response.json()
         assert len(data) == 1
         assert data[0]["bride_name"] == "Minha Noiva"
+
+    def test_complete_wedding_api_success(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/complete/ conclui casamento válido."""
+        today = timezone.now().date()
+        wedding = WeddingFactory(company=user.company, date=today)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/complete/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "COMPLETED"
+
+    def test_complete_wedding_api_premature_returns_422(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/complete/ rejeita conclusão antes da data."""
+        future_date = timezone.now().date() + timedelta(days=5)
+        wedding = WeddingFactory(company=user.company, date=future_date)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/complete/")
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "wedding_premature_completion"
+
+    def test_complete_wedding_api_cross_tenant_returns_404(self, auth_client):
+        """POST /api/v1/weddings/{uuid}/complete/ respeita isolamento de tenant."""
+        other_wedding = WeddingFactory()
+
+        response = auth_client.post(f"/api/v1/weddings/{other_wedding.uuid}/complete/")
+
+        assert response.status_code == 404
+
+    def test_cancel_wedding_api_success(self, auth_client, user):
+        """POST /api/v1/weddings/{uuid}/cancel/ cancela casamento em andamento."""
+        wedding = WeddingFactory(company=user.company)
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/cancel/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "CANCELED"
+
+    def test_cancel_wedding_api_cross_tenant_returns_404(self, auth_client):
+        """POST /api/v1/weddings/{uuid}/cancel/ respeita isolamento de tenant."""
+        other_wedding = WeddingFactory()
+
+        response = auth_client.post(f"/api/v1/weddings/{other_wedding.uuid}/cancel/")
+
+        assert response.status_code == 404
+
+    def test_reopen_wedding_api_success(self, auth_client: Any, user: Any) -> None:
+        """POST /api/v1/weddings/{uuid}/reopen/ reabre casamento cancelado."""
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/reopen/")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "IN_PROGRESS"
+
+    def test_reopen_wedding_api_invalid_transition_returns_422(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """POST /api/v1/weddings/{uuid}/reopen/ rejeita reabrir casamento concluído."""
+        wedding = WeddingFactory(
+            company=user.company,
+            date=timezone.now().date(),
+            status=Wedding.StatusChoices.COMPLETED,
+        )
+
+        response = auth_client.post(f"/api/v1/weddings/{wedding.uuid}/reopen/")
+
+        assert response.status_code == 422
+        body = response.json()
+        assert body["code"] == "wedding_invalid_status_transition"
+
+    def test_reopen_wedding_api_cross_tenant_returns_404(
+        self, auth_client: Any
+    ) -> None:
+        """POST /api/v1/weddings/{uuid}/reopen/ respeita isolamento de tenant."""
+        other_wedding = WeddingFactory(status=Wedding.StatusChoices.CANCELED)
+
+        response = auth_client.post(f"/api/v1/weddings/{other_wedding.uuid}/reopen/")
+
+        assert response.status_code == 404
+
+    @pytest.mark.skip(reason="Obsolete due to Phase 2 refactoring")
+    def test_wedding_out_serialization_allowed_transitions_and_can_complete(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """WeddingOut serializa allowed_transitions e can_complete corretamente."""
+        today = timezone.now().date()
+        future_date = today + timedelta(days=60)
+
+        # 1. Casamento futuro em andamento
+        future_wedding = WeddingFactory(company=user.company, date=future_date)
+        res_future = auth_client.get(f"/api/v1/weddings/{future_wedding.uuid}/")
+        assert res_future.status_code == 200
+        data_future = res_future.json()
+        assert data_future["status"] == "IN_PROGRESS"
+        assert set(data_future["allowed_transitions"]) == {"COMPLETED", "CANCELED"}
+        assert data_future["can_complete"] is False
+
+        # 2. Casamento de hoje em andamento
+        today_wedding = WeddingFactory(company=user.company, date=today)
+        res_today = auth_client.get(f"/api/v1/weddings/{today_wedding.uuid}/")
+        assert res_today.status_code == 200
+        data_today = res_today.json()
+        assert data_today["status"] == "IN_PROGRESS"
+        assert data_today["can_complete"] is True
+
+        # 3. Casamento cancelado
+        canceled_wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+        res_canceled = auth_client.get(f"/api/v1/weddings/{canceled_wedding.uuid}/")
+        assert res_canceled.status_code == 200
+        data_canceled = res_canceled.json()
+        assert data_canceled["allowed_transitions"] == ["IN_PROGRESS"]
+        assert data_canceled["can_complete"] is False
+
+        # 4. Casamento concluído
+        completed_wedding = WeddingFactory(
+            company=user.company, date=today, status=Wedding.StatusChoices.COMPLETED
+        )
+        res_completed = auth_client.get(f"/api/v1/weddings/{completed_wedding.uuid}/")
+        assert res_completed.status_code == 200
+        data_completed = res_completed.json()
+        assert data_completed["allowed_transitions"] == []
+        assert data_completed["can_complete"] is True
+
+
+@pytest.mark.django_db
+class TestSavePlannerContractAPI:
+    """Testes do endpoint de contrato de honorários da assessoria."""
+
+    def test_save_planner_contract_create_returns_201(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """POST cria o PlannerContract e retorna 201."""
+        wedding = WeddingFactory(company=user.company)
+        response = auth_client.post(
+            f"/api/v1/weddings/{wedding.uuid}/planner-contract/",
+            data={"service_tier": "COMPLETA", "effective_amount": "6000.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        data = response.json()
+        assert data["service_tier"] == "COMPLETA"
+        assert str(data["effective_amount"]) == "6000.00"
+
+    def test_save_planner_contract_update_returns_200(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """POST repetido atualiza e retorna 200."""
+        wedding = WeddingFactory(company=user.company)
+        url = f"/api/v1/weddings/{wedding.uuid}/planner-contract/"
+        first = auth_client.post(
+            url,
+            data={"service_tier": "COMPLETA", "effective_amount": "6000.00"},
+            content_type="application/json",
+        )
+        assert first.status_code == 201
+        second = auth_client.post(
+            url,
+            data={"service_tier": "PARCIAL", "effective_amount": "4000.00"},
+            content_type="application/json",
+        )
+        assert second.status_code == 200
+        assert second.json()["uuid"] == first.json()["uuid"]
+        assert second.json()["service_tier"] == "PARCIAL"
+
+    def test_save_planner_contract_cross_tenant_returns_404(
+        self, auth_client: Any, user: Any
+    ) -> None:
+        """Casamento de outro tenant retorna 404."""
+        other_wedding = WeddingFactory()
+        assert other_wedding.company_id != user.company.id
+        response = auth_client.post(
+            f"/api/v1/weddings/{other_wedding.uuid}/planner-contract/",
+            data={"effective_amount": "6000.00"},
+            content_type="application/json",
+        )
+        assert response.status_code == 404

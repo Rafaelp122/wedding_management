@@ -8,6 +8,20 @@ import * as zod from 'zod';
 
 
 /**
+ * Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001).
+ * @summary Get Timeline Compression
+ */
+export const SchedulerTimelineCompressionGetQueryParams = zod.object({
+  "wedding_id": zod.string()
+})
+
+export const SchedulerTimelineCompressionGetResponse = zod.object({
+  "is_timeline_compressed": zod.boolean(),
+  "compressed_timeline_message": zod.union([zod.string(),zod.null()]).optional(),
+  "days_until_wedding": zod.union([zod.int(),zod.null()]).optional()
+}).describe('Schema de saída para análise de compressão da linha do tempo do casamento.')
+
+/**
  * Lista todos os eventos do cronograma do Planner logado.
  *
  * Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
@@ -32,6 +46,7 @@ export const SchedulerEventsListResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -64,6 +79,7 @@ export const schedulerEventsCreateBodyEventTypeMax = 50;
 export const schedulerEventsCreateBodyRecurrenceRuleDefault = `none`;
 export const schedulerEventsCreateBodyReminderEnabledDefault = false;
 export const schedulerEventsCreateBodyReminderMinutesBeforeDefault = 60;
+export const schedulerEventsCreateBodyForceOverlapDefault = false;
 
 export const SchedulerEventsCreateBody = zod.object({
   "wedding": zod.string(),
@@ -75,13 +91,15 @@ export const SchedulerEventsCreateBody = zod.object({
   "end_time": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "recurrence_rule": zod.union([zod.string(),zod.null()]).default(schedulerEventsCreateBodyRecurrenceRuleDefault),
   "reminder_enabled": zod.boolean().default(schedulerEventsCreateBodyReminderEnabledDefault),
-  "reminder_minutes_before": zod.int().default(schedulerEventsCreateBodyReminderMinutesBeforeDefault)
+  "reminder_minutes_before": zod.int().default(schedulerEventsCreateBodyReminderMinutesBeforeDefault),
+  "force_overlap": zod.boolean().default(schedulerEventsCreateBodyForceOverlapDefault)
 }).describe('Schema de entrada para criação de evento\/compromisso.')
 
 export const SchedulerEventsCreateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -92,6 +110,16 @@ export const SchedulerEventsCreateResponse = zod.object({
   "reminder_enabled": zod.boolean(),
   "reminder_minutes_before": zod.int()
 }).describe('Schema de saída para exibição de evento\/compromisso.')
+
+/**
+ * Retorna o resumo estatístico consolidado dos eventos do cronograma.
+ * @summary Get Scheduler Summary
+ */
+export const SchedulerSummaryGetResponse = zod.object({
+  "total": zod.int(),
+  "upcoming_7_days": zod.int(),
+  "with_reminder": zod.int()
+}).describe('Schema de saída para resumo estatístico do cronograma.')
 
 /**
  * Retorna os detalhes completos de um evento específico no cronograma.
@@ -107,6 +135,7 @@ export const SchedulerEventsReadResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -136,7 +165,7 @@ export const schedulerEventsUpdateBodyLocationMax = 255;
 export const schedulerEventsUpdateBodyDescriptionDefault = ``;
 export const schedulerEventsUpdateBodyEventTypeOneMax = 50;
 
-
+export const schedulerEventsUpdateBodyForceOverlapDefault = false;
 
 export const SchedulerEventsUpdateBody = zod.object({
   "wedding": zod.union([zod.string(),zod.null()]).optional(),
@@ -148,13 +177,15 @@ export const SchedulerEventsUpdateBody = zod.object({
   "end_time": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
   "recurrence_rule": zod.union([zod.string(),zod.null()]).optional(),
   "reminder_enabled": zod.union([zod.boolean(),zod.null()]).optional(),
-  "reminder_minutes_before": zod.union([zod.int(),zod.null()]).optional()
+  "reminder_minutes_before": zod.union([zod.int(),zod.null()]).optional(),
+  "force_overlap": zod.boolean().default(schedulerEventsUpdateBodyForceOverlapDefault)
 }).describe('Schema de entrada para atualização parcial de evento\/compromisso.')
 
 export const SchedulerEventsUpdateResponse = zod.object({
   "uuid": zod.string(),
   "company_id": zod.string(),
   "wedding": zod.string(),
+  "wedding_name": zod.union([zod.string(),zod.null()]).optional(),
   "title": zod.string(),
   "location": zod.union([zod.string(),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
@@ -196,6 +227,10 @@ export const SchedulerTasksListQueryParams = zod.object({
   "offset": zod.int().min(schedulerTasksListQueryOffsetMin).default(schedulerTasksListQueryOffsetDefault)
 })
 
+export const schedulerTasksListResponseItemsItemPriorityDefault = `MEDIUM`;
+export const schedulerTasksListResponseItemsItemIsOverdueDefault = false;
+export const schedulerTasksListResponseItemsItemDaysOverdueDefault = 0;
+
 export const SchedulerTasksListResponse = zod.object({
   "items": zod.array(zod.object({
   "uuid": zod.string(),
@@ -204,7 +239,11 @@ export const SchedulerTasksListResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "priority": zod.string().default(schedulerTasksListResponseItemsItemPriorityDefault),
+  "is_completed": zod.boolean(),
+  "completed_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
+  "is_overdue": zod.boolean().default(schedulerTasksListResponseItemsItemIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksListResponseItemsItemDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')),
   "count": zod.int()
 })
@@ -216,6 +255,7 @@ export const SchedulerTasksListResponse = zod.object({
 export const schedulerTasksCreateBodyTitleMax = 255;
 
 export const schedulerTasksCreateBodyDescriptionDefault = ``;
+export const schedulerTasksCreateBodyPriorityDefault = `MEDIUM`;
 export const schedulerTasksCreateBodyIsCompletedDefault = false;
 
 export const SchedulerTasksCreateBody = zod.object({
@@ -223,8 +263,13 @@ export const SchedulerTasksCreateBody = zod.object({
   "title": zod.string().min(1).max(schedulerTasksCreateBodyTitleMax),
   "description": zod.string().default(schedulerTasksCreateBodyDescriptionDefault),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "priority": zod.string().default(schedulerTasksCreateBodyPriorityDefault),
   "is_completed": zod.boolean().default(schedulerTasksCreateBodyIsCompletedDefault)
 }).describe('Schema de entrada para criação de tarefa.')
+
+export const schedulerTasksCreateResponsePriorityDefault = `MEDIUM`;
+export const schedulerTasksCreateResponseIsOverdueDefault = false;
+export const schedulerTasksCreateResponseDaysOverdueDefault = 0;
 
 export const SchedulerTasksCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -233,7 +278,11 @@ export const SchedulerTasksCreateResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "priority": zod.string().default(schedulerTasksCreateResponsePriorityDefault),
+  "is_completed": zod.boolean(),
+  "completed_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
+  "is_overdue": zod.boolean().default(schedulerTasksCreateResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksCreateResponseDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')
 
 /**
@@ -252,8 +301,13 @@ export const SchedulerTasksUpdateBody = zod.object({
   "title": zod.union([zod.string().min(1).max(schedulerTasksUpdateBodyTitleOneMax),zod.null()]).optional(),
   "description": zod.string().default(schedulerTasksUpdateBodyDescriptionDefault),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "priority": zod.union([zod.string(),zod.null()]).optional(),
   "is_completed": zod.union([zod.boolean(),zod.null()]).optional()
 }).describe('Schema de entrada para atualização parcial de tarefa.')
+
+export const schedulerTasksUpdateResponsePriorityDefault = `MEDIUM`;
+export const schedulerTasksUpdateResponseIsOverdueDefault = false;
+export const schedulerTasksUpdateResponseDaysOverdueDefault = 0;
 
 export const SchedulerTasksUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -262,7 +316,11 @@ export const SchedulerTasksUpdateResponse = zod.object({
   "title": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "is_completed": zod.boolean()
+  "priority": zod.string().default(schedulerTasksUpdateResponsePriorityDefault),
+  "is_completed": zod.boolean(),
+  "completed_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
+  "is_overdue": zod.boolean().default(schedulerTasksUpdateResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksUpdateResponseDaysOverdueDefault)
 }).describe('Schema de saída para exibição de tarefa.')
 
 /**
@@ -274,4 +332,56 @@ export const SchedulerTasksDeleteParams = zod.object({
 })
 
 export const SchedulerTasksDeleteResponse = zod.void()
+
+/**
+ * Marca uma tarefa do checklist como concluída.
+ * @summary Complete Task
+ */
+export const SchedulerTasksCompleteParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const schedulerTasksCompleteResponsePriorityDefault = `MEDIUM`;
+export const schedulerTasksCompleteResponseIsOverdueDefault = false;
+export const schedulerTasksCompleteResponseDaysOverdueDefault = 0;
+
+export const SchedulerTasksCompleteResponse = zod.object({
+  "uuid": zod.string(),
+  "company_id": zod.string(),
+  "wedding": zod.string(),
+  "title": zod.string(),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "priority": zod.string().default(schedulerTasksCompleteResponsePriorityDefault),
+  "is_completed": zod.boolean(),
+  "completed_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
+  "is_overdue": zod.boolean().default(schedulerTasksCompleteResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksCompleteResponseDaysOverdueDefault)
+}).describe('Schema de saída para exibição de tarefa.')
+
+/**
+ * Reabre uma tarefa concluída do checklist.
+ * @summary Reopen Task
+ */
+export const SchedulerTasksReopenParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const schedulerTasksReopenResponsePriorityDefault = `MEDIUM`;
+export const schedulerTasksReopenResponseIsOverdueDefault = false;
+export const schedulerTasksReopenResponseDaysOverdueDefault = 0;
+
+export const SchedulerTasksReopenResponse = zod.object({
+  "uuid": zod.string(),
+  "company_id": zod.string(),
+  "wedding": zod.string(),
+  "title": zod.string(),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "due_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "priority": zod.string().default(schedulerTasksReopenResponsePriorityDefault),
+  "is_completed": zod.boolean(),
+  "completed_at": zod.union([zod.iso.datetime({"offset":true}),zod.null()]).optional(),
+  "is_overdue": zod.boolean().default(schedulerTasksReopenResponseIsOverdueDefault),
+  "days_overdue": zod.int().default(schedulerTasksReopenResponseDaysOverdueDefault)
+}).describe('Schema de saída para exibição de tarefa.')
 

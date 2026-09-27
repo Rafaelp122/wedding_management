@@ -1,7 +1,7 @@
 # Especificação Técnica: Dicionário Exaustivo de Variáveis de Ambiente (.env)
 
 > **Categoria:** Referência Técnica (Ambiente & Configurações)
-> **Relacionados:** [Guia de Ambiente Local](../../guides/dev-environment/index.md) · [Visão Geral da Arquitetura](../../architecture/concepts/system-overview.md) · [CI/CD Pipelines](../ci-cd/index.md)
+> **Relacionados:** [Guia de Ambiente Local](../../guides/dev-environment/setup-local-environment.md) · [Visão Geral da Arquitetura](../../architecture/concepts/system-overview.md) · [Validação de PRs (CI)](../ci-cd/ci-pr-validation-spec.md)
 
 ---
 

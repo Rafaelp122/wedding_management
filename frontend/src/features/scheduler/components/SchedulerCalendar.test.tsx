@@ -105,7 +105,6 @@ describe("SchedulerCalendar", () => {
     render(
       <SchedulerCalendar
         events={[currentEvent]}
-        weddingsByUuid={new Map()}
         onSelectEvent={selectEvent}
         onSelectSlot={onSelectSlot}
       />,
@@ -115,4 +114,26 @@ describe("SchedulerCalendar", () => {
     expect(selectEvent).toHaveBeenCalledWith(currentEvent);
   });
 
+  it("renders event using event.wedding_name when available", async () => {
+    const user = userEvent.setup();
+    const eventWithName = createMockEvent({
+      uuid: "event-with-name",
+      wedding: "wedding-xyz",
+      wedding_name: "Ana & Carlos",
+      title: "Degustação",
+      start_time: new Date().toISOString(),
+    });
+    const selectEvent = vi.fn();
+
+    render(
+      <SchedulerCalendar
+        events={[eventWithName]}
+        onSelectEvent={selectEvent}
+        onSelectSlot={onSelectSlot}
+      />,
+    );
+
+    await user.click(screen.getByText(/Degustação \(Ana & Carlos\)/));
+    expect(selectEvent).toHaveBeenCalledWith(eventWithName);
+  });
 });

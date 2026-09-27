@@ -5,12 +5,12 @@ from uuid import uuid4
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory as _SupplierFactory
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.services.expense_service import ExpenseService
-from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.schemas import WeddingIn
@@ -374,6 +374,154 @@ class TestFinancesNinjaAPI:
             f"/api/v1/finances/categories/{seed_data['my_category'].uuid}/",
         )
         assert response.status_code == 409
+
+    def test_renegotiate_expense_installments_success(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Renegociar parcelas de despesa redistribui parcelas e retorna 200."""
+        expense = seed_data["my_expense"]
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 3, "first_due_date": "2026-11-01"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["installments_count"] == 3
+        expense.refresh_from_db()
+        assert expense.installments.count() == 3
+
+    def test_renegotiate_expense_with_paid_installment_returns_422(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Renegociar despesa com parcelas pagas retorna 422 (BR-F04)."""
+        expense = seed_data["my_expense"]
+        first_inst = expense.installments.first()
+        assert first_inst is not None
+        auth_client.post(
+            f"/api/v1/finances/installments/{first_inst.uuid}/mark-as-paid/",
+        )
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 4},
+            content_type="application/json",
+        )
+        assert response.status_code == 422
+
+    def test_renegotiate_other_tenant_expense_returns_404(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """Tentativa de renegociar despesa de outro tenant deve retornar 404."""
+        other_expense = (
+            seed_data["my_expense"].__class__.objects.filter(name="Despesa B").first()
+        )
+        assert other_expense is not None
+        response = auth_client.post(
+            f"/api/v1/finances/expenses/{other_expense.uuid}/renegotiate/",
+            data={"num_installments": 2},
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    def test_list_installments_exclude_paid(
+        self, auth_client: Any, seed_data: Any
+    ) -> None:
+        """GET /installments/?exclude_paid=true deve omitir parcelas com status PAID."""
+        expense = seed_data["my_expense"]
+        # Criamos despesa com 2 parcelas
+        auth_client.post(
+            f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
+            data={"num_installments": 2},
+            content_type="application/json",
+        )
+        first_inst = expense.installments.order_by("installment_number").first()
+        assert first_inst is not None
+        auth_client.post(
+            f"/api/v1/finances/installments/{first_inst.uuid}/mark-as-paid/",
+        )
+
+        # Sem exclude_paid: retorna ambas
+        res_all = auth_client.get(
+            f"/api/v1/finances/installments/?expense_id={expense.uuid}",
+        )
+        assert res_all.status_code == 200
+        assert len(res_all.json()["items"]) == 2
+
+        # Com exclude_paid=true: retorna apenas a pendente
+        res_unpaid = auth_client.get(
+            f"/api/v1/finances/installments/?expense_id={expense.uuid}&exclude_paid=true",
+        )
+        assert res_unpaid.status_code == 200
+        items = res_unpaid.json()["items"]
+        assert len(items) == 1
+        assert items[0]["status"] != "PAID"
+
+    def test_contracts_lookup_success(
+        self, auth_client: Any, user: Any, seed_data: Any
+    ) -> None:
+        """
+        Verifica a listagem de contratos vinculados ao casamento
+        ordenados por nome.
+        """
+        wedding = seed_data["my_budget"].wedding
+        c1 = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            name="Z Buffet",
+            total_amount=Decimal("12000.00"),
+        )
+        c2 = ContractFactory(
+            wedding=wedding,
+            company=user.company,
+            name="A Decoração",
+            total_amount=Decimal("8000.00"),
+        )
+
+        response = auth_client.get(
+            f"/api/v1/finances/expenses/contracts-lookup/?wedding_id={wedding.uuid}"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+        # Ordenado por nome ("A Decoração" antes de "Z Buffet")
+        assert data[0]["uuid"] == str(c2.uuid)
+        assert data[0]["name"] == "A Decoração"
+        assert Decimal(data[0]["total_amount"]) == Decimal("8000.00")
+        assert data[1]["uuid"] == str(c1.uuid)
+        assert data[1]["name"] == "Z Buffet"
+
+    def test_contracts_lookup_multitenancy_and_wedding_isolation(
+        self, auth_client: Any, user: Any, seed_data: Any
+    ) -> None:
+        """Contratos de outro tenant ou casamento não devem vazar no lookup."""
+        other_user = UserFactory()
+        other_wedding = WeddingService.create(
+            other_user.company,
+            WeddingIn(
+                bride_name="Noiva 2",
+                groom_name="Noivo 2",
+                location="Local",
+                date=date(2026, 12, 1),
+                template="civil_buffet_3m",
+                expected_guests=50,
+            ),
+        )
+        ContractFactory(
+            wedding=other_wedding,
+            company=other_user.company,
+            name="Outro Contrato",
+        )
+
+        response = auth_client.get(
+            f"/api/v1/finances/expenses/contracts-lookup/?wedding_id={other_wedding.uuid}"
+        )
+        assert response.status_code == 200
+        assert response.json() == []
+
+    def test_contracts_lookup_missing_wedding_id(self, auth_client: Any) -> None:
+        """Sem wedding_id, endpoint deve responder 422 Unprocessable Entity."""
+        response = auth_client.get("/api/v1/finances/expenses/contracts-lookup/")
+        assert response.status_code == 422
 
 
 @pytest.mark.django_db

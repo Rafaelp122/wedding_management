@@ -16,6 +16,7 @@ const validEvent = {
   recurrence_rule: "none",
   reminder_enabled: false,
   reminder_minutes_before: 60,
+  force_overlap: false,
 };
 
 describe("useCreateEventForm", () => {

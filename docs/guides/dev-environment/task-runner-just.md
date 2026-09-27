@@ -1,6 +1,6 @@
 # How-To: Utilizar o Task Runner Just e a Trilha Nativa de Comandos
 
-> **Categoria:** [how-to](../../index.md) | [dev-environment](index.md)
+> **Categoria:** [Início](../../index.md) | Guia de Desenvolvimento
 > **Camada:** Ferramentas de Desenvolvimento, Automação & Scripting
 > **Relacionados:** [ADR-029: Modern Task Runner (Just)](../../architecture/adr/029-modern-task-runner-just.md) · [Setup do Ambiente Local](setup-local-environment.md) · [Migrações de Banco de Dados](database-migrations.md) · [Pipeline de CI/CD](../../architecture/concepts/ci-cd-pipeline-flow.md)
 

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WeddingFormFields } from "./WeddingFormFields";
+import { GuestCountChangeNoticeDialog } from "./GuestCountChangeNoticeDialog";
 
 const WEDDING_STATUS_OPTIONS = [
   { value: WeddingStatusEnum.IN_PROGRESS, label: "Em Andamento" },
@@ -47,6 +49,10 @@ export function EditWeddingDialog({
   onSuccess,
 }: EditWeddingDialogProps) {
   const { mutate, isPending } = useWeddingsUpdate();
+  const [guestCountNotice, setGuestCountNotice] = useState<{
+    previous: number | null | undefined;
+    new: number | null | undefined;
+  } | null>(null);
 
   const form = useForm<UpdateWeddingFormData>({
     resolver: zodResolver(WeddingsUpdateBody),
@@ -61,57 +67,101 @@ export function EditWeddingDialog({
   });
 
   const onSubmit = (data: UpdateWeddingFormData) => {
+    const rawNewGuests = data.expected_guests !== undefined && data.expected_guests !== null
+      ? Number(data.expected_guests)
+      : null;
+    const rawOldGuests = wedding.expected_guests ?? null;
+    const countChanged = rawNewGuests !== null && rawNewGuests !== rawOldGuests;
+
     mutate(
       { uuid: wedding.uuid, data },
       createMutationCallbacks({
         successMsg: "Casamento atualizado com sucesso!",
         fallbackErrorMsg: "Erro ao atualizar casamento.",
-        onSuccess: () => onSuccess(),
+        onSuccess: () => {
+          if (countChanged) {
+            onOpenChange(false);
+            setGuestCountNotice({
+              previous: rawOldGuests,
+              new: rawNewGuests,
+            });
+          } else {
+            onSuccess();
+          }
+        },
       }),
     );
   };
 
-  return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Editar Casamento"
-      description="Atualize os dados do casamento. As alterações serão salvas imediatamente."
-      form={form}
-      onSubmit={form.handleSubmit(onSubmit)}
-      isPending={isPending}
-      submitLabel="Salvar Alterações"
-      maxWidth="600px"
-    >
-      <WeddingFormFields form={form} />
+  const allowedSet = new Set([
+    wedding.status,
+    ...(wedding.allowed_transitions ?? []),
+  ]);
+  const availableStatusOptions = WEDDING_STATUS_OPTIONS.filter((opt) =>
+    allowedSet.has(opt.value),
+  );
 
-      <FormField
-        control={form.control}
-        name="status"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Status</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              value={field.value ?? "IN_PROGRESS"}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {WEDDING_STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </FormDialog>
+  return (
+    <>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Editar Casamento"
+        description="Atualize os dados do casamento. As alterações serão salvas imediatamente."
+        form={form}
+        onSubmit={form.handleSubmit(onSubmit)}
+        isPending={isPending}
+        submitLabel="Salvar Alterações"
+        maxWidth="600px"
+      >
+        <WeddingFormFields form={form} />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? "IN_PROGRESS"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {availableStatusOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </FormDialog>
+
+      {guestCountNotice && (
+        <GuestCountChangeNoticeDialog
+          open={!!guestCountNotice}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setGuestCountNotice(null);
+              onSuccess();
+            }
+          }}
+          previousGuestCount={guestCountNotice.previous}
+          newGuestCount={guestCountNotice.new}
+          onConfirm={() => {
+            setGuestCountNotice(null);
+            onSuccess();
+          }}
+        />
+      )}
+    </>
   );
 }

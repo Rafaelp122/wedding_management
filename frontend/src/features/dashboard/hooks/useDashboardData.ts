@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import {
   useWeddingsLookup,
-  useWeddingsList,
   useWeddingsRead,
 } from "@/api/generated/v1/endpoints/weddings/weddings";
 import {
@@ -14,7 +13,7 @@ import { getWeddingStatusInfo } from "@/features/weddings/utils/wedding-status";
 /**
  * Hook que encapsula todas as queries de dados do dashboard.
  *
- * Centraliza fetching de lookup, listagem, summary, dashboard individual,
+ * Centraliza fetching de lookup, summary, dashboard individual,
  * estado de seleção de casamento/ano, e valores derivados (saudação, data,
  * informações de status).
  *
@@ -38,11 +37,6 @@ export function useDashboardData() {
     query: { enabled: !isWeddingSelected },
   });
 
-  const { data: weddingsData } = useWeddingsList(
-    { limit: 200 },
-    { query: { enabled: !isWeddingSelected } },
-  );
-
   const { data: weddingDashboardData, isLoading: isLoadingWeddingDashboard } =
     useDashboardWedding(selectedWeddingUuid, {
       query: { enabled: isWeddingSelected },
@@ -54,7 +48,6 @@ export function useDashboardData() {
 
   // --- Derived data ---
   const weddingsArray = lookupData?.data ?? [];
-  const fullWeddingsArray = weddingsData?.data?.items ?? [];
   const summary = summaryData?.data;
   const weddingDashboard = weddingDashboardData?.data;
 
@@ -118,6 +111,5 @@ export function useDashboardData() {
     isLoadingWeddingDashboard,
     weddingDashboard,
     summary,
-    fullWeddingsArray,
   } as const;
 }

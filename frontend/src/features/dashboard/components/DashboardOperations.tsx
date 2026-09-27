@@ -1,18 +1,17 @@
-import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 import { useNavigate } from "react-router-dom";
 import { useDashboardOperations } from "../hooks/useDashboardOperations";
 import { DashboardOperationsView } from "./DashboardOperationsView";
 
 interface DashboardOperationsProps {
-  weddings: WeddingOut[];
+  weddings?: unknown;
 }
 
-export function DashboardOperations({ weddings }: DashboardOperationsProps) {
-  const operations = useDashboardOperations({ weddings });
+export function DashboardOperations(_props?: DashboardOperationsProps) {
+  const operations = useDashboardOperations();
   const navigate = useNavigate();
 
   const handleNavigateToWedding = (weddingUuid: string, tab?: string) => {
-    const url = `/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}`;
+    const url = weddingUuid ? `/weddings/${weddingUuid}${tab ? `?tab=${tab}` : ""}` : "/weddings";
     navigate(url);
   };
 
@@ -26,7 +25,6 @@ export function DashboardOperations({ weddings }: DashboardOperationsProps) {
       displayWeddings={operations.displayWeddings}
       urgentTasks={operations.urgentTasks}
       pendingContracts={operations.pendingContracts}
-      weddingMap={operations.weddingMap}
       handleTaskToggle={operations.handleTaskToggle}
       todayStr={operations.todayStr}
       onNavigateToWedding={handleNavigateToWedding}

@@ -33,6 +33,7 @@ def list_installments(
     status: str | None = None,
     due_date_gte: date | None = None,
     due_date_lte: date | None = None,
+    exclude_paid: bool = False,
 ) -> QuerySet[Installment]:
     """
     Lista parcelas com filtros opcionais por casamento, despesa,
@@ -46,6 +47,7 @@ def list_installments(
         status=status,
         due_date_gte=due_date_gte,
         due_date_lte=due_date_lte,
+        exclude_paid=exclude_paid,
     )
 
 

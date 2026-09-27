@@ -63,4 +63,202 @@ describe("WeddingHeader", () => {
 
     expect(onEditClick).toHaveBeenCalledTimes(1);
   });
+
+  it("calls onCancelClick when cancel button is clicked", async () => {
+    const onCancelClick = vi.fn();
+    render(
+      <WeddingHeader
+        wedding={mockWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={45}
+        onEditClick={vi.fn()}
+        onCancelClick={onCancelClick}
+      />
+    );
+
+    const cancelBtn = screen.getByTitle("Cancelar casamento");
+    await userEvent.click(cancelBtn);
+
+    expect(onCancelClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onCompleteClick when complete button is clicked and can_complete is true", async () => {
+    const onCompleteClick = vi.fn();
+    const readyWedding = createMockWedding({
+      ...mockWedding,
+      can_complete: true,
+    });
+
+    render(
+      <WeddingHeader
+        wedding={readyWedding}
+        displayDate="01 Jan 2020"
+        checklistPercentage={100}
+        onEditClick={vi.fn()}
+        onCompleteClick={onCompleteClick}
+      />
+    );
+
+    const completeBtn = screen.getByTitle("Concluir casamento");
+    expect(completeBtn).not.toBeDisabled();
+    await userEvent.click(completeBtn);
+
+    expect(onCompleteClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables complete button when can_complete is false", () => {
+    const onCompleteClick = vi.fn();
+    const notReadyWedding = createMockWedding({
+      ...mockWedding,
+      can_complete: false,
+    });
+
+    render(
+      <WeddingHeader
+        wedding={notReadyWedding}
+        displayDate="31 Dez 2099"
+        checklistPercentage={10}
+        onEditClick={vi.fn()}
+        onCompleteClick={onCompleteClick}
+      />
+    );
+
+    const completeBtn = screen.getByTitle(
+      "O casamento só pode ser concluído na data do evento ou posterior"
+    );
+    expect(completeBtn).toBeDisabled();
+  });
+
+  it("renders reopen button when wedding status is CANCELED", async () => {
+    const onReopenClick = vi.fn();
+    const canceledWedding = createMockWedding({
+      ...mockWedding,
+      status: "CANCELED",
+      allowed_transitions: ["IN_PROGRESS"],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={canceledWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={30}
+        onEditClick={vi.fn()}
+        onReopenClick={onReopenClick}
+      />
+    );
+
+    const reopenBtn = screen.getByTitle("Reabrir casamento");
+    expect(reopenBtn).toBeInTheDocument();
+    await userEvent.click(reopenBtn);
+
+    expect(onReopenClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders reopen button when allowed_transitions includes IN_PROGRESS", async () => {
+    const onReopenClick = vi.fn();
+    const weddingWithReopen = createMockWedding({
+      ...mockWedding,
+      status: "COMPLETED",
+      allowed_transitions: ["IN_PROGRESS"],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={weddingWithReopen}
+        displayDate="15 Set 2026"
+        checklistPercentage={100}
+        onEditClick={vi.fn()}
+        onReopenClick={onReopenClick}
+      />
+    );
+
+    const reopenBtn = screen.getByTitle("Reabrir casamento");
+    expect(reopenBtn).toBeInTheDocument();
+  });
+
+  it("does not render reopen button when not canceled and allowed_transitions lacks IN_PROGRESS", () => {
+    const closedWedding = createMockWedding({
+      ...mockWedding,
+      status: "COMPLETED",
+      allowed_transitions: [],
+    });
+
+    render(
+      <WeddingHeader
+        wedding={closedWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={100}
+        onEditClick={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTitle("Reabrir casamento")).not.toBeInTheDocument();
+  });
+
+  it("renders contract and convert buttons when status is PROPOSAL", async () => {
+    const onPlannerContractClick = vi.fn();
+    const onConvertToPlanningClick = vi.fn();
+
+    const proposalWedding = createMockWedding({
+      ...mockWedding,
+      status: "PROPOSAL",
+    });
+
+    render(
+      <WeddingHeader
+        wedding={proposalWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={0}
+        onEditClick={vi.fn()}
+        onPlannerContractClick={onPlannerContractClick}
+        onConvertToPlanningClick={onConvertToPlanningClick}
+      />,
+    );
+
+    expect(screen.getByText("Proposta")).toBeInTheDocument();
+
+    const contractBtn = screen.getByRole("button", {
+      name: /contrato da assessoria/i,
+    });
+    const convertBtn = screen.getByRole("button", {
+      name: /efetivar casamento/i,
+    });
+
+    expect(contractBtn).toBeInTheDocument();
+    expect(convertBtn).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(contractBtn);
+    expect(onPlannerContractClick).toHaveBeenCalledTimes(1);
+
+    await user.click(convertBtn);
+    expect(onConvertToPlanningClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders status badge, contract button and cancel button when status is PLANNING", async () => {
+    const onPlannerContractClick = vi.fn();
+    const onCancelClick = vi.fn();
+
+    const planningWedding = createMockWedding({
+      ...mockWedding,
+      status: "PLANNING",
+    });
+
+    render(
+      <WeddingHeader
+        wedding={planningWedding}
+        displayDate="15 Set 2026"
+        checklistPercentage={20}
+        onEditClick={vi.fn()}
+        onPlannerContractClick={onPlannerContractClick}
+        onCancelClick={onCancelClick}
+      />,
+    );
+
+    expect(screen.getByText("Planejamento")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /contrato da assessoria/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("Cancelar casamento")).toBeInTheDocument();
+  });
 });

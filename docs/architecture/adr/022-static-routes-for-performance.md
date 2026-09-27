@@ -4,7 +4,7 @@
 > **Status:** 🟢 Vigente
 > **Data:** Fevereiro 2026
 > **Decisor:** Rafael
-> **Relacionados:** [ADR-013: Migração para Django Ninja](013-migrate-drf-to-ninja.md) · [Referência de API](../../reference/api/index.md) · [Smart vs Dumb Components](../concepts/smart-dumb-components.md)
+> **Relacionados:** [ADR-013: Migração para Django Ninja](013-migrate-drf-to-ninja.md) · [Contrato OpenAPI](../../reference/api/openapi-schema.md) · [Smart vs Dumb Components](../concepts/smart-dumb-components.md)
 
 ---
 
@@ -165,4 +165,4 @@ export function AppRoutes() {
 1. [ADR-012: Geração Automática da Camada de API do Frontend via Orval](012-orval-contract-driven-frontend.md)
 2. [ADR-013: Migração de DRF para Django Ninja](013-migrate-drf-to-ninja.md)
 3. [ADR-024: Padrão Smart/Dumb Components](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
-4. [Referência de API](../../reference/api/index.md)
+4. [Contrato OpenAPI](../../reference/api/openapi-schema.md)

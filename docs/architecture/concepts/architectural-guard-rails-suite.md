@@ -14,7 +14,7 @@ tests:
 # Suíte de Guard-Rails Arquiteturais e Integridade Estática
 
 > **Categoria:** Conceito Arquitetural
-> **Relacionados:** [Índice de Guard-Rails](../../reference/architecture-standards/guard-rails/index.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Visão Geral do Sistema](system-overview.md)
+> **Relacionados:** [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md) · [Tenant Isolation Guard](../../reference/architecture-standards/guard-rails/tenant-isolation-guard.md) · [Atomic Service Audit Guard](../../reference/architecture-standards/guard-rails/atomic-service-audit-guard.md) · [Security Permissions Guard](../../reference/architecture-standards/guard-rails/security-permissions-guard.md) · [Pipeline de CI/CD](ci-cd-pipeline-flow.md) · [ADR-029: Modern Task Runner (Just)](../adr/029-modern-task-runner-just.md) · [Visão Geral do Sistema](system-overview.md)
 
 ---
 

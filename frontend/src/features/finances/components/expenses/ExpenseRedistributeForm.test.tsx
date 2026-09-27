@@ -20,7 +20,7 @@ describe("ExpenseRedistributeForm", () => {
 
     // Default: successful mutation via MSW
     server.use(
-      http.patch(`*/api/v1/finances/expenses/${EXPENSE_UUID}/`, async ({ request }) => {
+      http.post(`*/api/v1/finances/expenses/${EXPENSE_UUID}/renegotiate/`, async ({ request }) => {
         capturedBody = await request.json();
         return HttpResponse.json({ uuid: EXPENSE_UUID, num_installments: 3 });
       }),
@@ -120,7 +120,7 @@ describe("ExpenseRedistributeForm", () => {
 
   it("shows error toast on failed mutation", async () => {
     server.use(
-      http.patch(`*/api/v1/finances/expenses/${EXPENSE_UUID}/`, async () => {
+      http.post(`*/api/v1/finances/expenses/${EXPENSE_UUID}/renegotiate/`, async () => {
         return HttpResponse.json({ detail: "API Error" }, { status: 400 });
       }),
     );
@@ -148,7 +148,7 @@ describe("ExpenseRedistributeForm", () => {
       resolveMutation = resolve;
     });
     server.use(
-      http.patch("*/api/v1/finances/expenses/:uuid/", () => {
+      http.post("*/api/v1/finances/expenses/:uuid/renegotiate/", () => {
         return mutationPromise.then(() =>
           HttpResponse.json({ uuid: EXPENSE_UUID, num_installments: 3 })
         );

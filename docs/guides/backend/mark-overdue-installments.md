@@ -1,6 +1,6 @@
 # Como Executar a Rotina de Marcação de Parcelas Vencidas
 
-> **Categoria:** [backend](../../reference/architecture-standards/index.md) | [installment-overdue-logic](../../architecture/business-rules/finances/installment-overdue-logic.md) | [financial-integrity-rules](../../architecture/business-rules/finances/financial-integrity-rules.md)
+> **Categoria:** [backend](use-core-services.md) | [installment-overdue-logic](../../architecture/business-rules/finances/installment-overdue-logic.md) | [financial-integrity-rules](../../architecture/business-rules/finances/financial-integrity-rules.md)
 > **Comando CLI:** `python manage.py mark_overdue_installments`
 > **Serviço Responsável:** `InstallmentService.mark_overdue_installments`
 

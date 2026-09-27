@@ -18,5 +18,6 @@ export interface InstallmentOut {
   due_date: string;
   paid_date?: string | null;
   status: string;
+  is_late?: boolean;
   notes?: string | null;
 }

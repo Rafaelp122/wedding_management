@@ -22,6 +22,14 @@ class BudgetService:
 
     Garante que cada casamento tenha exatamente um teto financeiro (OneToOne)
     e isola a lógica de negócio por tenant.
+
+    Regras de Negócio e SSOT:
+    - BR-F04-A..D (Distribuição e Teto Orçamentário):
+      docs/architecture/business-rules/finances/budget-category-distribution.md
+    - BR-F06 (Benchmark da Assessoria):
+      docs/architecture/business-rules/finances/tenant-budget-benchmark.md
+    - Hub do Domínio Financeiro:
+      docs/architecture/domains/finances-domain.md
     """
 
     @staticmethod

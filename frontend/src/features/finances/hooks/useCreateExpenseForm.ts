@@ -6,8 +6,8 @@ import type { z } from "zod";
 import {
   useFinancesExpensesCreate,
   useFinancesCategoriesList,
+  useFinancesExpensesContractsLookup,
 } from "@/api/generated/v1/endpoints/finances/finances";
-import { useLogisticsContractsList } from "@/api/generated/v1/endpoints/logistics/logistics";
 import { FinancesExpensesCreateBody } from "@/api/generated/v1/zod/finances/finances";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 
@@ -39,10 +39,10 @@ export function useCreateExpenseForm({
   });
   const categories = categoriesResponse?.data?.items || [];
 
-  const { data: contractsResponse } = useLogisticsContractsList({
+  const { data: contractsResponse } = useFinancesExpensesContractsLookup({
     wedding_id: weddingUuid,
   });
-  const contracts = contractsResponse?.data?.items || [];
+  const contracts = contractsResponse?.data || [];
 
   const form = useForm<CreateExpenseFormData>({
     resolver: zodResolver(FinancesExpensesCreateBody),

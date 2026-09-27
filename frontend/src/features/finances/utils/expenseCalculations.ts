@@ -7,9 +7,17 @@
 interface ProgressInput {
   total_paid?: string | number | null;
   actual_amount?: string | number | null;
+  payment_progress_percent?: number | null;
 }
 
 export function calculateExpenseProgress(expense: ProgressInput): number {
+  if (
+    expense.payment_progress_percent !== undefined &&
+    expense.payment_progress_percent !== null
+  ) {
+    return Math.min(100, Math.max(0, expense.payment_progress_percent));
+  }
+
   const totalPaid = Number(expense.total_paid ?? 0);
   const actualAmount = Number(expense.actual_amount ?? 0);
 

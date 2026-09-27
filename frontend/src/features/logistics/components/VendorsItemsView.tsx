@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AlertCircle, FileText, Package, Plus } from "lucide-react";
 
 import { useWeddingVendorsItems } from "../hooks/useVendorsItems";
@@ -13,14 +14,14 @@ import type { ContractOut } from "@/api/generated/v1/models/contractOut";
 
 const ContractDetailDialog = lazy(
   () =>
-    import("./contracts/ContractDetailDialog").then((m) => ({
+    import("@/features/contracts/components/ContractDetailDialog").then((m) => ({
       default: m.ContractDetailDialog,
     })),
 );
 
 const ContractUploadDialog = lazy(
   () =>
-    import("./contracts/ContractUploadDialog").then((m) => ({
+    import("@/features/contracts/components/ContractUploadDialog").then((m) => ({
       default: m.ContractUploadDialog,
     })),
 );
@@ -125,7 +126,6 @@ export function WeddingVendorsItemsTabView({
         <CardContent>
           <WeddingVendorsTable
             contracts={contracts}
-            isAddendum={(c) => !!c.parent}
             onDetail={setDetailContractUuid}
           />
         </CardContent>
@@ -222,7 +222,10 @@ interface WeddingVendorsItemsTabProps {
 
 export function WeddingVendorsItemsTab({ weddingUuid }: WeddingVendorsItemsTabProps) {
   const { contracts, items, isLoading, error } = useWeddingVendorsItems(weddingUuid);
-  const orchestrator = useVendorsItemsOrchestrator();
+  const [searchParams] = useSearchParams();
+  const orchestrator = useVendorsItemsOrchestrator({
+    initialContractUuid: searchParams.get("contract_id"),
+  });
 
   return (
     <WeddingVendorsItemsTabView

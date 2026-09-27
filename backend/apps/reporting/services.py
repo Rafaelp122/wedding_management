@@ -17,6 +17,12 @@ class ReportGenerationService:
 
     Delega a agregação de dados aos selectors multi-tenant e a diagramação
     visual aos renderizadores especializados (PDF e Excel).
+
+    Regras de Negócio e SSOT:
+    - Hub do Domínio de Relatórios (BR-R01..04):
+      docs/architecture/domains/reporting-domain.md
+    - Padrão Query Selectors:
+      docs/architecture/concepts/query-selectors-pattern.md
     """
 
     @classmethod

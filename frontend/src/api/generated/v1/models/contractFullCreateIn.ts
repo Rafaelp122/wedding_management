@@ -10,18 +10,24 @@
  */
 export interface ContractFullCreateIn {
   wedding: string;
-  supplier: string;
+  contract_type?: string;
+  service_tier?: string | null;
+  supplier?: string | null;
+  client?: string | null;
   /**
      * @minLength 1
      * @maxLength 255
      */
   name: string;
   total_amount: number | string;
+  /** @minimum 1 */
+  installments_count?: number;
   status?: string;
   description?: string;
   parent?: string | null;
   pdf_file_key?: string | null;
-  items_data?: string;
+  items?: unknown[];
+  items_data?: string | null;
   create_expense?: boolean;
   expense_category?: string | null;
   expense_num_installments?: number | null;

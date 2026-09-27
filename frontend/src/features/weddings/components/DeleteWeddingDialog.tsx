@@ -45,9 +45,8 @@ export function DeleteWeddingDialog({
       itemName={weddingName}
       consequences={[
         "Orçamentos e categorias",
-        "Despesas e parcelas",
-        "Contratos vinculados",
         "Eventos do scheduler",
+        "Casamentos com contratos ou despesas ativas são protegidos contra exclusão (BR-W03); remova esses vínculos antes de prosseguir",
       ]}
       requireTypedConfirmation
       onConfirm={handleConfirm}

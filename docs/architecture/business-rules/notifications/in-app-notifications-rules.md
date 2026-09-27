@@ -16,7 +16,7 @@ tests:
 # Regras de Negócio de Notificações In-App
 
 > **Categoria:** Regra de Negócio (Domínio de Notificações)
-> **Relacionados:** [Lógica de Parcelas Vencidas](../finances/installment-overdue-logic.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Notificações](../../domains/notifications-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Lógica de Parcelas Vencidas](../finances/installment-overdue-logic.md) · [Integração de Pagamentos com Agenda](../finances/payment-schedule-integration.md) · [Domínio de Notificações](../../domains/notifications-domain.md)
 
 ---
 
@@ -91,8 +91,7 @@ O subsistema de notificações encapsula regras de isolamento, idempotência e a
 Implementado em [`Notification`](../../../../backend/apps/notifications/models.py):
 - `NotificationType` e `NotificationTargetType`: Enumerações tipadas para categorização e redirecionamento.
 - Invariantes no `clean()`: Garante isolamento estrito (`user.company_id == company_id`) e integridade temporal entre `is_read` e `read_at`.
-- Métodos de ciclo de vida: `mark_as_read(read_at=...)`, `mark_as_unread()`.
-- Propriedades de conveniência: `is_urgent`, `is_actionable`.
+- Métodos de ciclo de vida: `mark_as_read(read_at=...)`.
 
 ### B. Criação Síncrona e Validação de Tenant (`NotificationService.create_notification`)
 Implementado em [`NotificationService.create_notification`](../../../../backend/apps/notifications/services.py):

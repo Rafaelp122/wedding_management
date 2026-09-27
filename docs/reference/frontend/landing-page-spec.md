@@ -1,7 +1,7 @@
 # Especificação Técnica: Landing Page Comercial (Astro & Tailwind CSS v4)
 
 > **Categoria:** Referência Técnica (Frontend & Apresentação)
-> **Relacionados:** [MOC do Frontend](index.md) · [Componentes UI](ui-components-spec.md) · [Visão Geral do Sistema](../../architecture/concepts/system-overview.md) · [Racional do Design System](../../architecture/concepts/design-system-rationale.md)
+> **Relacionados:** [Componentes UI](ui-components-spec.md) · [Gerenciamento de Estado](store-state-spec.md) · [Visão Geral do Sistema](../../architecture/concepts/system-overview.md) · [Racional do Design System](../../architecture/concepts/design-system-rationale.md)
 
 ---
 

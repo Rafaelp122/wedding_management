@@ -25,4 +25,5 @@ export interface EventIn {
   recurrence_rule?: string | null;
   reminder_enabled?: boolean;
   reminder_minutes_before?: number;
+  force_overlap?: boolean;
 }

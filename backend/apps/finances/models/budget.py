@@ -10,8 +10,10 @@ Referência: RF03
 from decimal import Decimal
 from typing import cast
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import Sum
 
 from apps.core.mixins import WeddingOwnedMixin
 from apps.finances.managers import BudgetManager
@@ -42,8 +44,15 @@ class Budget(TenantModel, WeddingOwnedMixin):
         related_name="budget",
         verbose_name="Casamento",
     )
+    baseline_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Linha de Base Original",
+    )
     total_estimated = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Orçamento Total Estimado",
@@ -61,6 +70,50 @@ class Budget(TenantModel, WeddingOwnedMixin):
 
     def __str__(self) -> str:
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
+
+    def freeze_baseline(self) -> None:
+        """
+        Congela a linha de base original do orçamento caso ainda não tenha sido congelada.
+        Preserva o valor da primeira formalização de planejamento.
+        """
+        if self.baseline_amount is None:
+            self.baseline_amount = self.total_estimated
+
+    def clean(self) -> None:
+        """Valida se o teto estimado do orçamento não é inferior ao total já alocado."""
+        super().clean()
+        if self.pk and self.total_estimated is not None:
+            if self.total_estimated < self.total_allocated:
+                raise ValidationError(
+                    f"O orçamento total estimado (R${self.total_estimated}) não pode "
+                    f"ser inferior ao total já alocado (R${self.total_allocated})."
+                )
+
+    @property
+    def total_allocated(self) -> Decimal:
+        """Retorna o total estimado já alocado nas categorias do orçamento."""
+        val = getattr(self, "_total_allocated", None)
+        if val is not None:
+            return cast(Decimal, val)
+        if (
+            hasattr(self, "_prefetched_objects_cache")
+            and "categories" in self._prefetched_objects_cache
+        ):
+            return sum(
+                (
+                    c.allocated_budget
+                    for c in self._prefetched_objects_cache["categories"]
+                ),
+                Decimal("0.00"),
+            )
+        return self.categories.aggregate(total=Sum("allocated_budget"))[
+            "total"
+        ] or Decimal("0.00")
+
+    @property
+    def unallocated_budget(self) -> Decimal:
+        """Retorna a parcela do orçamento mestre ainda não alocada a categorias."""
+        return max(Decimal("0.00"), self.total_estimated - self.total_allocated)
 
     @property
     def total_overall_spent(self) -> Decimal:
@@ -89,15 +142,3 @@ class Budget(TenantModel, WeddingOwnedMixin):
                 filter=Q(expenses__installments__status=Installment.StatusChoices.PAID),
             )
         )["total"] or Decimal("0.00")
-
-    # ── Propriedades de Conveniência ─────────────────────────────────────
-
-    @property
-    def remaining_overall_budget(self) -> Decimal:
-        """Valor restante do orçamento geral estimado."""
-        return self.total_estimated - self.total_overall_spent
-
-    @property
-    def is_over_budget(self) -> bool:
-        """Indica se os gastos totais ultrapassaram o teto estimado do orçamento."""
-        return self.total_overall_spent > self.total_estimated

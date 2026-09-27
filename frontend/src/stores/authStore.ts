@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { AXIOS_INSTANCE } from "@/api/axios-instance";
 // IMPORTANTE: Use o tipo real gerado pelo Orval
 import type { UserDataOut } from "@/api/generated/v1/models/userDataOut";
 
@@ -18,7 +19,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       accessToken: null,
       refreshToken: null,
       user: null,
@@ -32,13 +33,21 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         }),
 
-      logout: () =>
+      logout: () => {
+        const refresh = get().refreshToken;
+        if (refresh) {
+          // Invalida o refresh token no servidor (RFC 7009)
+          AXIOS_INSTANCE.post("/api/v1/auth/logout/", { refresh }).catch(() => {
+            // Ignora erros de rede no logout para garantir limpeza de sessão local
+          });
+        }
         set({
           accessToken: null,
           refreshToken: null,
           user: null,
           isAuthenticated: false,
-        }),
+        });
+      },
 
       updateTokens: (access, refresh) =>
         set((state) => ({

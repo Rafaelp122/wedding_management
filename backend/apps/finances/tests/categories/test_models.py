@@ -258,7 +258,7 @@ class TestBudgetCategoryTotalSpent:
 class TestBudgetCategoryConvenienceProperties:
     """Testes de propriedades de conveniência em BudgetCategory."""
 
-    def test_remaining_budget_and_is_over_budget(self, user: Any) -> None:
+    def test_budget_utilization_percent(self, user: Any) -> None:
         wedding = WeddingFactory(user_context=user)
         budget = BudgetFactory(wedding=wedding)
         category = BudgetCategoryFactory(
@@ -266,11 +266,9 @@ class TestBudgetCategoryConvenienceProperties:
             wedding=wedding,
             allocated_budget=Decimal("5000.00"),
         )
-        assert category.remaining_budget == Decimal("5000.00")
-        assert category.is_over_budget is False
         assert category.budget_utilization_percent == 0
 
-        # Adiciona despesa paga de 2000
+        # Adiciona despesa paga de 2000 (40%)
         expense = ExpenseFactory(
             wedding=wedding,
             category=category,
@@ -284,11 +282,9 @@ class TestBudgetCategoryConvenienceProperties:
             paid_date="2026-01-15",
         )
 
-        assert category.remaining_budget == Decimal("3000.00")
-        assert category.is_over_budget is False
         assert category.budget_utilization_percent == 40
 
-        # Adiciona mais 4000 pago (total 6000 pago em verba de 5000)
+        # Adiciona mais 4000 pago (total 6000 pago em verba de 5000 = 120%)
         expense2 = ExpenseFactory(
             wedding=wedding,
             category=category,
@@ -302,8 +298,6 @@ class TestBudgetCategoryConvenienceProperties:
             paid_date="2026-02-15",
         )
 
-        assert category.remaining_budget == Decimal("-1000.00")
-        assert category.is_over_budget is True
         assert category.budget_utilization_percent == 120
 
     def test_budget_utilization_percent_zero_allocated(self, user: Any) -> None:
@@ -315,3 +309,40 @@ class TestBudgetCategoryConvenienceProperties:
             allocated_budget=Decimal("0.00"),
         )
         assert category.budget_utilization_percent == 0
+
+    def test_expenses_count_annotated_fast_path(self, user: Any) -> None:
+        """Quando _expenses_count está presente, utiliza o valor anotado sem query."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("1000.00"),
+        )
+        category._expenses_count = 7  # type: ignore[attr-defined]
+        assert category.expenses_count == 7
+
+    def test_expenses_count_query_fallback(self, user: Any) -> None:
+        """Quando _expenses_count não está presente, executa count() nas despesas."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding)
+        category = BudgetCategoryFactory(
+            budget=budget,
+            wedding=wedding,
+            allocated_budget=Decimal("1000.00"),
+        )
+        assert category.expenses_count == 0
+
+        ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("100.00"),
+            contract=None,
+        )
+        ExpenseFactory(
+            wedding=wedding,
+            category=category,
+            actual_amount=Decimal("200.00"),
+            contract=None,
+        )
+        assert category.expenses_count == 2

@@ -10,11 +10,8 @@
  */
 export interface SupplierIn {
   name: string;
-  /**
-     * @minLength 14
-     * @maxLength 18
-     */
-  cnpj: string;
+  /** @maxLength 18 */
+  cnpj?: string;
   phone: string;
   email: string;
   is_active?: boolean;

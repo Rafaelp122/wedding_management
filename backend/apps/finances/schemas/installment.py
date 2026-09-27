@@ -53,7 +53,17 @@ class InstallmentOut(Schema):
     due_date: date
     paid_date: date | None = None
     status: str
+    is_late: bool = False
     notes: str | None = None
+
+    @staticmethod
+    def resolve_is_late(obj: Any) -> bool:
+        """Indica se a parcela está pendente e atrasada."""
+        if hasattr(obj, "is_late"):
+            return bool(obj.is_late)
+        due_date = getattr(obj, "due_date", None)
+        status = getattr(obj, "status", None)
+        return bool(status == "PENDING" and due_date and due_date < date.today())
 
     @staticmethod
     def resolve_wedding(obj: Any) -> UUID4:

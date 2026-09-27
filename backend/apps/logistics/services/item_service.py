@@ -13,12 +13,13 @@ from apps.core.exceptions import (
 )
 from apps.core.shortcuts import resolve_tenant_resource
 from apps.core.tenant import validate_tenant_ownership
-from apps.logistics.models import Contract, Item
+from apps.logistics.models import Item
 from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.tenants.models import Company
 
 
 if TYPE_CHECKING:
+    from apps.contracts.models import Contract
     from apps.weddings.models import Wedding
 
 logger = logging.getLogger(__name__)
@@ -89,12 +90,19 @@ class ItemService:
         if not contract_input:
             return None
 
-        return resolve_tenant_resource(
-            Contract,
-            company,
-            contract_input,
-            detail="Contrato inválido ou acesso negado.",
-            code="contract_not_found_or_denied",
+        from django.apps import apps
+
+        contract_model = apps.get_model("contracts", "Contract")
+
+        return cast(
+            "Contract | None",
+            resolve_tenant_resource(
+                contract_model,
+                company,
+                contract_input,
+                detail="Contrato inválido ou acesso negado.",
+                code="contract_not_found_or_denied",
+            ),
         )
 
     @staticmethod
@@ -135,14 +143,8 @@ class ItemService:
             wedding = contract.wedding
             if wedding_input:
                 resolved_wedding = ItemService._resolve_wedding(company, wedding_input)
-                if resolved_wedding and wedding != resolved_wedding:
-                    raise DomainIntegrityError(
-                        detail=(
-                            "O wedding informado não corresponde ao wedding "
-                            "do contrato."
-                        ),
-                        code="item_contract_wedding_mismatch",
-                    )
+                if resolved_wedding:
+                    wedding = resolved_wedding
         else:
             wedding = ItemService._resolve_wedding(company, wedding_input)
 
@@ -154,7 +156,17 @@ class ItemService:
             )
 
         item = Item(company=company, wedding=wedding, contract=contract, **data)
-        item.save()
+        try:
+            item.save()
+        except ValidationError as exc:
+            if "contract" in getattr(exc, "message_dict", {}):
+                raise DomainIntegrityError(
+                    detail=(
+                        "O wedding informado não corresponde ao wedding do contrato."
+                    ),
+                    code="item_contract_wedding_mismatch",
+                ) from exc
+            raise
 
         logger.info(f"Item criado com sucesso: uuid={item.uuid}")
         return item
@@ -198,12 +210,10 @@ class ItemService:
         if "contract" in data:
             contract_input = data.pop("contract")
             contract = ItemService._resolve_contract(company, contract_input)
-            if contract and contract.wedding != instance.wedding:
-                raise DomainIntegrityError(
-                    detail="O contrato informado não pertence ao casamento deste item.",
-                    code="item_contract_wedding_mismatch",
-                )
-            instance.contract = contract
+            if contract:
+                instance.assign_contract(contract)
+            else:
+                instance.detach_contract()
             updated_fields.add("contract")
 
         status_input = data.pop("acquisition_status", None)
@@ -423,4 +433,97 @@ class ItemService:
                 detail="; ".join(e.messages) if hasattr(e, "messages") else str(e),
                 code="item_invalid_status_transition",
             ) from e
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def discard(company: Company, instance: Item, reason: str) -> Item:
+        """Descarta o item do escopo registrando compulsoriamente a justificativa (RF-15).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser descartada.
+            reason: Motivo do descarte / rejeição.
+
+        Returns:
+            A instância do Item atualizada.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.discard(reason)
+        instance.save(update_fields=["scope_status", "rejection_reason", "updated_at"])
+        logger.info(f"Item uuid={instance.uuid} descartado com motivo: {reason}")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def include(company: Company, instance: Item) -> Item:
+        """Reintegra o item ao escopo aprovado do evento.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser reintegrada.
+
+        Returns:
+            A instância do Item atualizada.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.include()
+        instance.save(update_fields=["scope_status", "rejection_reason", "updated_at"])
+        logger.info(f"Item uuid={instance.uuid} reintegrado ao escopo com sucesso.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def deliver(company: Company, instance: Item) -> Item:
+        """Registra a conferência física e entrega do material no local (RF-15).
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser marcada como entregue.
+
+        Returns:
+            A instância do Item atualizada.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.mark_as_delivered()
+        instance.save(update_fields=["delivery_status", "updated_at"])
+        logger.info(f"Item uuid={instance.uuid} marcado como entregue na portaria.")
+        return instance
+
+    @staticmethod
+    @transaction.atomic
+    def mark_returned(company: Company, instance: Item) -> Item:
+        """Registra a devolução física do material após o evento.
+
+        Args:
+            company: O tenant atual para isolamento de dados.
+            instance: A instância do Item a ser marcada como devolvida.
+
+        Returns:
+            A instância do Item atualizada.
+        """
+        validate_tenant_ownership(
+            company,
+            instance,
+            detail="Item de logística não encontrado ou acesso negado.",
+            code="item_not_found_or_denied",
+        )
+        instance.mark_as_returned()
+        instance.save(update_fields=["delivery_status", "updated_at"])
+        logger.info(f"Item uuid={instance.uuid} marcado como devolvido pós-evento.")
         return instance

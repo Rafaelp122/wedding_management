@@ -10,10 +10,8 @@ Este módulo expõe os modelos principais:
 - Item: Itens de logística e serviços (RF07-RF08)
 """
 
-from .contract import Contract
-from .item import Item
-from .supplier import Supplier
+from .item import Item, SupplyItem
 
 
 # Isso garante que o Django "veja" todos os modelos
-__all__ = ["Contract", "Item", "Supplier"]
+__all__ = ["Item", "SupplyItem"]

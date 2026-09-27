@@ -1,7 +1,7 @@
 # Especificação Técnica: Pipelines de Infraestrutura Terraform (IaC & OIDC)
 
 > **Categoria:** Referência Técnica (CI/CD & DevOps)
-> **Relacionados:** [MOC de CI/CD](index.md) · [ADR-025: Arquitetura Terraform](../../architecture/adr/025-terraform-iac-architecture.md) · [ADR-027: Topologia de States](../../architecture/adr/027-terraform-state-topology.md) · [MOC de Terraform](../terraform/index.md)
+> **Relacionados:** [Validação de PR (CI)](ci-pr-validation-spec.md) · [Módulo Terraform Cloud Run](../terraform/cloud-run-service-module.md) · [ADR-025: Arquitetura Terraform](../../architecture/adr/025-terraform-iac-architecture.md) · [ADR-027: Topologia de States](../../architecture/adr/027-terraform-state-topology.md)
 > **Workflows:** `.github/workflows/terraform-ci.yml` e `.github/workflows/staging-pipeline.yml`
 
 ---

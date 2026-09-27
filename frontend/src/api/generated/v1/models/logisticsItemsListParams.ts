@@ -10,6 +10,8 @@ wedding_id?: string | null;
 status?: string | null;
 search?: string | null;
 contract_id?: string | null;
+scope_status?: string | null;
+delivery_status?: string | null;
 /**
  * @minimum 1
  */

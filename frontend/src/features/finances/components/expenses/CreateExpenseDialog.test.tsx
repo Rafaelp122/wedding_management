@@ -4,8 +4,8 @@ import { CreateExpenseDialog } from "@/features/finances/components/expenses/Cre
 import {
   getFinancesCategoriesListMockHandler,
   getFinancesExpensesCreateMockHandler,
+  getFinancesExpensesContractsLookupMockHandler,
 } from "@/api/generated/v1/endpoints/finances/finances.msw";
-import { getLogisticsContractsListMockHandler } from "@/api/generated/v1/endpoints/logistics/logistics.msw";
 
 describe("CreateExpenseDialog", () => {
   const weddingUuid = "w-1";
@@ -19,10 +19,9 @@ describe("CreateExpenseDialog", () => {
         items: [{ uuid: "cat-1", name: "Alimentação" } as any],
         count: 1,
       }),
-      getLogisticsContractsListMockHandler({
-        items: [{ uuid: "con-1", name: "Contrato Buffet" } as any],
-        count: 1,
-      }),
+      getFinancesExpensesContractsLookupMockHandler([
+        { uuid: "con-1", name: "Contrato Buffet", status: "ACTIVE", total_amount: "5000.00" },
+      ]),
       getFinancesExpensesCreateMockHandler({ uuid: "exp-1" } as any),
     );
   });

@@ -1,6 +1,6 @@
 # Troubleshooting: Resolução de Falhas de Upload no Cloudflare R2
 
-> **Categoria:** [ops-troubleshooting](../../reference/architecture-standards/index.md) | [contract-pdf-upload-r2-flow](../../architecture/concepts/contract-pdf-upload-r2-flow.md) | [004-presigned-urls](../../architecture/adr/004-presigned-urls.md)
+> **Categoria:** Operações & Troubleshooting | [contract-pdf-upload-r2-flow](../../architecture/concepts/contract-pdf-upload-r2-flow.md) | [004-presigned-urls](../../architecture/adr/004-presigned-urls.md)
 > **Sintomas:** HTTP `403 Forbidden` (`SignatureDoesNotMatch`), `CORS Error` no browser, `RequestTimeTooSkewed`, upload zerado
 
 ---
@@ -16,7 +16,7 @@ sequenceDiagram
     participant API as Django Ninja Backend
     participant R2 as Cloudflare R2 Storage
 
-    Browser->>API: 1. POST /api/v1/logistics/contracts/presigned-url/<br/>(filename, content_type)
+    Browser->>API: 1. POST /api/v1/contracts/upload-url/<br/>(filename, wedding_id)
     API->>API: 2. Gera URL assinada via boto3 (TTL: 15 min)
     API-->>Browser: 3. Retorna { presigned_url, file_key }
 
@@ -26,7 +26,7 @@ sequenceDiagram
         R2-->>Browser: 5. HTTP 200 OK (com ETag)
     end
 
-    Browser->>API: 6. POST /api/v1/logistics/contracts/confirm/<br/>(file_key, wedding_id, name)
+    Browser->>API: 6. POST /api/v1/contracts/full/<br/>(file_key, wedding_id, name)
     API->>API: 7. Registra contrato no banco de dados
     API-->>Browser: 8. HTTP 201 Created
 ```
@@ -112,10 +112,10 @@ Para descartar problemas do frontend e testar a infraestrutura isoladamente:
 
 1. **Gere uma Presigned URL chamando a API do backend:**
    ```bash
-   curl -X POST http://localhost:8000/api/v1/logistics/contracts/presigned-url/ \
-     -H "Authorization: Bearer <TOKEN_JWT>" \
-     -H "Content-Type: application/json" \
-     -d '{"filename": "teste.pdf", "content_type": "application/pdf"}'
+    curl -X POST http://localhost:8000/api/v1/contracts/upload-url/ \
+      -H "Authorization: Bearer <TOKEN_JWT>" \
+      -H "Content-Type: application/json" \
+      -d '{"filename": "teste.pdf", "wedding_id": "<UUID_DO_CASAMENTO>"}'
    ```
 
 2. **Execute o upload binário direto com o `curl`:**

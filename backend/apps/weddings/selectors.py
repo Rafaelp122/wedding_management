@@ -38,7 +38,12 @@ def wedding_list_selector(
         WeddingQuerySet com casamentos filtrados.
     """
     qs = Wedding.objects.for_tenant(company)
-    return qs.select_related("company").search(search).by_status(status)
+    return (
+        qs.select_related("company")
+        .prefetch_related("contracts", "participants__client")
+        .search(search)
+        .by_status(status)
+    )
 
 
 def wedding_get_selector(
@@ -64,6 +69,7 @@ def wedding_get_selector(
         company,
         uuid,
         select_related=["company"],
+        prefetch_related=["contracts", "participants__client"],
         code="wedding_not_found_or_denied",
     )
 

@@ -32,6 +32,8 @@ describe("WeddingBudgetBreakdown", () => {
   it("renders a single category with correct values", () => {
     render(
       <WeddingBudgetBreakdown
+        totalAllocated="10000.00"
+        totalSpent="5000.00"
         categories={[
           createMockWeddingDashboardCategory({
             name: "Buffet",
@@ -133,6 +135,8 @@ describe("WeddingBudgetBreakdown", () => {
   it("calculates and displays totals correctly", () => {
     render(
       <WeddingBudgetBreakdown
+        totalAllocated="15000.00"
+        totalSpent="9000.00"
         categories={[
           createMockWeddingDashboardCategory({
             name: "Buffet",
@@ -158,6 +162,8 @@ describe("WeddingBudgetBreakdown", () => {
   it("shows danger total percentage when >= 90%", () => {
     render(
       <WeddingBudgetBreakdown
+        totalAllocated="10000.00"
+        totalSpent="9500.00"
         categories={[
           createMockWeddingDashboardCategory({
             name: "Buffet",
@@ -175,6 +181,8 @@ describe("WeddingBudgetBreakdown", () => {
   it("shows warning total percentage when between 70% and 90%", () => {
     render(
       <WeddingBudgetBreakdown
+        totalAllocated="10000.00"
+        totalSpent="7500.00"
         categories={[
           createMockWeddingDashboardCategory({
             name: "Buffet",
@@ -192,6 +200,8 @@ describe("WeddingBudgetBreakdown", () => {
   it("shows success total percentage when below 70%", () => {
     render(
       <WeddingBudgetBreakdown
+        totalAllocated="10000.00"
+        totalSpent="3000.00"
         categories={[
           createMockWeddingDashboardCategory({
             name: "Buffet",

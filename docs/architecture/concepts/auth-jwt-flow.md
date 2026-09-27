@@ -25,8 +25,8 @@ tests:
 
 A camada de segurança adota uma arquitetura de **Tokens JWT Assinados** complementada por renovação transparente (*Silent Refresh*) no cliente e **Type Hinting Estrito** no backend Django Ninja.
 
-- **Access Token (Vida Curta - 15 a 60 min):** Carrega os dados de autorização e o escopo multitenant (`user_id`, `company_id`, `email`, `role`).
-- **Refresh Token (Vida Longa - 7 a 30 dias):** Utilizado exclusivamente para obter um novo par de tokens no endpoint `/api/v1/auth/refresh/`.
+- **Access Token (Vida Curta - 15 min):** Carrega os dados de autorização e o escopo multitenant (`user_id`, `company_id`, `email`, `role`). Por boas práticas de segurança defensiva, o tempo de vida é padronizado em 15 minutos (`ACCESS_TOKEN_LIFETIME = 15m`).
+- **Refresh Token (Vida Longa - 7 dias):** Utilizado para obter um novo par de tokens no endpoint `/api/v1/auth/refresh/` e invalidado no servidor via blacklist no logout (`POST /api/v1/auth/logout/`) em conformidade com o RFC 7009.
 - **`AuthRequest` Type Boundary:** Subclasse de `HttpRequest` que informa ao Mypy que `request.user` é garantidamente uma instância concreta de `User`, eliminando verificações redundantes de `AnonymousUser` nas rotas autenticadas.
 
 ---
@@ -122,3 +122,20 @@ async function performRefresh(
 Para manter a conformidade com as normas de privacidade (LGPD/GDPR) e evitar vazamento de credenciais nos logs do Cloud Run:
 - **Mascaramento de E-mails (`_mask_email`):** Todos os eventos de log de auditoria ofuscam o e-mail do usuário (ex: `r*****l@domain.com`).
 - **Fingerprinting de Tokens:** Tokens JWT nunca são impressos em texto puro nos logs; em vez disso, registra-se apenas os primeiros 12 caracteres do seu hash SHA-256 (`hashlib.sha256(token).hexdigest()[:12]`).
+
+---
+
+## 6. Endurecimento de Autenticação (Defesas em Camadas)
+
+Para reforçar a segurança e mitigar ataques comuns de força bruta e enumeração, a pilha de identidade incorpora os seguintes controles:
+
+1. **Bloqueio Temporário de Conta (*Account Lockout*):**
+   - Limite estrito de 5 tentativas consecutivas incorretas por e-mail (`LockoutService`).
+   - Bloqueio por 15 minutos (900 segundos) retornando HTTP 429 (`AccountLockedError`, `code="account_locked"`).
+   - Sucesso no login limpa os contadores de falha.
+2. **Defesa Contra Ataques de Temporização (*Timing Attacks*):**
+   - Quando um e-mail não existe no banco durante o login, o sistema executa um hash simulado de tempo constante (`check_password(password, DUMMY_PASSWORD_HASH)`), prevenindo enumeração de usuários por análise de latência.
+3. **Mitigação de DoS por Senhas Excessivamente Longas:**
+   - O tamanho de todas as senhas de entrada é limitado estritamente a 128 caracteres em schemas Pydantic e validações de formulário React, prevenindo exaustão de CPU.
+4. **Revogação de Tokens no Logout (RFC 7009):**
+   - Ao deslogar no cliente, o refresh token é submetido ao endpoint `/api/v1/auth/logout/` e inserido na lista negra (*blacklist*), invalidando imediatamente a sessão no servidor.

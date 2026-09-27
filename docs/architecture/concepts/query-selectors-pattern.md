@@ -4,11 +4,11 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/finances/selectors/expense_selectors.py
-  - backend/apps/logistics/selectors/contract_selectors.py
-  - backend/apps/logistics/managers.py
+  - backend/apps/contracts/selectors/contract_selectors.py
+  - backend/apps/contracts/managers.py
 tests:
   - backend/apps/finances/tests/test_selectors.py
-  - backend/apps/logistics/tests/test_selectors.py
+  - backend/apps/contracts/tests/test_selectors.py
 ---
 
 # Padrão Query Selectors & Custom QuerySets
@@ -41,7 +41,7 @@ sequenceDiagram
     participant DB as PostgreSQL (Neon DB)
 
     User->>UI: Abre painel de Contratos
-    UI->>API: HTTP GET /api/v1/logistics/contracts/?page=1&status=SIGNED
+    UI->>API: HTTP GET /api/v1/contracts/?page=1&status=SIGNED
     Note over API: Injeta company de AuthRequest e chama selector
     API->>Selector: contract_list_selector(company, status="SIGNED")
     Selector->>Manager: Contract.objects.for_tenant(company).with_totals().by_status("SIGNED")
@@ -82,25 +82,45 @@ def expense_list_selector(
     return qs  # Retorno lazy, avaliado apenas no momento da serialização HTTP
 ```
 
-### B. Prevenção Ativa de Consultas N+1
+### B. Prevenção Ativa de Consultas N+1 e Isolamento de Domínio (ADR-031)
 Para manter o tempo de resposta abaixo de 50ms mesmo sob alta densidade de dados:
-- **`select_related`:** Usado para relacionamentos `1:1` e `N:1` (Foreign Keys), gerando um `SQL JOIN` imediato (ex: carregar `supplier` e `wedding` junto do contrato).
-- **`prefetch_related`:** Usado para relacionamentos `1:N` e `N:N` (ex: carregar parcelas de uma lista de despesas).
-- **`Subquery` + `Coalesce`:** Encapsulado em métodos do `QuerySet` (como [`.with_totals()`](../../../backend/apps/logistics/managers.py)) para calcular somas ou contagens agregadas em um único comando SQL, sem explosão de linhas por joins cartesianos.
+- **`select_related`:** Usado para relacionamentos `1:1` e `N:1` (Foreign Keys), gerando um `SQL JOIN` imediato (ex: carregar `supplier`, `wedding` e `parent` junto do contrato).
+- **`prefetch_related`:** Usado para relacionamentos `1:N` e `N:N` (ex: carregar itens e aditivos).
+- **`Subquery` + `Coalesce` Intra-Domínio:** Encapsulado em métodos do `QuerySet` (como [`.with_totals()`](../../../backend/apps/logistics/managers.py)) para calcular contagens e somas agregadas em um único comando SQL, sem explosão de linhas por joins cartesianos.
+
+> **Regra de Ouro (ADR-031):** Managers e Custom QuerySets cuidam **estritamente de tabelas do próprio Bounded Context**. No exemplo abaixo, `ContractQuerySet` manipula apenas a tabela de contratos (`self.model.objects`), anotando a contagem e soma de aditivos sem tocar tabelas financeiras. Subqueries e agregações multi-domínio (cruzando contratos com despesas e parcelas) pertencem **exclusivamente a `apps/reporting/selectors/summaries/`**.
 
 ```python
 # apps/logistics/managers.py
 class ContractQuerySet(TenantQuerySet["Contract"]):
     def with_totals(self) -> ContractQuerySet:
-        return self.select_related("supplier", "wedding", "parent").annotate(
+        return self.select_related("supplier", "wedding", "parent", "expense").annotate(
             supplier_name=F("supplier__name"),
-            total_paid=Coalesce(
+            supplier_phone=F("supplier__phone"),
+            supplier_email=F("supplier__email"),
+            addendums_count=Coalesce(
                 Subquery(
-                    Installment.objects.filter(
+                    self.model.objects.filter(
                         company=OuterRef("company"),
-                        expense__contract=OuterRef("pk"),
-                        status=Installment.StatusChoices.PAID,
-                    ).values("expense__contract").annotate(s=Sum("amount")).values("s")[:1]
+                        parent=OuterRef("pk"),
+                    )
+                    .exclude(status=self.model.StatusChoices.CANCELED)
+                    .values("parent")
+                    .annotate(cnt=Count("id"))
+                    .values("cnt")[:1]
+                ),
+                0,
+            ),
+            addendums_total_amount=Coalesce(
+                Subquery(
+                    self.model.objects.filter(
+                        company=OuterRef("company"),
+                        parent=OuterRef("pk"),
+                    )
+                    .exclude(status=self.model.StatusChoices.CANCELED)
+                    .values("parent")
+                    .annotate(s=Sum("total_amount"))
+                    .values("s")[:1]
                 ),
                 Value(Decimal("0.00")),
             ),
@@ -110,7 +130,7 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
 ### C. Busca Individual Segura (`*_get_selector`)
 Os seletores de registro individual encapsulam a resolução segura por UUID dentro do escopo do tenant e retornam `ObjectNotFoundError` (HTTP 404) quando o recurso não existe ou pertence a outro tenant:
 
-Exemplo canônico em [`contract_get_selector()`](../../../backend/apps/logistics/selectors/contract_selectors.py):
+Exemplo canônico em [`contract_get_selector()`](../../../backend/apps/contracts/selectors/contract_selectors.py):
 ```python
 def contract_get_selector(company: Company, uuid: UUID | str) -> Contract:
     try:

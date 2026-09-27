@@ -298,7 +298,6 @@ class TestBudgetCategoryServiceUpdate:
         assert updated.name == "Decoração Floral"
         spy_save.assert_called_once()
         _, kwargs = spy_save.call_args
-        assert kwargs.get("skip_clean") is True
         assert "update_fields" in kwargs
         assert set(kwargs["update_fields"]) == {"name", "updated_at"}
 

@@ -1,9 +1,14 @@
 """Schemas Pydantic/Ninja para a entidade de Evento/Compromisso (Event)."""
 
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
 from ninja import Field, Schema
 from pydantic import UUID4, ConfigDict, model_validator
+
+
+if TYPE_CHECKING:
+    from apps.scheduler.models import Event
 
 
 class EventIn(Schema):
@@ -21,11 +26,12 @@ class EventIn(Schema):
     recurrence_rule: str | None = "none"
     reminder_enabled: bool = False
     reminder_minutes_before: int = 60
+    force_overlap: bool = False
 
     @model_validator(mode="after")
     def validate_event(self) -> "EventIn":
         """Valida horários e minutos de antecedência do lembrete."""
-        if self.start_time and self.end_time and self.end_time < self.start_time:
+        if self.start_time and self.end_time and self.end_time <= self.start_time:
             raise ValueError(
                 "A hora de término não pode ser anterior à hora de início."
             )
@@ -54,11 +60,12 @@ class EventPatchIn(Schema):
     recurrence_rule: str | None = None
     reminder_enabled: bool | None = None
     reminder_minutes_before: int | None = None
+    force_overlap: bool = False
 
     @model_validator(mode="after")
     def validate_event(self) -> "EventPatchIn":
         """Valida horários e minutos de antecedência do lembrete."""
-        if self.start_time and self.end_time and self.end_time < self.start_time:
+        if self.start_time and self.end_time and self.end_time <= self.start_time:
             raise ValueError(
                 "A hora de término não pode ser anterior à hora de início."
             )
@@ -71,12 +78,16 @@ class EventPatchIn(Schema):
         return self
 
 
+EventUpdateIn = EventPatchIn
+
+
 class EventOut(Schema):
     """Schema de saída para exibição de evento/compromisso."""
 
     uuid: UUID4
     company_id: UUID4 = Field(alias="company.uuid")
     wedding: UUID4 = Field(alias="wedding.uuid")
+    wedding_name: str | None = None
     title: str
     location: str | None = None
     description: str | None = None
@@ -86,3 +97,25 @@ class EventOut(Schema):
     recurrence_rule: str
     reminder_enabled: bool
     reminder_minutes_before: int
+
+    @staticmethod
+    def resolve_wedding_name(obj: "Event | Any") -> str | None:
+        val = getattr(obj, "wedding_name", None)
+        if val is not None:
+            return str(val)
+        wedding = getattr(obj, "wedding", None)
+        if (
+            wedding
+            and hasattr(wedding, "bride_name")
+            and hasattr(wedding, "groom_name")
+        ):
+            return f"{wedding.bride_name} e {wedding.groom_name}"
+        return None
+
+
+class SchedulerSummaryOut(Schema):
+    """Schema de saída para resumo estatístico do cronograma."""
+
+    total: int
+    upcoming_7_days: int
+    with_reminder: int

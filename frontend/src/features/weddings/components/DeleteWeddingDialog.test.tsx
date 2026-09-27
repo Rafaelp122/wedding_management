@@ -40,6 +40,9 @@ describe("DeleteWeddingDialog", () => {
     expect(
       screen.getByText(/Orçamentos e categorias/),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/contratos ou despesas ativas são protegidos/i),
+    ).toBeInTheDocument();
   });
 
   it("delete button is disabled until name is typed", () => {

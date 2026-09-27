@@ -19,10 +19,10 @@ Plataforma SaaS Multi-Tenant de Alta Confiabilidade para Gestão de Casamentos, 
   <!-- sync-versions:tags:end -->
 </p>
 
-[:material-rocket-launch: Funcionalidades](features/index.md){ .md-button .md-button--primary }
+[:material-domain: Domínios & Negócio](architecture/domains/index.md){ .md-button .md-button--primary }
 [:material-sitemap: Arquitetura](architecture/index.md){ .md-button }
-[:material-book-open-page-variant: Guias & Onboarding](guides/index.md){ .md-button }
-[:material-code-json: Referência Técnica](reference/index.md){ .md-button }
+[:material-book-open-page-variant: Guias & Onboarding](onboarding/onboarding-quickstart.md){ .md-button }
+[:material-code-json: Referência Técnica](reference/api/openapi-schema.md){ .md-button }
 [:material-lightning-bolt: Quickstart](#quickstart){ .md-button }
 
 ---
@@ -143,7 +143,7 @@ A arquitetura estabelece contratos tipados onde o frontend consome diretamente o
             return Budget.objects.create(
                 company=company,
                 wedding=wedding,
-                total_budget=payload.total_budget,
+                total_estimated=payload.total_estimated,
             )
     ```
 
@@ -166,7 +166,7 @@ A arquitetura estabelece contratos tipados onde o frontend consome diretamente o
         resolver: zodResolver(FinancesBudgetsCreateBody),
         defaultValues: {
           wedding: weddingUuid,
-          total_budget: 0,
+          total_estimated: 0,
         },
       });
 

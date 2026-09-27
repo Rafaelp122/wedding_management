@@ -11,6 +11,7 @@ expense_id?: string | null;
 status?: string | null;
 due_date_gte?: string | null;
 due_date_lte?: string | null;
+exclude_paid?: boolean;
 /**
  * @minimum 1
  */

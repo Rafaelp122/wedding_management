@@ -1,0 +1,149 @@
+import { MessageCircle, Mail, Phone } from "lucide-react";
+import { memo } from "react";
+
+import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
+import { formatDateBR } from "@/lib/formatters";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
+export interface SupplierDetailDialogViewProps {
+  supplier?: SupplierOut;
+  isLoading: boolean;
+  error: unknown;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const SupplierDetailDialogView = memo(function SupplierDetailDialogView({
+  supplier,
+  isLoading,
+  error,
+  open,
+  onOpenChange,
+}: SupplierDetailDialogViewProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px]">
+        {isLoading ? (
+          <>
+            <DialogTitle className="sr-only">Carregando fornecedor...</DialogTitle>
+            <DialogDescription className="sr-only">
+              Carregando fornecedor...
+            </DialogDescription>
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </>
+        ) : error ? (
+          <>
+            <DialogTitle className="sr-only">Erro ao carregar fornecedor</DialogTitle>
+            <DialogDescription className="sr-only">
+              Erro ao carregar fornecedor
+            </DialogDescription>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Não foi possível carregar os dados do fornecedor.
+              </AlertDescription>
+            </Alert>
+          </>
+        ) : !supplier ? (
+          <>
+            <DialogTitle className="sr-only">Fornecedor não encontrado</DialogTitle>
+            <DialogDescription className="sr-only">
+              Fornecedor não encontrado
+            </DialogDescription>
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Fornecedor não encontrado.
+              </AlertDescription>
+            </Alert>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>{supplier.name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                Detalhes do fornecedor
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2">
+                <Badge variant={supplier.is_active ? "secondary" : "outline"}>
+                  {supplier.is_active ? "Ativo" : "Inativo"}
+                </Badge>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-1 gap-2">
+                {supplier.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="size-4 text-muted-foreground shrink-0" />
+                    <a
+                      href={`mailto:${supplier.email}`}
+                      className="text-primary hover:underline truncate"
+                    >
+                      {supplier.email}
+                    </a>
+                  </div>
+                )}
+
+                {supplier.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="size-4 text-muted-foreground shrink-0" />
+                    <span className="text-foreground">{supplier.phone}</span>
+                    <a
+                      href={`https://wa.me/55${supplier.phone.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 hover:text-green-800"
+                      title="Abrir WhatsApp"
+                    >
+                      <MessageCircle className="size-4" />
+                    </a>
+                  </div>
+                )}
+
+                {supplier.cnpj && (
+                  <p className="text-muted-foreground">
+                    CNPJ: {supplier.cnpj}
+                  </p>
+                )}
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  Cadastrado em: {formatDateBR(supplier.created_at)}
+                </p>
+                {supplier.updated_at !== supplier.created_at && (
+                  <p className="text-xs text-muted-foreground">
+                    Atualizado em: {formatDateBR(supplier.updated_at)}
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+});

@@ -44,7 +44,20 @@ export const weddingsListResponseItemsItemOverdueInstallmentsMin = 0;
 export const weddingsListResponseItemsItemIncompleteTasksDefault = 0;
 export const weddingsListResponseItemsItemIncompleteTasksMin = 0;
 
-
+export const weddingsListResponseItemsItemCanCompleteDefault = false;
+export const weddingsListResponseItemsItemClientNameDefault = ``;
+export const weddingsListResponseItemsItemClientCpfDefault = ``;
+export const weddingsListResponseItemsItemClientEmailDefault = ``;
+export const weddingsListResponseItemsItemClientPhoneDefault = ``;
+export const weddingsListResponseItemsItemClientRoleDefault = ``;
+export const weddingsListResponseItemsItemDaysBeforeInProgressDefault = 7;
+export const weddingsListResponseItemsItemPlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsListResponseItemsItemParticipantsItemClientCpfDefault = ``;
+export const weddingsListResponseItemsItemParticipantsItemClientEmailDefault = ``;
+export const weddingsListResponseItemsItemParticipantsItemClientPhoneDefault = ``;
+export const weddingsListResponseItemsItemParticipantsItemRoleDisplayDefault = ``;
+export const weddingsListResponseItemsItemParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsListResponseItemsItemParticipantsItemNotesDefault = ``;
 
 export const WeddingsListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -54,13 +67,46 @@ export const WeddingsListResponse = zod.object({
   "date": zod.iso.date(),
   "location": zod.string(),
   "expected_guests": zod.union([zod.int(),zod.null()]),
-  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
   "total_budget": zod.union([zod.string().regex(weddingsListResponseItemsItemTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.int().min(weddingsListResponseItemsItemOverdueInstallmentsMin).default(weddingsListResponseItemsItemOverdueInstallmentsDefault),
-  "incomplete_tasks": zod.int().min(weddingsListResponseItemsItemIncompleteTasksMin).default(weddingsListResponseItemsItemIncompleteTasksDefault)
+  "incomplete_tasks": zod.int().min(weddingsListResponseItemsItemIncompleteTasksMin).default(weddingsListResponseItemsItemIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsListResponseItemsItemCanCompleteDefault),
+  "client_name": zod.string().default(weddingsListResponseItemsItemClientNameDefault),
+  "client_cpf": zod.string().default(weddingsListResponseItemsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsListResponseItemsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsListResponseItemsItemClientPhoneDefault),
+  "client_role": zod.string().default(weddingsListResponseItemsItemClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsListResponseItemsItemDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsListResponseItemsItemPlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsListResponseItemsItemParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsListResponseItemsItemParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsListResponseItemsItemParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsListResponseItemsItemParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsListResponseItemsItemParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsListResponseItemsItemParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
 })),
   "count": zod.int()
 })
@@ -77,6 +123,24 @@ export const weddingsCreateBodyLocationMax = 255;
 
 export const weddingsCreateBodyTemplateOneMax = 50;
 
+export const weddingsCreateBodyClientNameDefault = ``;
+export const weddingsCreateBodyClientNameMax = 255;
+
+export const weddingsCreateBodyClientCpfDefault = ``;
+export const weddingsCreateBodyClientCpfMax = 14;
+
+export const weddingsCreateBodyClientEmailDefault = ``;
+export const weddingsCreateBodyClientEmailMax = 255;
+
+export const weddingsCreateBodyClientPhoneDefault = ``;
+export const weddingsCreateBodyClientPhoneMax = 20;
+
+export const weddingsCreateBodyClientRoleDefault = `NOIVO`;
+export const weddingsCreateBodyClientRoleMax = 50;
+
+export const weddingsCreateBodyDaysBeforeInProgressDefault = 7;
+export const weddingsCreateBodyDaysBeforeInProgressMin = 0;
+
 
 
 export const WeddingsCreateBody = zod.object({
@@ -85,7 +149,13 @@ export const WeddingsCreateBody = zod.object({
   "date": zod.iso.date(),
   "location": zod.string().min(1).max(weddingsCreateBodyLocationMax),
   "expected_guests": zod.union([zod.int().min(1),zod.null()]).optional(),
-  "template": zod.union([zod.string().max(weddingsCreateBodyTemplateOneMax),zod.null()]).optional()
+  "template": zod.union([zod.string().max(weddingsCreateBodyTemplateOneMax),zod.null()]).optional(),
+  "client_name": zod.string().max(weddingsCreateBodyClientNameMax).default(weddingsCreateBodyClientNameDefault),
+  "client_cpf": zod.string().max(weddingsCreateBodyClientCpfMax).default(weddingsCreateBodyClientCpfDefault),
+  "client_email": zod.string().max(weddingsCreateBodyClientEmailMax).default(weddingsCreateBodyClientEmailDefault),
+  "client_phone": zod.string().max(weddingsCreateBodyClientPhoneMax).default(weddingsCreateBodyClientPhoneDefault),
+  "client_role": zod.string().max(weddingsCreateBodyClientRoleMax).default(weddingsCreateBodyClientRoleDefault),
+  "days_before_in_progress": zod.int().min(weddingsCreateBodyDaysBeforeInProgressMin).default(weddingsCreateBodyDaysBeforeInProgressDefault)
 })
 
 export const weddingsCreateResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
@@ -95,7 +165,20 @@ export const weddingsCreateResponseOverdueInstallmentsMin = 0;
 export const weddingsCreateResponseIncompleteTasksDefault = 0;
 export const weddingsCreateResponseIncompleteTasksMin = 0;
 
-
+export const weddingsCreateResponseCanCompleteDefault = false;
+export const weddingsCreateResponseClientNameDefault = ``;
+export const weddingsCreateResponseClientCpfDefault = ``;
+export const weddingsCreateResponseClientEmailDefault = ``;
+export const weddingsCreateResponseClientPhoneDefault = ``;
+export const weddingsCreateResponseClientRoleDefault = ``;
+export const weddingsCreateResponseDaysBeforeInProgressDefault = 7;
+export const weddingsCreateResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCreateResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsCreateResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsCreateResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsCreateResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsCreateResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsCreateResponseParticipantsItemNotesDefault = ``;
 
 export const WeddingsCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -104,13 +187,46 @@ export const WeddingsCreateResponse = zod.object({
   "date": zod.iso.date(),
   "location": zod.string(),
   "expected_guests": zod.union([zod.int(),zod.null()]),
-  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
   "total_budget": zod.union([zod.string().regex(weddingsCreateResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.int().min(weddingsCreateResponseOverdueInstallmentsMin).default(weddingsCreateResponseOverdueInstallmentsDefault),
-  "incomplete_tasks": zod.int().min(weddingsCreateResponseIncompleteTasksMin).default(weddingsCreateResponseIncompleteTasksDefault)
+  "incomplete_tasks": zod.int().min(weddingsCreateResponseIncompleteTasksMin).default(weddingsCreateResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsCreateResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsCreateResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsCreateResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsCreateResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCreateResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsCreateResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsCreateResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsCreateResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsCreateResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsCreateResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCreateResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsCreateResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsCreateResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsCreateResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
 })
 
 /**
@@ -134,6 +250,126 @@ export const WeddingsByMonthResponseItem = zod.object({
 export const WeddingsByMonthResponse = zod.array(WeddingsByMonthResponseItem)
 
 /**
+ * Cria uma proposta de casamento com status inicial PROPOSAL.
+ * @summary Create Wedding Proposal
+ */
+export const createWeddingProposalBodyGroomNameMax = 100;
+
+export const createWeddingProposalBodyBrideNameMax = 100;
+
+export const createWeddingProposalBodyLocationDefault = ``;
+export const createWeddingProposalBodyLocationMax = 255;
+
+
+export const createWeddingProposalBodyTemplateOneMax = 50;
+
+export const createWeddingProposalBodyClientNameDefault = ``;
+export const createWeddingProposalBodyClientNameMax = 255;
+
+export const createWeddingProposalBodyClientCpfDefault = ``;
+export const createWeddingProposalBodyClientCpfMax = 14;
+
+export const createWeddingProposalBodyClientEmailDefault = ``;
+export const createWeddingProposalBodyClientEmailMax = 255;
+
+export const createWeddingProposalBodyClientPhoneDefault = ``;
+export const createWeddingProposalBodyClientPhoneMax = 20;
+
+export const createWeddingProposalBodyClientRoleDefault = `NOIVO`;
+export const createWeddingProposalBodyClientRoleMax = 50;
+
+export const createWeddingProposalBodyDaysBeforeInProgressDefault = 7;
+export const createWeddingProposalBodyDaysBeforeInProgressMin = 0;
+
+
+
+export const CreateWeddingProposalBody = zod.object({
+  "groom_name": zod.string().min(1).max(createWeddingProposalBodyGroomNameMax),
+  "bride_name": zod.string().min(1).max(createWeddingProposalBodyBrideNameMax),
+  "date": zod.iso.date(),
+  "location": zod.string().max(createWeddingProposalBodyLocationMax).default(createWeddingProposalBodyLocationDefault),
+  "expected_guests": zod.union([zod.int().min(1),zod.null()]).optional(),
+  "template": zod.union([zod.string().max(createWeddingProposalBodyTemplateOneMax),zod.null()]).optional(),
+  "client_name": zod.string().max(createWeddingProposalBodyClientNameMax).default(createWeddingProposalBodyClientNameDefault),
+  "client_cpf": zod.string().max(createWeddingProposalBodyClientCpfMax).default(createWeddingProposalBodyClientCpfDefault),
+  "client_email": zod.string().max(createWeddingProposalBodyClientEmailMax).default(createWeddingProposalBodyClientEmailDefault),
+  "client_phone": zod.string().max(createWeddingProposalBodyClientPhoneMax).default(createWeddingProposalBodyClientPhoneDefault),
+  "client_role": zod.string().max(createWeddingProposalBodyClientRoleMax).default(createWeddingProposalBodyClientRoleDefault),
+  "days_before_in_progress": zod.int().min(createWeddingProposalBodyDaysBeforeInProgressMin).default(createWeddingProposalBodyDaysBeforeInProgressDefault)
+})
+
+export const createWeddingProposalResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const createWeddingProposalResponseOverdueInstallmentsDefault = 0;
+export const createWeddingProposalResponseOverdueInstallmentsMin = 0;
+
+export const createWeddingProposalResponseIncompleteTasksDefault = 0;
+export const createWeddingProposalResponseIncompleteTasksMin = 0;
+
+export const createWeddingProposalResponseCanCompleteDefault = false;
+export const createWeddingProposalResponseClientNameDefault = ``;
+export const createWeddingProposalResponseClientCpfDefault = ``;
+export const createWeddingProposalResponseClientEmailDefault = ``;
+export const createWeddingProposalResponseClientPhoneDefault = ``;
+export const createWeddingProposalResponseClientRoleDefault = ``;
+export const createWeddingProposalResponseDaysBeforeInProgressDefault = 7;
+export const createWeddingProposalResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const createWeddingProposalResponseParticipantsItemClientCpfDefault = ``;
+export const createWeddingProposalResponseParticipantsItemClientEmailDefault = ``;
+export const createWeddingProposalResponseParticipantsItemClientPhoneDefault = ``;
+export const createWeddingProposalResponseParticipantsItemRoleDisplayDefault = ``;
+export const createWeddingProposalResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const createWeddingProposalResponseParticipantsItemNotesDefault = ``;
+
+export const CreateWeddingProposalResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(createWeddingProposalResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(createWeddingProposalResponseOverdueInstallmentsMin).default(createWeddingProposalResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(createWeddingProposalResponseIncompleteTasksMin).default(createWeddingProposalResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(createWeddingProposalResponseCanCompleteDefault),
+  "client_name": zod.string().default(createWeddingProposalResponseClientNameDefault),
+  "client_cpf": zod.string().default(createWeddingProposalResponseClientCpfDefault),
+  "client_email": zod.string().default(createWeddingProposalResponseClientEmailDefault),
+  "client_phone": zod.string().default(createWeddingProposalResponseClientPhoneDefault),
+  "client_role": zod.string().default(createWeddingProposalResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(createWeddingProposalResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(createWeddingProposalResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(createWeddingProposalResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(createWeddingProposalResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(createWeddingProposalResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(createWeddingProposalResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(createWeddingProposalResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(createWeddingProposalResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
+})
+
+/**
  * @summary Retrieve Wedding
  */
 export const WeddingsReadParams = zod.object({
@@ -147,7 +383,20 @@ export const weddingsReadResponseOverdueInstallmentsMin = 0;
 export const weddingsReadResponseIncompleteTasksDefault = 0;
 export const weddingsReadResponseIncompleteTasksMin = 0;
 
-
+export const weddingsReadResponseCanCompleteDefault = false;
+export const weddingsReadResponseClientNameDefault = ``;
+export const weddingsReadResponseClientCpfDefault = ``;
+export const weddingsReadResponseClientEmailDefault = ``;
+export const weddingsReadResponseClientPhoneDefault = ``;
+export const weddingsReadResponseClientRoleDefault = ``;
+export const weddingsReadResponseDaysBeforeInProgressDefault = 7;
+export const weddingsReadResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsReadResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsReadResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsReadResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsReadResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsReadResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsReadResponseParticipantsItemNotesDefault = ``;
 
 export const WeddingsReadResponse = zod.object({
   "uuid": zod.string(),
@@ -156,13 +405,46 @@ export const WeddingsReadResponse = zod.object({
   "date": zod.iso.date(),
   "location": zod.string(),
   "expected_guests": zod.union([zod.int(),zod.null()]),
-  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
   "total_budget": zod.union([zod.string().regex(weddingsReadResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.int().min(weddingsReadResponseOverdueInstallmentsMin).default(weddingsReadResponseOverdueInstallmentsDefault),
-  "incomplete_tasks": zod.int().min(weddingsReadResponseIncompleteTasksMin).default(weddingsReadResponseIncompleteTasksDefault)
+  "incomplete_tasks": zod.int().min(weddingsReadResponseIncompleteTasksMin).default(weddingsReadResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsReadResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsReadResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsReadResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsReadResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsReadResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsReadResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsReadResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsReadResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsReadResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsReadResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsReadResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsReadResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsReadResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsReadResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
 })
 
 /**
@@ -179,6 +461,18 @@ export const weddingsUpdateBodyBrideNameOneMax = 100;
 export const weddingsUpdateBodyLocationOneMax = 255;
 
 
+export const weddingsUpdateBodyClientNameOneMax = 255;
+
+export const weddingsUpdateBodyClientCpfOneMax = 14;
+
+export const weddingsUpdateBodyClientEmailOneMax = 255;
+
+export const weddingsUpdateBodyClientPhoneOneMax = 20;
+
+export const weddingsUpdateBodyClientRoleOneMax = 50;
+
+export const weddingsUpdateBodyDaysBeforeInProgressOneMin = 0;
+
 
 
 export const WeddingsUpdateBody = zod.object({
@@ -187,7 +481,13 @@ export const WeddingsUpdateBody = zod.object({
   "date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "location": zod.union([zod.string().min(1).max(weddingsUpdateBodyLocationOneMax),zod.null()]).optional(),
   "expected_guests": zod.union([zod.int().min(1),zod.null()]).optional(),
-  "status": zod.union([zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),zod.null()]).optional()
+  "status": zod.union([zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),zod.null()]).optional(),
+  "client_name": zod.union([zod.string().max(weddingsUpdateBodyClientNameOneMax),zod.null()]).optional(),
+  "client_cpf": zod.union([zod.string().max(weddingsUpdateBodyClientCpfOneMax),zod.null()]).optional(),
+  "client_email": zod.union([zod.string().max(weddingsUpdateBodyClientEmailOneMax),zod.null()]).optional(),
+  "client_phone": zod.union([zod.string().max(weddingsUpdateBodyClientPhoneOneMax),zod.null()]).optional(),
+  "client_role": zod.union([zod.string().max(weddingsUpdateBodyClientRoleOneMax),zod.null()]).optional(),
+  "days_before_in_progress": zod.union([zod.int().min(weddingsUpdateBodyDaysBeforeInProgressOneMin),zod.null()]).optional()
 })
 
 export const weddingsUpdateResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
@@ -197,7 +497,20 @@ export const weddingsUpdateResponseOverdueInstallmentsMin = 0;
 export const weddingsUpdateResponseIncompleteTasksDefault = 0;
 export const weddingsUpdateResponseIncompleteTasksMin = 0;
 
-
+export const weddingsUpdateResponseCanCompleteDefault = false;
+export const weddingsUpdateResponseClientNameDefault = ``;
+export const weddingsUpdateResponseClientCpfDefault = ``;
+export const weddingsUpdateResponseClientEmailDefault = ``;
+export const weddingsUpdateResponseClientPhoneDefault = ``;
+export const weddingsUpdateResponseClientRoleDefault = ``;
+export const weddingsUpdateResponseDaysBeforeInProgressDefault = 7;
+export const weddingsUpdateResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsUpdateResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsUpdateResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsUpdateResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsUpdateResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsUpdateResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsUpdateResponseParticipantsItemNotesDefault = ``;
 
 export const WeddingsUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -206,13 +519,46 @@ export const WeddingsUpdateResponse = zod.object({
   "date": zod.iso.date(),
   "location": zod.string(),
   "expected_guests": zod.union([zod.int(),zod.null()]),
-  "status": zod.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
   "template": zod.union([zod.string(),zod.null()]),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true}),
   "total_budget": zod.union([zod.string().regex(weddingsUpdateResponseTotalBudgetOneRegExp),zod.null()]).optional(),
   "overdue_installments": zod.int().min(weddingsUpdateResponseOverdueInstallmentsMin).default(weddingsUpdateResponseOverdueInstallmentsDefault),
-  "incomplete_tasks": zod.int().min(weddingsUpdateResponseIncompleteTasksMin).default(weddingsUpdateResponseIncompleteTasksDefault)
+  "incomplete_tasks": zod.int().min(weddingsUpdateResponseIncompleteTasksMin).default(weddingsUpdateResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsUpdateResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsUpdateResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsUpdateResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsUpdateResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsUpdateResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsUpdateResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsUpdateResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsUpdateResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsUpdateResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsUpdateResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsUpdateResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsUpdateResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsUpdateResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsUpdateResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
 })
 
 /**
@@ -223,4 +569,415 @@ export const WeddingsDeleteParams = zod.object({
 })
 
 export const WeddingsDeleteResponse = zod.void()
+
+/**
+ * Caso de uso: Conclui um casamento existente garantindo data válida.
+ * @summary Complete Wedding
+ */
+export const WeddingsCompleteParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsCompleteResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCompleteResponseOverdueInstallmentsDefault = 0;
+export const weddingsCompleteResponseOverdueInstallmentsMin = 0;
+
+export const weddingsCompleteResponseIncompleteTasksDefault = 0;
+export const weddingsCompleteResponseIncompleteTasksMin = 0;
+
+export const weddingsCompleteResponseCanCompleteDefault = false;
+export const weddingsCompleteResponseClientNameDefault = ``;
+export const weddingsCompleteResponseClientCpfDefault = ``;
+export const weddingsCompleteResponseClientEmailDefault = ``;
+export const weddingsCompleteResponseClientPhoneDefault = ``;
+export const weddingsCompleteResponseClientRoleDefault = ``;
+export const weddingsCompleteResponseDaysBeforeInProgressDefault = 7;
+export const weddingsCompleteResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCompleteResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsCompleteResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsCompleteResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsCompleteResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsCompleteResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsCompleteResponseParticipantsItemNotesDefault = ``;
+
+export const WeddingsCompleteResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(weddingsCompleteResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(weddingsCompleteResponseOverdueInstallmentsMin).default(weddingsCompleteResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(weddingsCompleteResponseIncompleteTasksMin).default(weddingsCompleteResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsCompleteResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsCompleteResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsCompleteResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsCompleteResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCompleteResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsCompleteResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsCompleteResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsCompleteResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsCompleteResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsCompleteResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCompleteResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsCompleteResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsCompleteResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsCompleteResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
+})
+
+/**
+ * Caso de uso: Cancela um casamento em andamento.
+ * @summary Cancel Wedding
+ */
+export const WeddingsCancelParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsCancelResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCancelResponseOverdueInstallmentsDefault = 0;
+export const weddingsCancelResponseOverdueInstallmentsMin = 0;
+
+export const weddingsCancelResponseIncompleteTasksDefault = 0;
+export const weddingsCancelResponseIncompleteTasksMin = 0;
+
+export const weddingsCancelResponseCanCompleteDefault = false;
+export const weddingsCancelResponseClientNameDefault = ``;
+export const weddingsCancelResponseClientCpfDefault = ``;
+export const weddingsCancelResponseClientEmailDefault = ``;
+export const weddingsCancelResponseClientPhoneDefault = ``;
+export const weddingsCancelResponseClientRoleDefault = ``;
+export const weddingsCancelResponseDaysBeforeInProgressDefault = 7;
+export const weddingsCancelResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsCancelResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsCancelResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsCancelResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsCancelResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsCancelResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsCancelResponseParticipantsItemNotesDefault = ``;
+
+export const WeddingsCancelResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(weddingsCancelResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(weddingsCancelResponseOverdueInstallmentsMin).default(weddingsCancelResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(weddingsCancelResponseIncompleteTasksMin).default(weddingsCancelResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsCancelResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsCancelResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsCancelResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsCancelResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCancelResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsCancelResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsCancelResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsCancelResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsCancelResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsCancelResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsCancelResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsCancelResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsCancelResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsCancelResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
+})
+
+/**
+ * Caso de uso: Reabre um casamento cancelado voltando para em andamento.
+ * @summary Reopen Wedding
+ */
+export const WeddingsReopenParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const weddingsReopenResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsReopenResponseOverdueInstallmentsDefault = 0;
+export const weddingsReopenResponseOverdueInstallmentsMin = 0;
+
+export const weddingsReopenResponseIncompleteTasksDefault = 0;
+export const weddingsReopenResponseIncompleteTasksMin = 0;
+
+export const weddingsReopenResponseCanCompleteDefault = false;
+export const weddingsReopenResponseClientNameDefault = ``;
+export const weddingsReopenResponseClientCpfDefault = ``;
+export const weddingsReopenResponseClientEmailDefault = ``;
+export const weddingsReopenResponseClientPhoneDefault = ``;
+export const weddingsReopenResponseClientRoleDefault = ``;
+export const weddingsReopenResponseDaysBeforeInProgressDefault = 7;
+export const weddingsReopenResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const weddingsReopenResponseParticipantsItemClientCpfDefault = ``;
+export const weddingsReopenResponseParticipantsItemClientEmailDefault = ``;
+export const weddingsReopenResponseParticipantsItemClientPhoneDefault = ``;
+export const weddingsReopenResponseParticipantsItemRoleDisplayDefault = ``;
+export const weddingsReopenResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const weddingsReopenResponseParticipantsItemNotesDefault = ``;
+
+export const WeddingsReopenResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(weddingsReopenResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(weddingsReopenResponseOverdueInstallmentsMin).default(weddingsReopenResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(weddingsReopenResponseIncompleteTasksMin).default(weddingsReopenResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(weddingsReopenResponseCanCompleteDefault),
+  "client_name": zod.string().default(weddingsReopenResponseClientNameDefault),
+  "client_cpf": zod.string().default(weddingsReopenResponseClientCpfDefault),
+  "client_email": zod.string().default(weddingsReopenResponseClientEmailDefault),
+  "client_phone": zod.string().default(weddingsReopenResponseClientPhoneDefault),
+  "client_role": zod.string().default(weddingsReopenResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(weddingsReopenResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(weddingsReopenResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(weddingsReopenResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(weddingsReopenResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(weddingsReopenResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(weddingsReopenResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(weddingsReopenResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(weddingsReopenResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
+})
+
+/**
+ * Cria ou atualiza o contrato de honorários da assessoria para o casamento.
+ * @summary Save Planner Contract Endpoint
+ */
+export const SavePlannerContractParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const savePlannerContractBodyServiceTierDefault = `COMPLETA`;
+export const savePlannerContractBodyEffectiveAmountOneMin = 0;
+
+export const savePlannerContractBodyEffectiveAmountTwoRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const savePlannerContractBodyInstallmentsCountDefault = 1;
+
+export const savePlannerContractBodyStatusDefault = `DRAFT`;
+
+export const SavePlannerContractBody = zod.object({
+  "service_tier": zod.union([zod.enum(['COMPLETA', 'PARCIAL', 'FINAL']),zod.string()]).default(savePlannerContractBodyServiceTierDefault),
+  "effective_amount": zod.union([zod.number().min(savePlannerContractBodyEffectiveAmountOneMin),zod.string().regex(savePlannerContractBodyEffectiveAmountTwoRegExp)]),
+  "installments_count": zod.int().min(1).default(savePlannerContractBodyInstallmentsCountDefault),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "status": zod.union([zod.enum(['DRAFT', 'SIGNED', 'CANCELED']),zod.string()]).default(savePlannerContractBodyStatusDefault)
+})
+
+export const savePlannerContractResponseEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+
+
+export const SavePlannerContractResponse = zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(savePlannerContractResponseEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+})
+
+/**
+ * Converte uma proposta em planejamento ativo gerando as despesas de honorários.
+ * @summary Convert To Planning Endpoint
+ */
+export const ConvertWeddingToPlanningParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const ConvertWeddingToPlanningBody = zod.union([zod.object({
+  "category_id": zod.union([zod.string(),zod.null()]).optional()
+}),zod.null()])
+
+export const convertWeddingToPlanningResponseTotalBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const convertWeddingToPlanningResponseOverdueInstallmentsDefault = 0;
+export const convertWeddingToPlanningResponseOverdueInstallmentsMin = 0;
+
+export const convertWeddingToPlanningResponseIncompleteTasksDefault = 0;
+export const convertWeddingToPlanningResponseIncompleteTasksMin = 0;
+
+export const convertWeddingToPlanningResponseCanCompleteDefault = false;
+export const convertWeddingToPlanningResponseClientNameDefault = ``;
+export const convertWeddingToPlanningResponseClientCpfDefault = ``;
+export const convertWeddingToPlanningResponseClientEmailDefault = ``;
+export const convertWeddingToPlanningResponseClientPhoneDefault = ``;
+export const convertWeddingToPlanningResponseClientRoleDefault = ``;
+export const convertWeddingToPlanningResponseDaysBeforeInProgressDefault = 7;
+export const convertWeddingToPlanningResponsePlannerContractOneEffectiveAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const convertWeddingToPlanningResponseParticipantsItemClientCpfDefault = ``;
+export const convertWeddingToPlanningResponseParticipantsItemClientEmailDefault = ``;
+export const convertWeddingToPlanningResponseParticipantsItemClientPhoneDefault = ``;
+export const convertWeddingToPlanningResponseParticipantsItemRoleDisplayDefault = ``;
+export const convertWeddingToPlanningResponseParticipantsItemIsPrimarySignatoryDefault = false;
+export const convertWeddingToPlanningResponseParticipantsItemNotesDefault = ``;
+
+export const ConvertWeddingToPlanningResponse = zod.object({
+  "uuid": zod.string(),
+  "groom_name": zod.string(),
+  "bride_name": zod.string(),
+  "date": zod.iso.date(),
+  "location": zod.string(),
+  "expected_guests": zod.union([zod.int(),zod.null()]),
+  "status": zod.enum(['PROPOSAL', 'PLANNING', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']),
+  "template": zod.union([zod.string(),zod.null()]),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true}),
+  "total_budget": zod.union([zod.string().regex(convertWeddingToPlanningResponseTotalBudgetOneRegExp),zod.null()]).optional(),
+  "overdue_installments": zod.int().min(convertWeddingToPlanningResponseOverdueInstallmentsMin).default(convertWeddingToPlanningResponseOverdueInstallmentsDefault),
+  "incomplete_tasks": zod.int().min(convertWeddingToPlanningResponseIncompleteTasksMin).default(convertWeddingToPlanningResponseIncompleteTasksDefault),
+  "allowed_transitions": zod.array(zod.string()).optional(),
+  "can_complete": zod.boolean().default(convertWeddingToPlanningResponseCanCompleteDefault),
+  "client_name": zod.string().default(convertWeddingToPlanningResponseClientNameDefault),
+  "client_cpf": zod.string().default(convertWeddingToPlanningResponseClientCpfDefault),
+  "client_email": zod.string().default(convertWeddingToPlanningResponseClientEmailDefault),
+  "client_phone": zod.string().default(convertWeddingToPlanningResponseClientPhoneDefault),
+  "client_role": zod.string().default(convertWeddingToPlanningResponseClientRoleDefault),
+  "days_before_in_progress": zod.int().default(convertWeddingToPlanningResponseDaysBeforeInProgressDefault),
+  "planner_contract": zod.union([zod.object({
+  "uuid": zod.string(),
+  "service_tier": zod.string(),
+  "effective_amount": zod.string().regex(convertWeddingToPlanningResponsePlannerContractOneEffectiveAmountRegExp),
+  "installments_count": zod.int(),
+  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "pdf_file": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}),zod.null()]).optional(),
+  "participants": zod.array(zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(convertWeddingToPlanningResponseParticipantsItemClientCpfDefault),
+  "client_email": zod.string().default(convertWeddingToPlanningResponseParticipantsItemClientEmailDefault),
+  "client_phone": zod.string().default(convertWeddingToPlanningResponseParticipantsItemClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(convertWeddingToPlanningResponseParticipantsItemRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(convertWeddingToPlanningResponseParticipantsItemIsPrimarySignatoryDefault),
+  "notes": zod.string().default(convertWeddingToPlanningResponseParticipantsItemNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')).optional()
+})
+
+/**
+ * Adiciona um cliente como participante vinculado a um casamento.
+ * @summary Add Wedding Participant Endpoint
+ */
+export const AddWeddingParticipantParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const addWeddingParticipantBodyRoleDefault = `BRIDE`;
+export const addWeddingParticipantBodyIsPrimarySignatoryDefault = false;
+export const addWeddingParticipantBodyNotesDefault = ``;
+
+export const AddWeddingParticipantBody = zod.object({
+  "client_id": zod.string(),
+  "role": zod.union([zod.enum(['BRIDE', 'GROOM', 'FINANCIAL_PAYER', 'LEGAL_REPRESENTATIVE', 'OTHER']),zod.string()]).default(addWeddingParticipantBodyRoleDefault),
+  "is_primary_signatory": zod.boolean().default(addWeddingParticipantBodyIsPrimarySignatoryDefault),
+  "notes": zod.string().default(addWeddingParticipantBodyNotesDefault)
+}).describe('Schema de entrada para vincular um cliente a um casamento.')
+
+export const addWeddingParticipantResponseClientCpfDefault = ``;
+export const addWeddingParticipantResponseClientEmailDefault = ``;
+export const addWeddingParticipantResponseClientPhoneDefault = ``;
+export const addWeddingParticipantResponseRoleDisplayDefault = ``;
+export const addWeddingParticipantResponseIsPrimarySignatoryDefault = false;
+export const addWeddingParticipantResponseNotesDefault = ``;
+
+export const AddWeddingParticipantResponse = zod.object({
+  "uuid": zod.string(),
+  "client_id": zod.string(),
+  "client_name": zod.string(),
+  "client_cpf": zod.string().default(addWeddingParticipantResponseClientCpfDefault),
+  "client_email": zod.string().default(addWeddingParticipantResponseClientEmailDefault),
+  "client_phone": zod.string().default(addWeddingParticipantResponseClientPhoneDefault),
+  "role": zod.string(),
+  "role_display": zod.string().default(addWeddingParticipantResponseRoleDisplayDefault),
+  "is_primary_signatory": zod.boolean().default(addWeddingParticipantResponseIsPrimarySignatoryDefault),
+  "notes": zod.string().default(addWeddingParticipantResponseNotesDefault),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para representação de participantes do casamento.')
+
+/**
+ * Remove um participante vinculado a um casamento.
+ * @summary Remove Wedding Participant Endpoint
+ */
+export const RemoveWeddingParticipantParams = zod.object({
+  "uuid": zod.string(),
+  "participant_uuid": zod.string()
+})
+
+export const RemoveWeddingParticipantResponse = zod.void()
 

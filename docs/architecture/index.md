@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [MOC de Domínios](domains/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Modelagem de Negócio & Visão](business-vision.md) | [Especificação de Requisitos (SRS)](requirements.md) | [Topologia de Domínios](domains/index.md) | [Catálogo de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -18,6 +18,7 @@ Hub executivo de engenharia, topologia de microsserviços e padrões de projeto 
 
 [:material-sitemap: System Design Unificado](#system-design-unificado){ .md-button .md-button--primary }
 [:material-shield-star: Pilares de Engenharia](#pilares-de-engenharia-padroes-arquiteturais){ .md-button }
+[:material-scale-balance: Regras de Negócio (SSOT)](business-rules/index.md){ .md-button }
 [:material-view-grid: Bounded Contexts (10 Domínios)](#bounded-contexts-10-dominios-da-plataforma){ .md-button }
 [:material-file-document-multiple: Catálogo de ADRs](#catalogo-de-decisoes-arquiteturais-adrs-001031){ .md-button }
 [:material-palette: Design System](#design-system-ergonomia-visual){ .md-button }
@@ -106,16 +107,16 @@ sequenceDiagram
 
     Note over User,R2: Fluxo de Mutação com Anexo (Upload de Contrato)
     User->>UI: Submete formulário com dados e anexo PDF
-    UI->>API: POST /api/v1/logistics/contracts/presign-upload/
+    UI->>API: POST /api/v1/contracts/upload-url/
     API->>Svc: StorageService.generate_presigned_url(company, filename)
     Svc-->>API: URL Assinada R2 + Storage Key
     API-->>UI: { upload_url, storage_key }
     UI->>R2: PUT binário direto no Cloudflare R2 (Presigned URL)
     R2-->>UI: 200 OK (Upload Concluído)
-    UI->>API: POST /api/v1/logistics/contracts/ (Payload com storage_key)
+    UI->>API: POST /api/v1/contracts/ (Payload com storage_key)
     API->>Svc: ContractService.create(company, payload)
     Note over Svc,DB: Transação Atômica (@transaction.atomic)
-    Svc->>DB: INSERT into logistics_contract + full_clean()
+    Svc->>DB: INSERT into contracts + full_clean()
     DB-->>Svc: Contrato persistido com sucesso
     Svc-->>API: Contract Instance
     API-->>UI: 201 Created (Schema ContractOut)
@@ -171,13 +172,21 @@ A arquitetura do **Wedding Management System** foi construída sobre princípios
 
     [:octicons-arrow-right-24: Smart & Dumb Pattern](concepts/smart-dumb-components.md) · [:octicons-shield-check-24: ADR-024](adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)
 
+-   :material-database-sync:{ .lg .middle } **Anti-Data-Stitching & CQRS**
+
+    ---
+
+    Proibição de costura de dados em memória no frontend ($O(W \times T)$ loops e mapas relacionais). Agregações analíticas e projeções multi-domínio centralizadas no backend CQRS (`apps/reporting`), entregando DTOs consolidados prontos para renderização imediata.
+
+    [:octicons-arrow-right-24: Anti-Data-Stitching](concepts/anti-data-stitching-pattern.md) · [:octicons-shield-check-24: ADR-024](adr/024-padrao-smart-dumb-desacoplamento-componentes-frontend.md) · [:octicons-shield-check-24: ADR-031](adr/031-inter-module-communication.md)
+
 -   :material-shield-check:{ .lg .middle } **Suíte de Guard-Rails**
 
     ---
 
     Testes arquiteturais estritos que rodam em CI e impedem regressões: barram chamadas `.objects.create()` em testes, bloqueiam queries sem filtro de tenant e validam a presença de docstrings e typing.
 
-    [:octicons-arrow-right-24: Suíte de Guard-Rails](concepts/architectural-guard-rails-suite.md) · [:octicons-checklist-24: Catálogo de Guards](../reference/architecture-standards/guard-rails/index.md)
+    [:octicons-arrow-right-24: Suíte de Guard-Rails](concepts/architectural-guard-rails-suite.md) · [:octicons-shield-check-24: Tenant Isolation Guard](../reference/architecture-standards/guard-rails/tenant-isolation-guard.md)
 
 -   :material-clock-fast:{ .lg .middle } **Tarefas Assíncronas & Crons**
 
@@ -204,7 +213,7 @@ A arquitetura do **Wedding Management System** foi construída sobre princípios
 
 O sistema é dividido em **10 Bounded Contexts** independentes e desacoplados, cada um com sua camada de modelos, rotas de API, serviços de domínio e seletores de consulta.
 
-Para uma navegação aprofundada em cada bounded context, consulte o [MOC Geral de Domínios](domains/index.md).
+Para uma navegação aprofundada em cada bounded context, consulte a [Topologia Geral de Domínios](domains/index.md).
 
 | Domínio | Especificação | Responsabilidade Arquitetural | Entidades Chave |
 | :--- | :--- | :--- | :--- |

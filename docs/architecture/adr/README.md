@@ -45,7 +45,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-018: Playwright E2E Testing](018-playwright-e2e-testing.md)** 🟢 — Testes de integração end-to-end do frontend com Playwright.
 - **[ADR-021: Commenting & Docstring Standards](021-padrao-comentarios-docstrings.md)** 🟢 — Padrão de comentários no código e Google Style docstrings em PT-BR para regras de negócio.
 - **[ADR-024: Smart/Dumb Components Pattern](024-padrao-smart-dumb-desacoplamento-componentes-frontend.md)** 🟢 — Separação entre componentes inteligentes (dados/rotas) e apresentacionais desacoplados.
-- **[ADR-028: Diátaxis & Anotações Atômicas](028-diataxis-atomic-notes.md)** 🟡 *(Emendada)* — Framework Diátaxis e notas atômicas, com diretriz pragmática de links da [ADR-030](030-rich-domain-model-service-layer.md) (§ 3).
+- **[ADR-028: Diátaxis & Anotações Atômicas](028-diataxis-atomic-notes.md)** 🟡 *(Emendada)* — Framework Diátaxis e notas atômicas, com diretriz pragmática de links da [ADR-030](030-rich-domain-model-service-layer.md) (§ 3) e Emenda 2 (Transição MkDocs-First & Hubs de Domínio Ricos).
 
 ### Infraestrutura, DevOps & Cloud
 - **[ADR-001: Cloud Run](001-why-cloud-run.md)** 🟢 — Hospedagem Serverless do Backend Django Ninja no GCP Cloud Run.
@@ -73,7 +73,7 @@ As decisões abaixo cumpriram papel fundamental nas fases iniciais da plataforma
 | **[ADR-011: BaseModel full_clean](011-basemodel-save-full-clean.md)** | 🟢 Consolidada | **[ADR-030](030-rich-domain-model-service-layer.md)** | Incorporada formalmente como o Nível 2 (Invariantes de Domínio) na arquitetura Rich Domain Model. |
 | **[ADR-015: (Proposta Legada)](README.md)** | ⚪ Descontinuada | *Nenhum* | Proposta preliminar descartada na fase inicial do projeto. Numeração preservada por integridade. |
 | **[ADR-019: Tenant Validation](019-tenant-validation-service-layer.md)** | 🟡 Consolidada | **[ADR-016](016-pragmatic-multi-tenancy.md)** | O helper `validate_tenant_ownership` foi incorporado como o Pilar 4 do modelo pragmático da ADR-016. |
-| **[ADR-028: Diátaxis & Notas Atômicas](028-diataxis-atomic-notes.md)** | 🟡 Emendada | **[ADR-030](030-rich-domain-model-service-layer.md)** (§ 3) | A cláusula de transclusões de código por número de linhas foi substituída por referências diretas a símbolos para mitigar code-drift. |
+| **[ADR-028: Diátaxis & Notas Atômicas](028-diataxis-atomic-notes.md)** | 🟡 Emendada | **[ADR-030](030-rich-domain-model-service-layer.md)** / Emenda 2 | Emenda 1: eliminação de code-drift em transclusões. Emenda 2: transição para MkDocs-First, abolição de MOCs intermediários e consolidação em Hubs de Domínio Ricos. |
 
 ---
 

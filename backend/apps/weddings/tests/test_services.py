@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -20,7 +21,11 @@ from apps.users.tests.factories import UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn, WeddingPatchIn
 from apps.weddings.services import WeddingService
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db
@@ -54,7 +59,6 @@ class TestWeddingService:
         )
 
         assert updated.status == Wedding.StatusChoices.CANCELED
-        assert updated.is_canceled is True
 
     def test_create_wedding_does_not_create_financial_data_eagerly(
         self, user, wedding_payload
@@ -119,6 +123,26 @@ class TestWeddingService:
                 payload=WeddingPatchIn(**{"bride_name": "Hack"}),
             )
 
+    def test_update_wedding_status_canceled_enqueues_task(self, user, monkeypatch):
+        """Atualizar status para CANCELED via update() enfileira tarefa."""
+        from unittest.mock import MagicMock
+
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.IN_PROGRESS
+        )
+        mock_task = MagicMock()
+        monkeypatch.setattr("apps.weddings.tasks.on_wedding_canceled_task", mock_task)
+        monkeypatch.setattr("django.db.transaction.on_commit", lambda fn: fn())
+
+        updated = WeddingService.update(
+            company=user.company,
+            instance=wedding,
+            payload=WeddingPatchIn(status=Wedding.StatusChoices.CANCELED),
+        )
+
+        assert updated.status == Wedding.StatusChoices.CANCELED
+        mock_task.enqueue.assert_called_once_with(user.company.id, str(wedding.uuid))
+
     def test_create_wedding_fail_fast_schema_validation_error(
         self, user, wedding_payload
     ):
@@ -166,7 +190,86 @@ class TestWeddingService:
         canceled = WeddingService.cancel(company=user.company, instance=wedding)
 
         assert canceled.status == Wedding.StatusChoices.CANCELED
-        assert canceled.is_canceled is True
+
+    def test_wedding_service_cancel_validation_error(self, user, mocker):
+        """cancel() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(company=user.company)
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated cancel error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.cancel(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_validation_error"
+
+    def test_wedding_service_reopen_success(self, user: Any) -> None:
+        """
+        Caso de uso: reopen() reabre casamento cancelado voltando a IN_PROGRESS.
+        """
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+
+        reopened = WeddingService.reopen(company=user.company, instance=wedding)
+
+        assert reopened.status == Wedding.StatusChoices.IN_PROGRESS
+
+    def test_wedding_service_reopen_invalid_status_raises(self, user: Any) -> None:
+        """Caso de uso: reopen() rejeita reabrir casamento concluído."""
+        wedding = WeddingFactory(
+            company=user.company,
+            date=timezone.now().date(),
+            status=Wedding.StatusChoices.COMPLETED,
+        )
+
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.reopen(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_invalid_status_transition"
+
+    def test_wedding_service_reopen_cross_tenant_raises(self, user: Any) -> None:
+        """
+        reopen() com casamento de outro tenant levanta ObjectNotFoundError.
+        """
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(
+            company=other_user.company, status=Wedding.StatusChoices.CANCELED
+        )
+
+        with pytest.raises(ObjectNotFoundError):
+            WeddingService.reopen(company=user.company, instance=other_wedding)
+
+    def test_wedding_service_reopen_validation_error(
+        self, user: Any, mocker: Any
+    ) -> None:
+        """reopen() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(
+            company=user.company, status=Wedding.StatusChoices.CANCELED
+        )
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated reopen error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.reopen(company=user.company, instance=wedding)
+        assert exc_info.value.code == "wedding_validation_error"
+
+    def test_wedding_service_update_validation_error(self, user, mocker):
+        """update() propagando DjangoValidationError como BusinessRuleViolation."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        wedding = WeddingFactory(company=user.company)
+        mocker.patch.object(
+            wedding, "save", side_effect=DjangoValidationError("Simulated update error")
+        )
+        with pytest.raises(BusinessRuleViolation) as exc_info:
+            WeddingService.update(
+                company=user.company,
+                instance=wedding,
+                payload=WeddingPatchIn(location="Novo Local"),
+            )
+        assert exc_info.value.code == "wedding_validation_error"
 
     def test_on_wedding_canceled_task_success(self, user):
         """Valida execução da task assíncrona pós-cancelamento."""
@@ -397,3 +500,83 @@ class TestWeddingTemplateApplication:
 
         assert events1 == 8
         assert events2 == 8
+
+
+@pytest.mark.django_db
+class TestWeddingProposalAndPlanningLifecycle:
+    """Testes de ciclo de vida de propostas, clientes e conversão para planejamento."""
+
+    def test_create_wedding_proposal_creates_client_and_wedding_client(
+        self, user: Any
+    ) -> None:
+        from apps.clients.models import Client
+        from apps.weddings.models import WeddingClient
+        from apps.weddings.schemas import WeddingProposalIn
+
+        future_date = timezone.now().date() + timedelta(days=120)
+        payload = WeddingProposalIn(
+            groom_name="Rodrigo",
+            bride_name="Juliana",
+            date=future_date,
+            location="Espaço Villa",
+            expected_guests=150,
+            client_name="Rodrigo Silva",
+            client_cpf="123.456.789-10",
+            client_email="rodrigo@example.com",
+            client_phone="11977778888",
+        )
+
+        wedding = WeddingService.create_wedding_proposal(
+            company=user.company, payload=payload
+        )
+        assert wedding.status == Wedding.StatusChoices.PROPOSAL
+
+        client = Client.objects.filter(
+            company=user.company, cpf="123.456.789-10"
+        ).first()
+        assert client is not None
+        assert client.name == "Rodrigo Silva"
+
+        participant = WeddingClient.objects.filter(
+            wedding=wedding, client=client
+        ).first()
+        assert participant is not None
+        assert participant.is_primary_signatory is True
+        assert participant.role == WeddingClient.RoleChoices.FINANCIAL_PAYER
+        assert wedding.primary_signatory_client == client
+
+    def test_convert_wedding_to_planning_success(self, user: Any) -> None:
+        from apps.finances.models import Budget
+        from apps.weddings.schemas import PlannerContractIn, WeddingProposalIn
+
+        future_date = timezone.now().date() + timedelta(days=180)
+        proposal_payload = WeddingProposalIn(
+            groom_name="Lucas",
+            bride_name="Beatriz",
+            date=future_date,
+            location="Praia de Toque-Toque",
+            expected_guests=100,
+        )
+        wedding = WeddingService.create_wedding_proposal(
+            company=user.company, payload=proposal_payload
+        )
+
+        contract_payload = PlannerContractIn(
+            service_tier="COMPLETA",
+            effective_amount=Decimal("12000.00"),
+            installments_count=3,
+        )
+        WeddingService.save_planner_contract(
+            company=user.company,
+            wedding=wedding,
+            payload=contract_payload,
+        )
+
+        activated_wedding = WeddingService.convert_wedding_to_planning(
+            company=user.company,
+            wedding_id=wedding.uuid,
+        )
+
+        assert activated_wedding.status == Wedding.StatusChoices.PLANNING
+        budget = Budget.objects.get(company=user.company, wedding=wedding)
+        assert budget.baseline_amount == Decimal("12000.00")

@@ -91,7 +91,7 @@ export function CreateExpenseDialog({
         label="Contrato Associado (Opcional)"
         items={contracts}
         getItemKey={(c) => c.uuid}
-        getItemLabel={(c) => c.name || c.description || c.uuid.substring(0, 8)}
+        getItemLabel={(c) => c.name || c.uuid.substring(0, 8)}
         placeholder="Nenhum (Despesa sem contrato)"
       />
 

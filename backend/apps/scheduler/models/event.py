@@ -1,8 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from apps.core.exceptions import BusinessRuleViolation
 from apps.core.mixins import WeddingOwnedMixin
 from apps.scheduler.managers import EventQuerySet
 from apps.tenants.models import TenantModel
@@ -86,7 +88,7 @@ class Event(TenantModel, WeddingOwnedMixin):
         return self.title
 
     def clean(self) -> None:
-        """Valida invariantes de integridade do intervalo de horários."""
+        """Valida integridade do intervalo de horários e proteção de pagamento."""
         super().clean()
         if self.end_time and self.start_time and self.end_time < self.start_time:
             raise ValidationError(
@@ -97,26 +99,56 @@ class Event(TenantModel, WeddingOwnedMixin):
                 }
             )
 
+        # BR-S01: Blindagem de eventos de pagamento contra mutação indevida
+        if self.pk and not getattr(self, "_allow_payment_mutation", False):
+            orig = (
+                Event.objects.filter(pk=self.pk)
+                .values("event_type", "start_time", "end_time", "title")
+                .first()
+            )
+            if orig:
+                if orig["event_type"] == self.TypeChoices.PAYMENT:
+                    if (
+                        self.event_type != self.TypeChoices.PAYMENT
+                        or self.start_time != orig["start_time"]
+                        or self.end_time != orig["end_time"]
+                        or self.title != orig["title"]
+                    ):
+                        raise ValidationError(
+                            "Eventos de pagamento são gerados automaticamente "
+                            "e não podem ser editados manualmente."
+                        )
+                elif (
+                    orig["event_type"] != self.TypeChoices.PAYMENT
+                    and self.event_type == self.TypeChoices.PAYMENT
+                ):
+                    raise ValidationError(
+                        "Não é permitido alterar o tipo de um evento para 'pagamento'."
+                    )
+
+    def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
+        """Deleção blindada conforme BR-S01 (eventos de pagamento são protegidos)."""
+        skip_payment_guard = kwargs.pop("skip_payment_guard", False)
+        if (
+            self.is_payment_event
+            and not skip_payment_guard
+            and not getattr(self, "_allow_payment_mutation", False)
+        ):
+            raise BusinessRuleViolation(
+                detail=(
+                    "Eventos de pagamento são gerados automaticamente e não podem ser "
+                    "deletados manualmente. Acesse o módulo financeiro para ajustar."
+                ),
+                code="payment_event_readonly",
+            )
+        return super().delete(*args, **kwargs)
+
     # ── Propriedades Semânticas ──────────────────────────────────────────
 
     @property
     def is_payment_event(self) -> bool:
         """Indica se o evento é do tipo pagamento."""
         return self.event_type == self.TypeChoices.PAYMENT
-
-    @property
-    def is_recurrent(self) -> bool:
-        """Indica se o evento possui recorrência configurada."""
-        return self.recurrence_rule != self.RecurrenceChoices.NONE
-
-    @property
-    def duration(self) -> timedelta | None:
-        """Duração calculada do evento."""
-        return (
-            (self.end_time - self.start_time)
-            if (self.end_time and self.start_time)
-            else None
-        )
 
     # ── Métodos de Domínio ───────────────────────────────────────────────
 
@@ -131,4 +163,17 @@ class Event(TenantModel, WeddingOwnedMixin):
         """
         self.start_time = start_time
         self.end_time = end_time
-        self.full_clean()
+        self.clean()
+
+    def enable_reminder(self, minutes_before: int = 60) -> None:
+        """Habilita o lembrete automático com antecedência em minutos.
+
+        Args:
+            minutes_before: Antecedência em minutos para disparo do lembrete.
+        """
+        self.reminder_enabled = True
+        self.reminder_minutes_before = minutes_before
+
+    def disable_reminder(self) -> None:
+        """Desabilita o lembrete automático do evento."""
+        self.reminder_enabled = False

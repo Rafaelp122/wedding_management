@@ -30,6 +30,7 @@ describe("LoginPage", () => {
       refresh: "refresh-token-123",
       user: {
         id: 1,
+        uuid: "00000000-0000-0000-0000-000000000001",
         first_name: "Helena",
         last_name: "Silva",
         email: "helena@simaceito.com",

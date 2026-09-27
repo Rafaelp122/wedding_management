@@ -4,12 +4,12 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/core/services/storage/cloudflare_r2.py
-  - backend/apps/logistics/services/contract_service.py
-  - frontend/src/features/logistics/hooks/useContractUpload.ts
+  - backend/apps/contracts/services/contract_service.py
+  - frontend/src/features/contracts/hooks/useContractUploadForm.ts
 tests:
   - backend/apps/core/tests/test_storage_service.py
-  - backend/apps/logistics/tests/contracts/test_services.py
-  - frontend/src/features/logistics/hooks/useContractUpload.test.ts
+  - backend/apps/contracts/tests/test_services.py
+  - frontend/src/features/contracts/hooks/useContractUploadForm.test.ts
 ---
 
 # Fluxo de Upload de Contratos PDF (Cloudflare R2 Direct Upload)
@@ -44,7 +44,7 @@ sequenceDiagram
     participant DB as PostgreSQL (Neon DB)
 
     User->>UI: Seleciona PDF e preenche dados do Contrato
-    UI->>API: POST /api/v1/logistics/contracts/upload-url/ (Payload: {filename, wedding_id})
+    UI->>API: POST /api/v1/contracts/upload-url/ (Payload: {filename, wedding_id})
     API->>Storage: generate_presigned_put_url(bucket, key, content_type)
     Storage-->>API: URL pré-assinada com validade de 900 segundos (15 min)
     API-->>UI: HTTP 200 OK ({upload_url, key})
@@ -54,8 +54,8 @@ sequenceDiagram
     R2-->>UI: HTTP 200 OK (Upload Concluído no Bucket)
 
     Note over UI,API: Persistência Atômica do Contrato e Entidades Vinculadas
-    UI->>API: POST /api/v1/logistics/contracts/full/ (Payload: dados + key do R2)
-    API->>Service: ContractService.create_full(company, payload)
+    UI->>API: POST /api/v1/contracts/full/ (Payload: dados + key do R2)
+    API->>Service: ContractService.create_full_from_payload(company, payload)
     Note over Service: Executa em transação atômica (@transaction.atomic)
     Service->>DB: 1. Cria Contract com chave do PDF no R2
     Service->>DB: 2. Cria Expense + Installments (Domínio Finances)
@@ -66,13 +66,15 @@ sequenceDiagram
     UI-->>User: Feedback de sucesso e atualização imediata da lista
 ```
 
+> **Prefixo canônico:** `/api/v1/contracts/` (`apps/contracts/api/contracts.py`). O prefixo legado `/api/v1/logistics/contracts/` foi removido na Onda 4.
+
 ---
 
 ## 3. Implementação Técnica
 
 - **Serviço de Armazenamento:** [`CloudflareR2StorageService.generate_presigned_put_url()`](../../../backend/apps/core/services/storage/cloudflare_r2.py)
-- **Hook de Upload Direto:** [`useContractUpload`](../../../frontend/src/features/logistics/hooks/useContractUpload.ts)
-- **Orquestração de Contrato:** [`ContractService.generate_upload_url()`](../../../backend/apps/logistics/services/contract_service.py)
+- **Hook de Upload Direto:** [`useContractUploadForm`](../../../frontend/src/features/contracts/hooks/useContractUploadForm.ts)
+- **Orquestração de Contrato:** [`ContractService.generate_upload_url()`](../../../backend/apps/contracts/services/contract_service.py)
 
 ### A. Geração de URLs Pré-Assinadas no Backend (`cloudflare_r2.py`)
 O serviço de storage gera URLs assinadas criptograficamente com parâmetros de cabeçalho estritos (`Bucket`, `Key`, `ContentType`) e tempo de expiração de 15 minutos:
@@ -89,26 +91,40 @@ def generate_presigned_put_url(
     )
 ```
 
-### B. Upload Direto pelo Frontend (`useContractUpload.ts`)
-O hook do cliente executa o ciclo de vida completo: obtém a URL assinada, envia o arquivo via `PUT` diretamente para a nuvem e, em seguida, dispara a criação atômica dos registros de banco de dados:
+### B. Upload Direto pelo Frontend (`useContractUploadForm.ts` e `uploadFileToR2`)
+O hook do cliente encapsula todo o fluxo de submissão do formulário, integrando o serviço utilitário centralizado [`uploadFileToR2`](../../../frontend/src/services/r2.ts) para transferir o arquivo binário diretamente ao bucket Cloudflare R2 sem sobrecarga de memória e sem waterfalls de rede intermediárias:
 
 ```typescript
-// 1. Solicita URL pré-assinada à API
+// 1. Solicita URL pré-assinada à API (Django Ninja Router)
 const uploadUrlRes = await getUploadUrl({
-  data: { filename: selectedFile.name, wedding_id: weddingUuid },
+  data: {
+    filename: selectedFile.name,
+    wedding_id: weddingUuid,
+  },
 });
 
-// 2. Upload direto via PUT para o Cloudflare R2
-const uploadResponse = await fetch(uploadUrlRes.data.upload_url, {
-  method: "PUT",
-  body: selectedFile,
-  headers: { "Content-Type": selectedFile.type || "application/octet-stream" },
-});
+// 2. Upload direto via PUT para o Cloudflare R2 usando o serviço centralizado
+await uploadFileToR2(uploadUrlRes.data.upload_url, selectedFile);
 
-if (!uploadResponse.ok) {
-  throw new Error(`Erro no envio do arquivo: ${uploadResponse.statusText}`);
-}
+const pdfFileKey = uploadUrlRes.data.object_key;
+
+// 3. Persistência atômica do contrato, itens e despesa financeira associada
+await createFull({
+  data: {
+    ...payload,
+    pdf_file_key: pdfFileKey,
+    items: itemDrafts.map((d) => ({
+      wedding: data.wedding,
+      name: d.name,
+      quantity: d.quantity,
+      acquisition_status: d.acquisition_status,
+    })),
+  },
+});
 ```
+
+#### Detalhes do Envio e Cabeçalho `Content-Type`:
+No serviço [`uploadFileToR2`](../../../frontend/src/services/r2.ts), a requisição `PUT` é despachada diretamente para a URL pré-assinada com o cabeçalho `Content-Type: file.type || "application/octet-stream"` (para arquivos PDF, `application/pdf`). Esse cabeçalho coincide estritamente com o `ContentType` especificado na assinatura criptográfica gerada pelo backend (`generate_presigned_put_url`), garantindo que o Cloudflare R2 valide a integridade do upload sem rejeições de CORS ou assinatura inválida (*SignatureDoesNotMatch*), prevenindo waterfalls ou requisições intermediárias desnecessárias. Testes automatizados do hook residem em [`useContractUploadForm.test.ts`](../../../frontend/src/features/contracts/hooks/useContractUploadForm.test.ts).
 
 ---
 

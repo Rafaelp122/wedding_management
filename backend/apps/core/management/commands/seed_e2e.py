@@ -21,6 +21,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory
 from apps.finances.models import Budget, Expense, Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -28,11 +30,9 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.models import Contract, Supplier
 from apps.logistics.tests.factories import (
     ContractFactory,
     ItemFactory,
-    SupplierFactory,
 )
 from apps.scheduler.models import Event, Task
 from apps.scheduler.tests.factories import EventFactory, TaskFactory

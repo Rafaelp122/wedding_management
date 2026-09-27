@@ -26,6 +26,11 @@ export const FinancesBudgetsListQueryParams = zod.object({
 export const financesBudgetsListResponseItemsItemTotalEstimatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsListResponseItemsItemTotalOverallSpentDefault = `0.00`;
 export const financesBudgetsListResponseItemsItemTotalOverallSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsListResponseItemsItemTotalAllocatedDefault = `0.00`;
+export const financesBudgetsListResponseItemsItemTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsListResponseItemsItemUnallocatedBudgetDefault = `0.00`;
+export const financesBudgetsListResponseItemsItemUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsListResponseItemsItemTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsListResponse = zod.object({
@@ -34,6 +39,10 @@ export const FinancesBudgetsListResponse = zod.object({
   "wedding": zod.string(),
   "total_estimated": zod.string().regex(financesBudgetsListResponseItemsItemTotalEstimatedRegExp),
   "total_overall_spent": zod.string().regex(financesBudgetsListResponseItemsItemTotalOverallSpentRegExp).default(financesBudgetsListResponseItemsItemTotalOverallSpentDefault),
+  "total_allocated": zod.string().regex(financesBudgetsListResponseItemsItemTotalAllocatedRegExp).default(financesBudgetsListResponseItemsItemTotalAllocatedDefault),
+  "unallocated_budget": zod.string().regex(financesBudgetsListResponseItemsItemUnallocatedBudgetRegExp).default(financesBudgetsListResponseItemsItemUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsListResponseItemsItemTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')),
   "count": zod.int()
@@ -60,6 +69,11 @@ export const FinancesBudgetsCreateBody = zod.object({
 export const financesBudgetsCreateResponseTotalEstimatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsCreateResponseTotalOverallSpentDefault = `0.00`;
 export const financesBudgetsCreateResponseTotalOverallSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsCreateResponseTotalAllocatedDefault = `0.00`;
+export const financesBudgetsCreateResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsCreateResponseUnallocatedBudgetDefault = `0.00`;
+export const financesBudgetsCreateResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsCreateResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsCreateResponse = zod.object({
@@ -67,6 +81,10 @@ export const FinancesBudgetsCreateResponse = zod.object({
   "wedding": zod.string(),
   "total_estimated": zod.string().regex(financesBudgetsCreateResponseTotalEstimatedRegExp),
   "total_overall_spent": zod.string().regex(financesBudgetsCreateResponseTotalOverallSpentRegExp).default(financesBudgetsCreateResponseTotalOverallSpentDefault),
+  "total_allocated": zod.string().regex(financesBudgetsCreateResponseTotalAllocatedRegExp).default(financesBudgetsCreateResponseTotalAllocatedDefault),
+  "unallocated_budget": zod.string().regex(financesBudgetsCreateResponseUnallocatedBudgetRegExp).default(financesBudgetsCreateResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsCreateResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -81,6 +99,11 @@ export const FinancesBudgetsReadParams = zod.object({
 export const financesBudgetsReadResponseTotalEstimatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsReadResponseTotalOverallSpentDefault = `0.00`;
 export const financesBudgetsReadResponseTotalOverallSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsReadResponseTotalAllocatedDefault = `0.00`;
+export const financesBudgetsReadResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsReadResponseUnallocatedBudgetDefault = `0.00`;
+export const financesBudgetsReadResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsReadResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsReadResponse = zod.object({
@@ -88,6 +111,10 @@ export const FinancesBudgetsReadResponse = zod.object({
   "wedding": zod.string(),
   "total_estimated": zod.string().regex(financesBudgetsReadResponseTotalEstimatedRegExp),
   "total_overall_spent": zod.string().regex(financesBudgetsReadResponseTotalOverallSpentRegExp).default(financesBudgetsReadResponseTotalOverallSpentDefault),
+  "total_allocated": zod.string().regex(financesBudgetsReadResponseTotalAllocatedRegExp).default(financesBudgetsReadResponseTotalAllocatedDefault),
+  "unallocated_budget": zod.string().regex(financesBudgetsReadResponseUnallocatedBudgetRegExp).default(financesBudgetsReadResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsReadResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -116,6 +143,11 @@ export const FinancesBudgetsUpdateBody = zod.object({
 export const financesBudgetsUpdateResponseTotalEstimatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsUpdateResponseTotalOverallSpentDefault = `0.00`;
 export const financesBudgetsUpdateResponseTotalOverallSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsUpdateResponseTotalAllocatedDefault = `0.00`;
+export const financesBudgetsUpdateResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsUpdateResponseUnallocatedBudgetDefault = `0.00`;
+export const financesBudgetsUpdateResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsUpdateResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsUpdateResponse = zod.object({
@@ -123,6 +155,10 @@ export const FinancesBudgetsUpdateResponse = zod.object({
   "wedding": zod.string(),
   "total_estimated": zod.string().regex(financesBudgetsUpdateResponseTotalEstimatedRegExp),
   "total_overall_spent": zod.string().regex(financesBudgetsUpdateResponseTotalOverallSpentRegExp).default(financesBudgetsUpdateResponseTotalOverallSpentDefault),
+  "total_allocated": zod.string().regex(financesBudgetsUpdateResponseTotalAllocatedRegExp).default(financesBudgetsUpdateResponseTotalAllocatedDefault),
+  "unallocated_budget": zod.string().regex(financesBudgetsUpdateResponseUnallocatedBudgetRegExp).default(financesBudgetsUpdateResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsUpdateResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -137,6 +173,11 @@ export const FinancesBudgetsForWeddingParams = zod.object({
 export const financesBudgetsForWeddingResponseTotalEstimatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesBudgetsForWeddingResponseTotalOverallSpentDefault = `0.00`;
 export const financesBudgetsForWeddingResponseTotalOverallSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsForWeddingResponseTotalAllocatedDefault = `0.00`;
+export const financesBudgetsForWeddingResponseTotalAllocatedRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsForWeddingResponseUnallocatedBudgetDefault = `0.00`;
+export const financesBudgetsForWeddingResponseUnallocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesBudgetsForWeddingResponseTenantAverageBudgetOneRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 
 
 export const FinancesBudgetsForWeddingResponse = zod.object({
@@ -144,6 +185,10 @@ export const FinancesBudgetsForWeddingResponse = zod.object({
   "wedding": zod.string(),
   "total_estimated": zod.string().regex(financesBudgetsForWeddingResponseTotalEstimatedRegExp),
   "total_overall_spent": zod.string().regex(financesBudgetsForWeddingResponseTotalOverallSpentRegExp).default(financesBudgetsForWeddingResponseTotalOverallSpentDefault),
+  "total_allocated": zod.string().regex(financesBudgetsForWeddingResponseTotalAllocatedRegExp).default(financesBudgetsForWeddingResponseTotalAllocatedDefault),
+  "unallocated_budget": zod.string().regex(financesBudgetsForWeddingResponseUnallocatedBudgetRegExp).default(financesBudgetsForWeddingResponseUnallocatedBudgetDefault),
+  "tenant_average_budget": zod.union([zod.string().regex(financesBudgetsForWeddingResponseTenantAverageBudgetOneRegExp),zod.null()]).optional(),
+  "comparison_percentage": zod.union([zod.number(),zod.null()]).optional(),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de orçamento.')
 
@@ -167,7 +212,8 @@ export const FinancesCategoriesListQueryParams = zod.object({
 export const financesCategoriesListResponseItemsItemAllocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesListResponseItemsItemTotalSpentDefault = `0.00`;
 export const financesCategoriesListResponseItemsItemTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesCategoriesListResponseItemsItemBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesListResponseItemsItemExpensesCountDefault = 0;
 
 export const FinancesCategoriesListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -177,7 +223,9 @@ export const FinancesCategoriesListResponse = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesListResponseItemsItemAllocatedBudgetRegExp),
-  "total_spent": zod.string().regex(financesCategoriesListResponseItemsItemTotalSpentRegExp).default(financesCategoriesListResponseItemsItemTotalSpentDefault)
+  "total_spent": zod.string().regex(financesCategoriesListResponseItemsItemTotalSpentRegExp).default(financesCategoriesListResponseItemsItemTotalSpentDefault),
+  "budget_utilization_percent": zod.int().default(financesCategoriesListResponseItemsItemBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesListResponseItemsItemExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')),
   "count": zod.int()
 })
@@ -207,7 +255,8 @@ export const FinancesCategoriesCreateBody = zod.object({
 export const financesCategoriesCreateResponseAllocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesCreateResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesCreateResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesCategoriesCreateResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesCreateResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -216,7 +265,9 @@ export const FinancesCategoriesCreateResponse = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesCreateResponseAllocatedBudgetRegExp),
-  "total_spent": zod.string().regex(financesCategoriesCreateResponseTotalSpentRegExp).default(financesCategoriesCreateResponseTotalSpentDefault)
+  "total_spent": zod.string().regex(financesCategoriesCreateResponseTotalSpentRegExp).default(financesCategoriesCreateResponseTotalSpentDefault),
+  "budget_utilization_percent": zod.int().default(financesCategoriesCreateResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesCreateResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -231,7 +282,8 @@ export const FinancesCategoriesReadParams = zod.object({
 export const financesCategoriesReadResponseAllocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesReadResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesReadResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesCategoriesReadResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesReadResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesReadResponse = zod.object({
   "uuid": zod.string(),
@@ -240,7 +292,9 @@ export const FinancesCategoriesReadResponse = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesReadResponseAllocatedBudgetRegExp),
-  "total_spent": zod.string().regex(financesCategoriesReadResponseTotalSpentRegExp).default(financesCategoriesReadResponseTotalSpentDefault)
+  "total_spent": zod.string().regex(financesCategoriesReadResponseTotalSpentRegExp).default(financesCategoriesReadResponseTotalSpentDefault),
+  "budget_utilization_percent": zod.int().default(financesCategoriesReadResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesReadResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -271,7 +325,8 @@ export const FinancesCategoriesUpdateBody = zod.object({
 export const financesCategoriesUpdateResponseAllocatedBudgetRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesCategoriesUpdateResponseTotalSpentDefault = `0.00`;
 export const financesCategoriesUpdateResponseTotalSpentRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesCategoriesUpdateResponseBudgetUtilizationPercentDefault = 0;
+export const financesCategoriesUpdateResponseExpensesCountDefault = 0;
 
 export const FinancesCategoriesUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -280,7 +335,9 @@ export const FinancesCategoriesUpdateResponse = zod.object({
   "name": zod.string(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "allocated_budget": zod.string().regex(financesCategoriesUpdateResponseAllocatedBudgetRegExp),
-  "total_spent": zod.string().regex(financesCategoriesUpdateResponseTotalSpentRegExp).default(financesCategoriesUpdateResponseTotalSpentDefault)
+  "total_spent": zod.string().regex(financesCategoriesUpdateResponseTotalSpentRegExp).default(financesCategoriesUpdateResponseTotalSpentDefault),
+  "budget_utilization_percent": zod.int().default(financesCategoriesUpdateResponseBudgetUtilizationPercentDefault),
+  "expenses_count": zod.int().default(financesCategoriesUpdateResponseExpensesCountDefault)
 }).describe('Schema de saída para exibição de categoria de orçamento.')
 
 /**
@@ -322,7 +379,7 @@ export const financesExpensesListResponseItemsItemTotalPaidDefault = `0.00`;
 export const financesExpensesListResponseItemsItemTotalPaidRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesExpensesListResponseItemsItemTotalPendingDefault = `0.00`;
 export const financesExpensesListResponseItemsItemTotalPendingRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesExpensesListResponseItemsItemPaymentProgressPercentDefault = 0;
 
 export const FinancesExpensesListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -340,7 +397,8 @@ export const FinancesExpensesListResponse = zod.object({
   "installments_count": zod.int().default(financesExpensesListResponseItemsItemInstallmentsCountDefault),
   "paid_installments_count": zod.int().default(financesExpensesListResponseItemsItemPaidInstallmentsCountDefault),
   "total_paid": zod.string().regex(financesExpensesListResponseItemsItemTotalPaidRegExp).default(financesExpensesListResponseItemsItemTotalPaidDefault),
-  "total_pending": zod.string().regex(financesExpensesListResponseItemsItemTotalPendingRegExp).default(financesExpensesListResponseItemsItemTotalPendingDefault)
+  "total_pending": zod.string().regex(financesExpensesListResponseItemsItemTotalPendingRegExp).default(financesExpensesListResponseItemsItemTotalPendingDefault),
+  "payment_progress_percent": zod.int().default(financesExpensesListResponseItemsItemPaymentProgressPercentDefault)
 }).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')),
   "count": zod.int()
 })
@@ -387,7 +445,7 @@ export const financesExpensesCreateResponseTotalPaidDefault = `0.00`;
 export const financesExpensesCreateResponseTotalPaidRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesExpensesCreateResponseTotalPendingDefault = `0.00`;
 export const financesExpensesCreateResponseTotalPendingRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesExpensesCreateResponsePaymentProgressPercentDefault = 0;
 
 export const FinancesExpensesCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -404,8 +462,28 @@ export const FinancesExpensesCreateResponse = zod.object({
   "installments_count": zod.int().default(financesExpensesCreateResponseInstallmentsCountDefault),
   "paid_installments_count": zod.int().default(financesExpensesCreateResponsePaidInstallmentsCountDefault),
   "total_paid": zod.string().regex(financesExpensesCreateResponseTotalPaidRegExp).default(financesExpensesCreateResponseTotalPaidDefault),
-  "total_pending": zod.string().regex(financesExpensesCreateResponseTotalPendingRegExp).default(financesExpensesCreateResponseTotalPendingDefault)
+  "total_pending": zod.string().regex(financesExpensesCreateResponseTotalPendingRegExp).default(financesExpensesCreateResponseTotalPendingDefault),
+  "payment_progress_percent": zod.int().default(financesExpensesCreateResponsePaymentProgressPercentDefault)
 }).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')
+
+/**
+ * Lista contratos vinculados a um casamento para associação em despesas.
+ * @summary List Contracts Lookup
+ */
+export const FinancesExpensesContractsLookupQueryParams = zod.object({
+  "wedding_id": zod.string()
+})
+
+export const financesExpensesContractsLookupResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+
+
+export const FinancesExpensesContractsLookupResponseItem = zod.object({
+  "uuid": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "total_amount": zod.string().regex(financesExpensesContractsLookupResponseTotalAmountRegExp)
+}).describe('Schema de saída para listagem simplificada de contratos em dropdowns\/lookups.')
+export const FinancesExpensesContractsLookupResponse = zod.array(FinancesExpensesContractsLookupResponseItem)
 
 /**
  * Retorna recibo unitário simplificado nominal registrado no controle base.
@@ -426,7 +504,7 @@ export const financesExpensesReadResponseTotalPaidDefault = `0.00`;
 export const financesExpensesReadResponseTotalPaidRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesExpensesReadResponseTotalPendingDefault = `0.00`;
 export const financesExpensesReadResponseTotalPendingRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesExpensesReadResponsePaymentProgressPercentDefault = 0;
 
 export const FinancesExpensesReadResponse = zod.object({
   "uuid": zod.string(),
@@ -443,7 +521,8 @@ export const FinancesExpensesReadResponse = zod.object({
   "installments_count": zod.int().default(financesExpensesReadResponseInstallmentsCountDefault),
   "paid_installments_count": zod.int().default(financesExpensesReadResponsePaidInstallmentsCountDefault),
   "total_paid": zod.string().regex(financesExpensesReadResponseTotalPaidRegExp).default(financesExpensesReadResponseTotalPaidDefault),
-  "total_pending": zod.string().regex(financesExpensesReadResponseTotalPendingRegExp).default(financesExpensesReadResponseTotalPendingDefault)
+  "total_pending": zod.string().regex(financesExpensesReadResponseTotalPendingRegExp).default(financesExpensesReadResponseTotalPendingDefault),
+  "payment_progress_percent": zod.int().default(financesExpensesReadResponsePaymentProgressPercentDefault)
 }).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')
 
 /**
@@ -465,8 +544,6 @@ export const financesExpensesUpdateBodyEstimatedAmountTwoRegExp = new RegExp('^(
 export const financesExpensesUpdateBodyActualAmountOneMin = 0;
 
 export const financesExpensesUpdateBodyActualAmountTwoRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const financesExpensesUpdateBodyNumInstallmentsOneExclusiveMin = 0;
-
 
 
 export const FinancesExpensesUpdateBody = zod.object({
@@ -474,9 +551,7 @@ export const FinancesExpensesUpdateBody = zod.object({
   "name": zod.union([zod.string().min(1).max(financesExpensesUpdateBodyNameOneMax),zod.null()]).optional(),
   "description": zod.string().max(financesExpensesUpdateBodyDescriptionMax).default(financesExpensesUpdateBodyDescriptionDefault),
   "estimated_amount": zod.union([zod.number().min(financesExpensesUpdateBodyEstimatedAmountOneMin),zod.string().regex(financesExpensesUpdateBodyEstimatedAmountTwoRegExp),zod.null()]).optional(),
-  "actual_amount": zod.union([zod.number().min(financesExpensesUpdateBodyActualAmountOneMin),zod.string().regex(financesExpensesUpdateBodyActualAmountTwoRegExp),zod.null()]).optional(),
-  "num_installments": zod.union([zod.int().gt(financesExpensesUpdateBodyNumInstallmentsOneExclusiveMin),zod.null()]).optional(),
-  "first_due_date": zod.union([zod.iso.date(),zod.null()]).optional()
+  "actual_amount": zod.union([zod.number().min(financesExpensesUpdateBodyActualAmountOneMin),zod.string().regex(financesExpensesUpdateBodyActualAmountTwoRegExp),zod.null()]).optional()
 }).describe('Schema de entrada para atualização parcial de despesa.')
 
 export const financesExpensesUpdateResponseDescriptionDefault = ``;
@@ -490,7 +565,7 @@ export const financesExpensesUpdateResponseTotalPaidDefault = `0.00`;
 export const financesExpensesUpdateResponseTotalPaidRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
 export const financesExpensesUpdateResponseTotalPendingDefault = `0.00`;
 export const financesExpensesUpdateResponseTotalPendingRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesExpensesUpdateResponsePaymentProgressPercentDefault = 0;
 
 export const FinancesExpensesUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -507,7 +582,8 @@ export const FinancesExpensesUpdateResponse = zod.object({
   "installments_count": zod.int().default(financesExpensesUpdateResponseInstallmentsCountDefault),
   "paid_installments_count": zod.int().default(financesExpensesUpdateResponsePaidInstallmentsCountDefault),
   "total_paid": zod.string().regex(financesExpensesUpdateResponseTotalPaidRegExp).default(financesExpensesUpdateResponseTotalPaidDefault),
-  "total_pending": zod.string().regex(financesExpensesUpdateResponseTotalPendingRegExp).default(financesExpensesUpdateResponseTotalPendingDefault)
+  "total_pending": zod.string().regex(financesExpensesUpdateResponseTotalPendingRegExp).default(financesExpensesUpdateResponseTotalPendingDefault),
+  "payment_progress_percent": zod.int().default(financesExpensesUpdateResponsePaymentProgressPercentDefault)
 }).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')
 
 /**
@@ -544,10 +620,61 @@ export const FinancesExpensesFromDocumentResponse = zod.object({
 }).describe('Schema de saída com dados extraídos de documento\/contrato.')
 
 /**
+ * Renegocia e redistribui as parcelas de uma despesa.
+ * Bloqueia a operação se houver parcelas já marcadas como pagas (BR-F04).
+ * @summary Renegotiate Expense
+ */
+export const FinancesExpensesRenegotiateParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const financesExpensesRenegotiateBodyNumInstallmentsExclusiveMin = 0;
+
+
+
+export const FinancesExpensesRenegotiateBody = zod.object({
+  "num_installments": zod.int().gt(financesExpensesRenegotiateBodyNumInstallmentsExclusiveMin),
+  "first_due_date": zod.union([zod.iso.date(),zod.null()]).optional()
+}).describe('Schema de entrada para renegociação e redistribuição de parcelas.')
+
+export const financesExpensesRenegotiateResponseDescriptionDefault = ``;
+export const financesExpensesRenegotiateResponseEstimatedAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesExpensesRenegotiateResponseActualAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesExpensesRenegotiateResponseCategoryNameDefault = ``;
+export const financesExpensesRenegotiateResponseStatusDefault = `PENDING`;
+export const financesExpensesRenegotiateResponseInstallmentsCountDefault = 0;
+export const financesExpensesRenegotiateResponsePaidInstallmentsCountDefault = 0;
+export const financesExpensesRenegotiateResponseTotalPaidDefault = `0.00`;
+export const financesExpensesRenegotiateResponseTotalPaidRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesExpensesRenegotiateResponseTotalPendingDefault = `0.00`;
+export const financesExpensesRenegotiateResponseTotalPendingRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
+export const financesExpensesRenegotiateResponsePaymentProgressPercentDefault = 0;
+
+export const FinancesExpensesRenegotiateResponse = zod.object({
+  "uuid": zod.string(),
+  "wedding": zod.string(),
+  "category": zod.string(),
+  "contract": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.string(),
+  "description": zod.string().default(financesExpensesRenegotiateResponseDescriptionDefault),
+  "estimated_amount": zod.string().regex(financesExpensesRenegotiateResponseEstimatedAmountRegExp),
+  "actual_amount": zod.string().regex(financesExpensesRenegotiateResponseActualAmountRegExp),
+  "category_name": zod.string().default(financesExpensesRenegotiateResponseCategoryNameDefault),
+  "contract_description": zod.union([zod.string(),zod.null()]).optional(),
+  "status": zod.string().default(financesExpensesRenegotiateResponseStatusDefault),
+  "installments_count": zod.int().default(financesExpensesRenegotiateResponseInstallmentsCountDefault),
+  "paid_installments_count": zod.int().default(financesExpensesRenegotiateResponsePaidInstallmentsCountDefault),
+  "total_paid": zod.string().regex(financesExpensesRenegotiateResponseTotalPaidRegExp).default(financesExpensesRenegotiateResponseTotalPaidDefault),
+  "total_pending": zod.string().regex(financesExpensesRenegotiateResponseTotalPendingRegExp).default(financesExpensesRenegotiateResponseTotalPendingDefault),
+  "payment_progress_percent": zod.int().default(financesExpensesRenegotiateResponsePaymentProgressPercentDefault)
+}).describe('Schema de saída para exibição de despesa (CQRS puro sem queries ORM).')
+
+/**
  * Lista parcelas com filtros opcionais por casamento, despesa,
  * status e período de vencimento.
  * @summary List Installments
  */
+export const financesInstallmentsListQueryExcludePaidDefault = false;
 export const financesInstallmentsListQueryLimitDefault = 100;
 
 export const financesInstallmentsListQueryOffsetDefault = 0;
@@ -561,12 +688,13 @@ export const FinancesInstallmentsListQueryParams = zod.object({
   "status": zod.union([zod.string(),zod.null()]).optional(),
   "due_date_gte": zod.union([zod.iso.date(),zod.null()]).optional(),
   "due_date_lte": zod.union([zod.iso.date(),zod.null()]).optional(),
+  "exclude_paid": zod.boolean().default(financesInstallmentsListQueryExcludePaidDefault),
   "limit": zod.int().min(1).default(financesInstallmentsListQueryLimitDefault),
   "offset": zod.int().min(financesInstallmentsListQueryOffsetMin).default(financesInstallmentsListQueryOffsetDefault)
 })
 
 export const financesInstallmentsListResponseItemsItemAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesInstallmentsListResponseItemsItemIsLateDefault = false;
 
 export const FinancesInstallmentsListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -578,6 +706,7 @@ export const FinancesInstallmentsListResponse = zod.object({
   "due_date": zod.iso.date(),
   "paid_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "status": zod.string(),
+  "is_late": zod.boolean().default(financesInstallmentsListResponseItemsItemIsLateDefault),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de parcela.')),
   "count": zod.int()
@@ -592,7 +721,7 @@ export const FinancesInstallmentsReadParams = zod.object({
 })
 
 export const financesInstallmentsReadResponseAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesInstallmentsReadResponseIsLateDefault = false;
 
 export const FinancesInstallmentsReadResponse = zod.object({
   "uuid": zod.string(),
@@ -603,6 +732,7 @@ export const FinancesInstallmentsReadResponse = zod.object({
   "due_date": zod.iso.date(),
   "paid_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "status": zod.string(),
+  "is_late": zod.boolean().default(financesInstallmentsReadResponseIsLateDefault),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de parcela.')
 
@@ -616,7 +746,7 @@ export const FinancesInstallmentsMarkAsPaidParams = zod.object({
 })
 
 export const financesInstallmentsMarkAsPaidResponseAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesInstallmentsMarkAsPaidResponseIsLateDefault = false;
 
 export const FinancesInstallmentsMarkAsPaidResponse = zod.object({
   "uuid": zod.string(),
@@ -627,6 +757,7 @@ export const FinancesInstallmentsMarkAsPaidResponse = zod.object({
   "due_date": zod.iso.date(),
   "paid_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "status": zod.string(),
+  "is_late": zod.boolean().default(financesInstallmentsMarkAsPaidResponseIsLateDefault),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de parcela.')
 
@@ -639,7 +770,7 @@ export const FinancesInstallmentsUnmarkAsPaidParams = zod.object({
 })
 
 export const financesInstallmentsUnmarkAsPaidResponseAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesInstallmentsUnmarkAsPaidResponseIsLateDefault = false;
 
 export const FinancesInstallmentsUnmarkAsPaidResponse = zod.object({
   "uuid": zod.string(),
@@ -650,6 +781,7 @@ export const FinancesInstallmentsUnmarkAsPaidResponse = zod.object({
   "due_date": zod.iso.date(),
   "paid_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "status": zod.string(),
+  "is_late": zod.boolean().default(financesInstallmentsUnmarkAsPaidResponseIsLateDefault),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de parcela.')
 
@@ -673,7 +805,7 @@ export const FinancesInstallmentsAdjustBody = zod.object({
 }).describe('Schema de entrada para ajuste financeiro de parcela.')
 
 export const financesInstallmentsAdjustResponseAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-
+export const financesInstallmentsAdjustResponseIsLateDefault = false;
 
 export const FinancesInstallmentsAdjustResponse = zod.object({
   "uuid": zod.string(),
@@ -684,6 +816,7 @@ export const FinancesInstallmentsAdjustResponse = zod.object({
   "due_date": zod.iso.date(),
   "paid_date": zod.union([zod.iso.date(),zod.null()]).optional(),
   "status": zod.string(),
+  "is_late": zod.boolean().default(financesInstallmentsAdjustResponseIsLateDefault),
   "notes": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de saída para exibição de parcela.')
 

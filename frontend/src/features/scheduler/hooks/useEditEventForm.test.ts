@@ -61,6 +61,7 @@ describe("useEditEventForm", () => {
       description: "",
       start_time: null,
       end_time: null,
+      force_overlap: false,
     }));
     expect(result.current.readOnly).toBe(true);
     expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
@@ -89,6 +90,7 @@ describe("useEditEventForm", () => {
       description: "",
       start_time: null,
       end_time: null,
+      force_overlap: false,
     }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());

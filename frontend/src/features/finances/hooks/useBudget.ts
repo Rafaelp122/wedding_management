@@ -39,10 +39,7 @@ export function useWeddingBudget(weddingUuid: string) {
 
   const isLoading = isLoadingBudget || isLoadingCategories;
 
-  const totalAllocated = categories.reduce(
-    (acc, category) => acc + Number(category.allocated_budget || 0),
-    0,
-  );
+  const totalAllocated = Number(budget?.total_allocated || 0);
   const totalSpent = Number(budget?.total_overall_spent || 0);
   const totalEstimated = Number(budget?.total_estimated || 0);
 

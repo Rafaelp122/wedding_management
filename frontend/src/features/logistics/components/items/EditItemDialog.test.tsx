@@ -34,7 +34,7 @@ describe("EditItemDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     server.use(
-      http.get("*/api/v1/logistics/contracts/", () =>
+      http.get("*/api/v1/contracts/", () =>
         HttpResponse.json({ items: [], count: 0 }),
       ),
     );

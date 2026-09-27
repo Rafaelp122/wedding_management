@@ -30,7 +30,7 @@ export function DeleteBudgetCategoryDialog({
 }: DeleteBudgetCategoryDialogProps) {
   const { mutate, isPending } = useFinancesCategoriesDelete();
 
-  const hasExpenses = parseFloat(category.total_spent ?? "0") > 0;
+  const hasExpenses = (category.expenses_count ?? 0) > 0;
 
   const handleDelete = () => {
     mutate(
@@ -67,12 +67,8 @@ export function DeleteBudgetCategoryDialog({
           <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
             <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
             <span>
-              Esta categoria possui R${" "}
-              {parseFloat(category.total_spent ?? "0").toLocaleString(
-                "pt-BR",
-                { minimumFractionDigits: 2 },
-              )}{" "}
-              em despesas vinculadas. Remova as despesas antes de excluir a
+              Esta categoria possui {category.expenses_count}{" "}
+              {category.expenses_count === 1 ? "despesa vinculada" : "despesas vinculadas"}. Remova as despesas antes de excluir a
               categoria.
             </span>
           </div>

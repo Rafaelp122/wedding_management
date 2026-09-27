@@ -21,4 +21,6 @@ export interface WeddingDashboardOut {
   upcoming_installments: WeddingDashboardInstallmentOut[];
   urgent_tasks: WeddingDashboardTaskOut[];
   categories_summary: WeddingDashboardCategoryOut[];
+  total_allocated?: string;
+  total_spent?: string;
 }

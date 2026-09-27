@@ -1,7 +1,7 @@
 # Especificação Técnica: Guard-Rail de Atomicidade na Service Layer
 
 > **Categoria:** Referência Técnica (Guard-Rails & Integridade)
-> **Relacionados:** [MOC de Guard-Rails](index.md) · [ADR-006: Service Layer Pattern](../../../architecture/adr/006-service-layer.md) · [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md)
+> **Relacionados:** [Suíte de Guard-Rails](../../../architecture/concepts/architectural-guard-rails-suite.md) · [ADR-006: Service Layer Pattern](../../../architecture/adr/006-service-layer.md)
 > **Implementação:** `backend/apps/core/tests/test_atomic_service_audit.py`
 
 ---

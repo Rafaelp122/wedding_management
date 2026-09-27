@@ -26,7 +26,7 @@ const mockNotifications: NotificationOut[] = [
     message: "O contrato com a florista expira em 5 dias",
     type: "EXPIRING_CONTRACT",
     is_read: true,
-    link: "/logistics/contracts",
+    link: "/contracts",
     created_at: "2026-08-07T08:30:00Z",
   },
 ];

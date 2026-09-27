@@ -11,10 +11,12 @@ from apps.finances.schemas.budget_category import (
     BudgetCategoryPatchIn,
 )
 from apps.finances.schemas.expense import (
+    ContractLookupOut,
     ExpenseFromDocumentOut,
     ExpenseIn,
     ExpenseOut,
     ExpensePatchIn,
+    ExpenseRenegotiateIn,
 )
 from apps.finances.schemas.installment import (
     InstallmentAdjustIn,
@@ -31,10 +33,12 @@ __all__ = [
     "BudgetIn",
     "BudgetOut",
     "BudgetPatchIn",
+    "ContractLookupOut",
     "ExpenseFromDocumentOut",
     "ExpenseIn",
     "ExpenseOut",
     "ExpensePatchIn",
+    "ExpenseRenegotiateIn",
     "InstallmentAdjustIn",
     "InstallmentIn",
     "InstallmentOut",

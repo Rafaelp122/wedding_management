@@ -5,20 +5,39 @@ from typing import Any, cast
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.schemas import ContractIn
+from apps.contracts.schemas.supplier import SupplierIn
+from apps.contracts.services.contract_service import ContractService
+from apps.contracts.services.supplier_service import SupplierService
+from apps.contracts.tests.factories import (
+    SupplierFactory as _SupplierFactory,
+)
 from apps.finances.services.budget_service import BudgetService
 from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
-from apps.logistics.models import Supplier
-from apps.logistics.schemas import ContractIn, ItemIn, SupplierIn
-from apps.logistics.services.contract_service import ContractService
+from apps.logistics.models import Item
+from apps.logistics.schemas import ItemIn
 from apps.logistics.services.item_service import ItemService
-from apps.logistics.services.supplier_service import SupplierService
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
+from apps.logistics.tests.factories import (
+    ContractFactory as _ContractFactory,
+)
+from apps.logistics.tests.factories import (
+    ItemFactory as _ItemFactory,
+)
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.models import Wedding
 from apps.weddings.schemas import WeddingIn
 from apps.weddings.services import WeddingService
 from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def ContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _ContractFactory(*args, **kwargs))
+
+
+def ItemFactory(*args: Any, **kwargs: Any) -> Item:
+    return cast(Item, _ItemFactory(*args, **kwargs))
 
 
 def SupplierFactory(*args: Any, **kwargs: Any) -> Supplier:
@@ -51,7 +70,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
         user.company,
         SupplierIn(
             name="Fornecedor Meu",
-            cnpj="00.000.000/0001-00",
+            cnpj="00.000.000/0001-91",
             phone="0",
             email="a@email.com",
             state="",
@@ -98,7 +117,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
         other_user.company,
         SupplierIn(
             name="Outro",
-            cnpj="00.000.000/0001-01",
+            cnpj="11.222.333/0001-81",
             phone="1",
             email="b@email.com",
             state="",
@@ -146,7 +165,7 @@ class TestLogisticsNinjaAPI:
     def test_list_suppliers_isolation(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
-        response = auth_client.get("/api/v1/logistics/suppliers/")
+        response = auth_client.get("/api/v1/suppliers/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 1
@@ -155,7 +174,7 @@ class TestLogisticsNinjaAPI:
     def test_list_contracts_isolation(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
-        response = auth_client.get("/api/v1/logistics/contracts/")
+        response = auth_client.get("/api/v1/contracts/")
         assert response.status_code == 200
         data = response.json()
         assert len(data["items"]) == 1
@@ -164,9 +183,9 @@ class TestLogisticsNinjaAPI:
     def test_list_contracts_filter_by_parent(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
-        """GET /api/v1/logistics/contracts/?parent_id=X retorna só aditivos."""
+        """GET /api/v1/contracts/?parent_id=X retorna só aditivos."""
         response = auth_client.get(
-            f"/api/v1/logistics/contracts/?parent_id={seed_data['my_contract'].uuid}"
+            f"/api/v1/contracts/?parent_id={seed_data['my_contract'].uuid}"
         )
         assert response.status_code == 200
         data = response.json()
@@ -184,7 +203,7 @@ class TestLogisticsNinjaAPI:
     def test_create_supplier_success(self, auth_client: Any) -> None:
         payload = {
             "name": "Banda Ninja",
-            "cnpj": "99.999.999/0001-99",
+            "cnpj": "11.222.333/0001-81",
             "phone": "11999999999",
             "email": "banda@ninja.com",
             "is_active": True,
@@ -195,7 +214,7 @@ class TestLogisticsNinjaAPI:
             "notes": "Banda de casamento",
         }
         response = auth_client.post(
-            "/api/v1/logistics/suppliers/",
+            "/api/v1/suppliers/",
             data=payload,
             content_type="application/json",
         )
@@ -217,7 +236,7 @@ class TestLogisticsNinjaAPI:
             "email": "invalido@email.com",
         }
         response = auth_client.post(
-            "/api/v1/logistics/suppliers/",
+            "/api/v1/suppliers/",
             data=payload,
             content_type="application/json",
         )
@@ -234,7 +253,7 @@ class TestLogisticsNinjaAPI:
             "email": "invalido@email.com",
         }
         response = auth_client.post(
-            "/api/v1/logistics/suppliers/",
+            "/api/v1/suppliers/",
             data=payload,
             content_type="application/json",
         )
@@ -250,7 +269,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="Buffet Estrela",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="1",
                 email="buffet@email.com",
                 state="",
@@ -261,7 +280,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="Fotógrafo Sol",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="2",
                 email="foto@email.com",
                 state="",
@@ -272,7 +291,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="Outro",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="3",
                 email="outro@email.com",
                 state="",
@@ -280,7 +299,7 @@ class TestLogisticsNinjaAPI:
             ),
         )
 
-        response = auth_client.get("/api/v1/logistics/suppliers/?search=estrela")
+        response = auth_client.get("/api/v1/suppliers/?search=estrela")
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 1
@@ -294,7 +313,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="Ativo",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="1",
                 email="a@email.com",
                 state="",
@@ -306,7 +325,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="Inativo",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="2",
                 email="b@email.com",
                 state="",
@@ -315,7 +334,7 @@ class TestLogisticsNinjaAPI:
             ),
         )
 
-        response = auth_client.get("/api/v1/logistics/suppliers/?is_active=false")
+        response = auth_client.get("/api/v1/suppliers/?is_active=false")
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 1
@@ -328,7 +347,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="A Buffet",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="1",
                 email="a@email.com",
                 state="",
@@ -340,7 +359,7 @@ class TestLogisticsNinjaAPI:
             user.company,
             SupplierIn(
                 name="B Buffet",
-                cnpj="00.000.000/0001-00",
+                cnpj="00.000.000/0001-91",
                 phone="2",
                 email="b@email.com",
                 state="",
@@ -349,9 +368,7 @@ class TestLogisticsNinjaAPI:
             ),
         )
 
-        response = auth_client.get(
-            "/api/v1/logistics/suppliers/?search=buffet&is_active=true"
-        )
+        response = auth_client.get("/api/v1/suppliers/?search=buffet&is_active=true")
         assert response.status_code == 200
         data = response.json()
         assert data["count"] == 1
@@ -364,7 +381,7 @@ class TestLogisticsNinjaAPI:
         contract = seed_data["my_contract"]
         payload = {"name": "Contrato Atualizado"}
         response = auth_client.patch(
-            f"/api/v1/logistics/contracts/{contract.uuid}/",
+            f"/api/v1/contracts/{contract.uuid}/",
             data=payload,
             content_type="application/json",
         )
@@ -382,7 +399,7 @@ class TestLogisticsNinjaAPI:
         other_wedding = WeddingFactory(company=user.company)
         payload = {"name": "Novo Nome", "wedding": str(other_wedding.uuid)}
         response = auth_client.patch(
-            f"/api/v1/logistics/contracts/{contract.uuid}/",
+            f"/api/v1/contracts/{contract.uuid}/",
             data=payload,
             content_type="application/json",
         )
@@ -396,7 +413,7 @@ class TestLogisticsNinjaAPI:
     ) -> None:
         """Testa exclusão de contrato com DELETE."""
         contract = seed_data["my_contract"]
-        response = auth_client.delete(f"/api/v1/logistics/contracts/{contract.uuid}/")
+        response = auth_client.delete(f"/api/v1/contracts/{contract.uuid}/")
         assert response.status_code == 204
 
     def test_update_item_success(
@@ -448,7 +465,7 @@ class TestLogisticsNinjaAPI:
         supplier = seed_data["my_supplier"]
         payload = {"name": "Fornecedor Atualizado"}
         response = auth_client.patch(
-            f"/api/v1/logistics/suppliers/{supplier.uuid}/",
+            f"/api/v1/suppliers/{supplier.uuid}/",
             data=payload,
             content_type="application/json",
         )
@@ -460,47 +477,106 @@ class TestLogisticsNinjaAPI:
     ) -> None:
         """Testa exclusão de fornecedor com DELETE."""
         supplier = seed_data["my_supplier"]
-        response = auth_client.delete(f"/api/v1/logistics/suppliers/{supplier.uuid}/")
+        response = auth_client.delete(f"/api/v1/suppliers/{supplier.uuid}/")
         assert response.status_code == 204
 
     def test_retrieve_contract(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
         response = auth_client.get(
-            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/"
+            f"/api/v1/contracts/{seed_data['my_contract'].uuid}/"
         )
         assert response.status_code == 200
-        assert response.json()["name"] == "Contrato Teste"
-        assert "addendums_total_amount" in response.json()
-        assert "total_amount_with_addendums" in response.json()
+        data = response.json()
+        assert data["name"] == "Contrato Teste"
+        assert data["allowed_transitions"] == ["PENDING", "CANCELED"]
+        assert "addendums_total_amount" in data
+        assert "total_amount_with_addendums" in data
 
     def test_retrieve_contract_with_addendums_consolidated_totals(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
+        """Consolidado SIGNED-only via aggregate da API."""
         parent = seed_data["my_contract"]
         addendum_payload = {
-            "wedding": str(parent.wedding.uuid),
-            "supplier": str(seed_data["my_supplier"].uuid),
-            "name": "Aditivo 1",
-            "total_amount": "2500.00",
-            "status": "DRAFT",
-            "parent": str(parent.uuid),
+            "amount": "2500.00",
+            "justification": "Aditivo 1",
         }
         res_create = auth_client.post(
-            "/api/v1/logistics/contracts/",
+            f"/api/v1/contracts/{parent.uuid}/addendums/",
             data=addendum_payload,
             content_type="application/json",
         )
         assert res_create.status_code == 201
 
-        response = auth_client.get(f"/api/v1/logistics/contracts/{parent.uuid}/")
+        response = auth_client.get(f"/api/v1/contracts/{parent.uuid}/")
         assert response.status_code == 200
         data = response.json()
         assert data["addendums_count"] == 1
-        assert Decimal(str(data["addendums_total_amount"])) == Decimal("2500.00")
-        assert Decimal(str(data["total_amount_with_addendums"])) == Decimal(
+        assert Decimal(str(data["addendums_total"])) == Decimal("0.00")
+
+        addendum_uuid = res_create.json()["uuid"]
+        res_sign = auth_client.post(
+            f"/api/v1/contracts/{parent.uuid}/addendums/{addendum_uuid}/sign/",
+            data=json.dumps({"signed_date": str(date.today())}),
+            content_type="application/json",
+        )
+        assert res_sign.status_code == 200
+
+        response = auth_client.get(f"/api/v1/contracts/{parent.uuid}/")
+        assert response.status_code == 200
+        data = response.json()
+        assert Decimal(str(data["addendums_total"])) == Decimal("2500.00")
+        assert Decimal(str(data["effective_amount"])) == Decimal(
             str(parent.total_amount)
         ) + Decimal("2500.00")
+
+    def test_retrieve_contract_details_aggregate_success(
+        self, auth_client: Any, seed_data: dict[str, Any]
+    ) -> None:
+        """
+        GET /contracts/{uuid}/details/ retorna agregado de contrato, itens e aditivos.
+        """
+        parent = seed_data["my_contract"]
+        addendum_payload = {
+            "amount": "1200.00",
+            "justification": "Aditivo Detalhes",
+        }
+        res_addendum = auth_client.post(
+            f"/api/v1/contracts/{parent.uuid}/addendums/",
+            data=addendum_payload,
+            content_type="application/json",
+        )
+        assert res_addendum.status_code == 201
+
+        response = auth_client.get(f"/api/v1/contracts/{parent.uuid}/details/")
+        assert response.status_code == 200
+        data = response.json()
+        assert "contract" in data
+        assert "items" in data
+        assert "addendums" in data
+        assert data["contract"]["uuid"] == str(parent.uuid)
+        assert data["contract"]["allowed_transitions"] == ["PENDING", "CANCELED"]
+        assert len(data["items"]) >= 1
+        assert data["items"][0]["uuid"] == str(seed_data["my_item"].uuid)
+        assert len(data["addendums"]) == 1
+        assert data["addendums"][0]["justification"] == "Aditivo Detalhes"
+
+    def test_retrieve_contract_details_cross_tenant_returns_404(
+        self, auth_client: Any, seed_data: dict[str, Any]
+    ) -> None:
+        """GET /contracts/{uuid}/details/ de outro tenant retorna 404."""
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        other_supplier = SupplierFactory(company=other_user.company)
+        other_contract = ContractFactory(
+            wedding=other_wedding,
+            supplier=other_supplier,
+            company=other_user.company,
+        )
+
+        response = auth_client.get(f"/api/v1/contracts/{other_contract.uuid}/details/")
+        assert response.status_code == 404
 
     def test_create_contract_via_api(
         self, auth_client: Any, seed_data: dict[str, Any]
@@ -513,7 +589,7 @@ class TestLogisticsNinjaAPI:
             "status": "DRAFT",
         }
         response = auth_client.post(
-            "/api/v1/logistics/contracts/",
+            "/api/v1/contracts/",
             data=payload,
             content_type="application/json",
         )
@@ -524,7 +600,7 @@ class TestLogisticsNinjaAPI:
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
         response = auth_client.post(
-            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            f"/api/v1/contracts/{seed_data['my_contract'].uuid}/upload/",
             data=json.dumps({"pdf_file_key": "contracts/test.pdf"}),
             content_type="application/json",
         )
@@ -534,22 +610,22 @@ class TestLogisticsNinjaAPI:
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
         auth_client.post(
-            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+            f"/api/v1/contracts/{seed_data['my_contract'].uuid}/upload/",
             data=json.dumps({"pdf_file_key": "contracts/test.pdf"}),
             content_type="application/json",
         )
-        response = auth_client.delete(
-            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}/upload/",
+        response = auth_client.post(
+            f"/api/v1/contracts/{seed_data['my_contract'].uuid}/detach-file/",
         )
-        assert response.status_code == 204
+        assert response.status_code == 200
+        assert response.json()["has_file"] is False
 
     def test_transition_contract_status(
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
         """DRAFT → PENDING (transição válida)."""
         response = auth_client.post(
-            f"/api/v1/logistics/contracts/{seed_data['my_contract'].uuid}"
-            f"/transition-status/",
+            f"/api/v1/contracts/{seed_data['my_contract'].uuid}/transition/",
             data={"status": "PENDING"},
             content_type="application/json",
         )
@@ -603,7 +679,7 @@ class TestLogisticsNinjaAPI:
         self, auth_client: Any, seed_data: dict[str, Any]
     ) -> None:
         response = auth_client.get(
-            f"/api/v1/logistics/suppliers/{seed_data['my_supplier'].uuid}/"
+            f"/api/v1/suppliers/{seed_data['my_supplier'].uuid}/"
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Fornecedor Meu"
@@ -645,7 +721,7 @@ class TestContractCreateFullAPI:
         """POST /full/ apenas com dados do contrato retorna 201."""
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -665,7 +741,7 @@ class TestContractCreateFullAPI:
         """POST /full/ com items_data em JSON string retorna 201."""
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -683,11 +759,37 @@ class TestContractCreateFullAPI:
         assert response.status_code == 201
         assert response.json()["name"] == "Contrato com Itens"
 
+    def test_create_full_with_typed_items_array(
+        self, auth_client: Any, user: User
+    ) -> None:
+        """POST /full/ com array tipado de items retorna 201 e persiste itens."""
+        wedding, supplier = self._wedding_supplier(user)
+        response = auth_client.post(
+            "/api/v1/contracts/full/",
+            data=json.dumps(
+                {
+                    "wedding": str(wedding.uuid),
+                    "supplier": str(supplier.uuid),
+                    "name": "Contrato Itens Tipados",
+                    "total_amount": "4500.00",
+                    "items": [
+                        {"name": "Mesa Rústica", "quantity": 10},
+                        {"name": "Cadeira Medalhão", "quantity": 100},
+                    ],
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 201
+        data = response.json()
+        contract_uuid = data["uuid"]
+        assert Item.objects.filter(contract__uuid=contract_uuid).count() == 2
+
     def test_create_full_with_file(self, auth_client: Any, user: User) -> None:
         """POST /full/ com pdf_file_key retorna 201."""
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -709,7 +811,7 @@ class TestContractCreateFullAPI:
         wedding, category = self._category(user)
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -733,7 +835,7 @@ class TestContractCreateFullAPI:
         wedding, category = self._category(user)
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -763,7 +865,7 @@ class TestContractCreateFullAPI:
         """POST /full/ com items_data inválido retorna 422."""
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -784,7 +886,7 @@ class TestContractCreateFullAPI:
         """POST /full/ com items_data não-lista retorna 422."""
         wedding, supplier = self._wedding_supplier(user)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -807,7 +909,7 @@ class TestContractCreateFullAPI:
         wedding = WeddingFactory(company=user.company)
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(wedding.uuid),
@@ -827,7 +929,7 @@ class TestContractCreateFullAPI:
         other_wedding = WeddingFactory(company=other_user.company)
         supplier = SupplierFactory(company=user.company)
         response = auth_client.post(
-            "/api/v1/logistics/contracts/full/",
+            "/api/v1/contracts/full/",
             data=json.dumps(
                 {
                     "wedding": str(other_wedding.uuid),
@@ -846,7 +948,7 @@ class TestContractCreateFullAPI:
         settings.AWS_STORAGE_BUCKET_NAME = "test-bucket"
         wedding = WeddingFactory(company=user.company)
 
-        from apps.logistics.services.contract_service import ContractService
+        from apps.contracts.services.contract_service import ContractService
 
         original_storage = ContractService._storage_service
         dummy_storage = DummyStorageService()
@@ -854,7 +956,7 @@ class TestContractCreateFullAPI:
 
         try:
             response = auth_client.post(
-                "/api/v1/logistics/contracts/upload-url/",
+                "/api/v1/contracts/upload-url/",
                 data=json.dumps(
                     {
                         "filename": "contrato.pdf",
@@ -878,7 +980,7 @@ class TestContractCreateFullAPI:
 class TestLogisticsAPIAuth:
     def test_contracts_requires_auth(self, client: Any) -> None:
         """Verifica que listar contratos sem autenticação retorna 401."""
-        response = client.get("/api/v1/logistics/contracts/")
+        response = client.get("/api/v1/contracts/")
         assert response.status_code == 401
 
     def test_items_requires_auth(self, client: Any) -> None:
@@ -888,5 +990,114 @@ class TestLogisticsAPIAuth:
 
     def test_suppliers_requires_auth(self, client: Any) -> None:
         """Verifica que listar fornecedores sem autenticação retorna 401."""
-        response = client.get("/api/v1/logistics/suppliers/")
+        response = client.get("/api/v1/suppliers/")
         assert response.status_code == 401
+
+
+@pytest.mark.django_db
+class TestContractSemanticEndpoints:
+    """Testes dos endpoints semânticos de ciclo de vida de contratos."""
+
+    def test_send_to_pending_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="DRAFT")
+        response = auth_client.post(
+            f"/api/v1/contracts/{contract.uuid}/send-to-pending/"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "PENDING"
+
+    def test_sign_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(
+            wedding=wedding,
+            status="PENDING",
+            total_amount=Decimal("1500.00"),
+        )
+        response = auth_client.post(
+            f"/api/v1/contracts/{contract.uuid}/sign/",
+            data=json.dumps(
+                {
+                    "signed_date": "2026-09-17",
+                    "pdf_file_key": "contracts/test.pdf",
+                }
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "SIGNED"
+        assert data["signed_date"] == "2026-09-17"
+        assert data["has_file"] is True
+
+    def test_cancel_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="DRAFT")
+        response = auth_client.post(f"/api/v1/contracts/{contract.uuid}/cancel/")
+        assert response.status_code == 200
+        assert response.json()["status"] == "CANCELED"
+
+    def test_revert_to_draft_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        contract = ContractFactory(wedding=wedding, status="CANCELED")
+        response = auth_client.post(
+            f"/api/v1/contracts/{contract.uuid}/revert-to-draft/"
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "DRAFT"
+
+    def test_contract_semantic_endpoint_multitenancy(
+        self, auth_client: Any, user: User
+    ) -> None:
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_contract = ContractFactory(wedding=other_wedding, status="DRAFT")
+        response = auth_client.post(
+            f"/api/v1/contracts/{other_contract.uuid}/send-to-pending/"
+        )
+        assert response.status_code == 404
+
+
+@pytest.mark.django_db
+class TestItemSemanticEndpoints:
+    """Testes dos endpoints semânticos de ciclo de vida de itens."""
+
+    def test_start_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="PENDING")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/start/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "IN_PROGRESS"
+
+    def test_complete_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="IN_PROGRESS")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/complete/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "DONE"
+
+    def test_reopen_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="DONE")
+        response = auth_client.post(f"/api/v1/logistics/items/{item.uuid}/reopen/")
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "IN_PROGRESS"
+
+    def test_revert_to_pending_endpoint(self, auth_client: Any, user: User) -> None:
+        wedding = WeddingFactory(company=user.company)
+        item = ItemFactory(wedding=wedding, acquisition_status="IN_PROGRESS")
+        response = auth_client.post(
+            f"/api/v1/logistics/items/{item.uuid}/revert-to-pending/"
+        )
+        assert response.status_code == 200
+        assert response.json()["acquisition_status"] == "PENDING"
+
+    def test_item_semantic_endpoint_multitenancy(
+        self, auth_client: Any, user: User
+    ) -> None:
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(company=other_user.company)
+        other_item = ItemFactory(wedding=other_wedding, acquisition_status="PENDING")
+        response = auth_client.post(f"/api/v1/logistics/items/{other_item.uuid}/start/")
+        assert response.status_code == 404

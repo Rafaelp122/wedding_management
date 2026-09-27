@@ -1,6 +1,6 @@
 # Como Executar a Suíte de Testes Pytest no Backend
 
-> **Categoria:** [backend](../../reference/architecture-standards/index.md) | [backend-testing-spec](../../reference/testing/backend-testing-spec.md) | [use-core-services](use-core-services.md)
+> **Categoria:** [backend](use-core-services.md) | [backend-testing-spec](../../reference/testing/backend-testing-spec.md)
 > **Comandos Principais:** `just test`, `just test-cov` / `uv run poe test`, `uv run poe test-cov`
 > **Stack & Ferramentas:** Pytest, `pytest-django`, `pytest-xdist`, `pytest-cov`, FactoryBoy
 

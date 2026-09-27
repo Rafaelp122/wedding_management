@@ -70,8 +70,8 @@ describe("WeddingMonthlyChart", () => {
   it("switches to Financeiro tab and shows expected content", async () => {
     const user = userEvent.setup();
     server.use(
-      http.get("*/api/v1/finances/installments/", () =>
-        HttpResponse.json({ items: [], count: 0, limit: 200, offset: 0 }),
+      http.get("*/api/v1/dashboard/chart/cash-flow/", () =>
+        HttpResponse.json([]),
       ),
     );
 
@@ -94,41 +94,19 @@ describe("WeddingMonthlyChart", () => {
   it("renders cash flow bars with populated installment data", async () => {
     const user = userEvent.setup();
     server.use(
-      http.get("*/api/v1/finances/installments/", () =>
-        HttpResponse.json({
-          items: [
-            {
-              uuid: "inst-1",
-              installment_number: 1,
-              amount: "3000.00",
-              due_date: "2025-01-15",
-              status: "PAID",
-              expense: "exp-1",
-              wedding: "w1",
-            },
-            {
-              uuid: "inst-2",
-              installment_number: 2,
-              amount: "2000.00",
-              due_date: "2025-01-20",
-              status: "PENDING",
-              expense: "exp-2",
-              wedding: "w1",
-            },
-            {
-              uuid: "inst-3",
-              installment_number: 1,
-              amount: "5000.00",
-              due_date: "2025-06-10",
-              status: "PAID",
-              expense: "exp-3",
-              wedding: "w2",
-            },
-          ],
-          count: 3,
-          limit: 200,
-          offset: 0,
-        }),
+      http.get("*/api/v1/dashboard/chart/cash-flow/", () =>
+        HttpResponse.json([
+          {
+            month: 1,
+            paid: "3000.00",
+            pending: "2000.00",
+          },
+          {
+            month: 6,
+            paid: "5000.00",
+            pending: "0.00",
+          },
+        ]),
       ),
     );
 
@@ -150,8 +128,8 @@ describe("WeddingMonthlyChart", () => {
   it("switches to Tarefas tab and shows expected content", async () => {
     const user = userEvent.setup();
     server.use(
-      http.get("*/api/v1/scheduler/tasks/", () =>
-        HttpResponse.json({ items: [], count: 0, limit: 200, offset: 0 }),
+      http.get("*/api/v1/dashboard/chart/task-progress/", () =>
+        HttpResponse.json([]),
       ),
     );
 
@@ -174,19 +152,16 @@ describe("WeddingMonthlyChart", () => {
   it("renders task progress bars with populated data", async () => {
     const user = userEvent.setup();
     server.use(
-      http.get("*/api/v1/scheduler/tasks/", () =>
-        HttpResponse.json({
-          items: [
-            { uuid: "t1", title: "Tarefa 1", is_completed: true, wedding: "w1" },
-            { uuid: "t2", title: "Tarefa 2", is_completed: false, wedding: "w1" },
-            { uuid: "t3", title: "Tarefa 3", is_completed: true, wedding: "w2" },
-            { uuid: "t4", title: "Tarefa 4", is_completed: true, wedding: "w2" },
-            { uuid: "t5", title: "Tarefa 5", is_completed: false, wedding: "w2" },
-          ],
-          count: 5,
-          limit: 200,
-          offset: 0,
-        }),
+      http.get("*/api/v1/dashboard/chart/task-progress/", () =>
+        HttpResponse.json([
+          {
+            wedding_uuid: "w1",
+            wedding_name: "Ana e Carlos",
+            total_tasks: 10,
+            completed_tasks: 8,
+            progress_pct: 80,
+          },
+        ]),
       ),
     );
 

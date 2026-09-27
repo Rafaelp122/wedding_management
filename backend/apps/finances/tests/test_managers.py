@@ -164,6 +164,17 @@ class TestBudgetCategoryQuerySet:
         qs = BudgetCategory.objects.for_tenant(user.company).with_total_spent()
         res = qs.get(uuid=c.uuid)
         assert res.total_spent == Decimal("200.00")
+        assert res._expenses_count == 1  # type: ignore[attr-defined]
+        assert res.expenses_count == 1
+
+        # Adiciona uma segunda despesa para validar contagem distinta
+        ExpenseFactory(
+            wedding=w, category=c, actual_amount=Decimal("300.00"), contract=None
+        )
+        qs2 = BudgetCategory.objects.for_tenant(user.company).with_total_spent()
+        res2 = qs2.get(uuid=c.uuid)
+        assert res2._expenses_count == 2  # type: ignore[attr-defined]
+        assert res2.expenses_count == 2
 
 
 @pytest.mark.django_db

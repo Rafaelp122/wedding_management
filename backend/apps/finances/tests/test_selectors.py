@@ -150,6 +150,45 @@ class TestBudgetSelectors:
                 company=user_a.company, wedding_uuid=wedding_b.uuid
             )
 
+    def test_budget_get_selectors_tenant_average_and_comparison_metrics(
+        self, user: Any
+    ) -> None:
+        """
+        Verifica o cálculo de tenant_average_budget e comparison_percentage
+        com isolamento de tenant.
+        """
+        wedding1 = WeddingFactory(user_context=user)
+        wedding2 = WeddingFactory(user_context=user)
+
+        BudgetFactory(wedding=wedding1, total_estimated=Decimal("30000.00"))
+        b2 = BudgetFactory(wedding=wedding2, total_estimated=Decimal("10000.00"))
+
+        # Tenant alheio com valor exorbitante não deve influenciar o cálculo
+        other_user = UserFactory()
+        other_wedding = WeddingFactory(user_context=other_user)
+        BudgetFactory(wedding=other_wedding, total_estimated=Decimal("500000.00"))
+
+        # Consulta via budget_get_for_wedding_selector
+        res1 = budget_get_for_wedding_selector(
+            company=user.company, wedding_uuid=wedding1.uuid
+        )
+        assert res1._tenant_average_budget == Decimal("20000.00")  # type: ignore[attr-defined]
+        assert res1._comparison_percentage == 50.0  # type: ignore[attr-defined]
+
+        # Consulta via budget_get_selector
+        res2 = budget_get_selector(company=user.company, uuid=b2.uuid)
+        assert res2._tenant_average_budget == Decimal("20000.00")  # type: ignore[attr-defined]
+        assert res2._comparison_percentage == -50.0  # type: ignore[attr-defined]
+
+    def test_budget_get_selector_metrics_single_budget(self, user: Any) -> None:
+        """Com apenas 1 orçamento, o percentual de comparação deve ser 0.0."""
+        wedding = WeddingFactory(user_context=user)
+        budget = BudgetFactory(wedding=wedding, total_estimated=Decimal("40000.00"))
+
+        res = budget_get_selector(company=user.company, uuid=budget.uuid)
+        assert res._tenant_average_budget == Decimal("40000.00")  # type: ignore[attr-defined]
+        assert res._comparison_percentage == 0.0  # type: ignore[attr-defined]
+
 
 @pytest.mark.django_db
 class TestBudgetCategorySelectors:

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createEventSchema } from "./validation";
+import { createEventSchema, createTaskSchema } from "./validation";
 
 describe("createEventSchema", () => {
   beforeEach(() => {
@@ -113,3 +113,48 @@ describe("createEventSchema", () => {
     expect(parsed.success).toBe(true);
   });
 });
+
+describe("createTaskSchema", () => {
+  it("validates a valid task payload", () => {
+    const validData = {
+      title: "Comprar lembrancinhas",
+      description: "Pesquisar lojas no centro",
+      priority: "HIGH",
+      due_date: "2026-10-15",
+    };
+
+    const parsed = createTaskSchema.safeParse(validData);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.due_date).toBe("2026-10-15");
+      expect(parsed.data.priority).toBe("HIGH");
+    }
+  });
+
+  it("transforms empty string due_date to null", () => {
+    const data = {
+      title: "Confirmar músicos",
+      due_date: "",
+    };
+
+    const parsed = createTaskSchema.safeParse(data);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.due_date).toBeNull();
+      expect(parsed.data.priority).toBe("MEDIUM");
+    }
+  });
+
+  it("fails if title is empty", () => {
+    const invalidData = {
+      title: "",
+    };
+
+    const parsed = createTaskSchema.safeParse(invalidData);
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0].message).toBe("O título da tarefa é obrigatório.");
+    }
+  });
+});
+

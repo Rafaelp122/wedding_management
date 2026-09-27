@@ -1,6 +1,6 @@
 # Como Escrever Testes de Frontend com MSW e RTL
 
-> **Categoria:** [frontend](../../reference/frontend/index.md) | [frontend-testing-spec](../../reference/testing/frontend-testing-spec.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
+> **Categoria:** Guias de Frontend | [frontend-testing-spec](../../reference/testing/frontend-testing-spec.md) | [ui-components-spec](../../reference/frontend/ui-components-spec.md)
 > **Stack:** Vitest (`isolate: false`), React Testing Library (RTL), Mock Service Worker (MSW), Orval
 
 ---
@@ -145,6 +145,8 @@ it("submete formulário de fornecedor e exibe toast de sucesso", async () => {
   });
 });
 ```
+
+> **Origem do endpoint:** a rota `POST /api/v1/logistics/suppliers/` é servida pelo código em `backend/apps/contracts/api/suppliers.py` (domínio de Contratações, Onda 4) — o prefixo da URL foi preservado.
 
 ---
 

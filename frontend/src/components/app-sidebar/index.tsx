@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   LayoutDashboard,
   Heart,
+  Users,
+  FileText,
   Calendar,
   Handshake,
   Settings,
@@ -28,6 +30,8 @@ import { Logo, RingsIcon } from "@/components/logo";
 const menuItems = [
   { title: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { title: "Casamentos", path: "/weddings", icon: Heart },
+  { title: "Clientes", path: "/clients", icon: Users },
+  { title: "Contratos", path: "/contracts", icon: FileText },
   { title: "Fornecedores", path: "/suppliers", icon: Handshake },
   { title: "Cronograma Geral", path: "/scheduler", icon: Calendar },
   { title: "Configurações", path: "/settings", icon: Settings },

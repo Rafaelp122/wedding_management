@@ -24,6 +24,7 @@ describe("useWeddingBudget", () => {
           wedding: weddingUuid,
           total_estimated: "1000.00",
           total_overall_spent: "500.00",
+          total_allocated: "300.00",
           notes: "",
         }),
       ),

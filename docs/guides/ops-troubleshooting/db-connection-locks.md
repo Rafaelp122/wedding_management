@@ -1,6 +1,6 @@
 # Troubleshooting: Resolução de Connection Locks e Timeouts no PostgreSQL Neon
 
-> **Categoria:** [ops-troubleshooting](../../reference/architecture-standards/index.md) | [database-migrations](../dev-environment/database-migrations.md) | [setup-local-environment](../dev-environment/setup-local-environment.md)
+> **Categoria:** Operações & Troubleshooting | [database-migrations](../dev-environment/database-migrations.md) | [setup-local-environment](../dev-environment/setup-local-environment.md)
 > **Sintomas:** Backend congela em requisições, erros HTTP 504 / timeout, migrações travadas, `OperationalError: connection timeout`
 
 ---

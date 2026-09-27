@@ -311,7 +311,6 @@ class TestInstallmentSemanticMethods:
 
         assert inst.status == Installment.StatusChoices.PAID
         assert inst.paid_date == custom_date
-        assert inst.is_paid is True
 
     def test_mark_as_paid_default_today(self, user: Any) -> None:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -326,7 +325,7 @@ class TestInstallmentSemanticMethods:
         )
         inst.mark_as_paid()
         assert inst.paid_date == date.today()
-        assert inst.is_paid is True
+        assert inst.status == Installment.StatusChoices.PAID
 
     def test_mark_as_paid_already_paid_raises_violation(self, user: Any) -> None:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -361,7 +360,6 @@ class TestInstallmentSemanticMethods:
         inst.unmark_as_paid()
         assert inst.status == Installment.StatusChoices.PENDING
         assert inst.paid_date is None
-        assert inst.is_pending is True
 
     def test_unmark_as_paid_past_due_date_transitions_to_overdue(
         self, user: Any
@@ -380,7 +378,6 @@ class TestInstallmentSemanticMethods:
         inst.unmark_as_paid()
         assert inst.status == Installment.StatusChoices.OVERDUE
         assert inst.paid_date is None
-        assert inst.is_overdue is True
 
     def test_unmark_as_paid_not_paid_raises_violation(self, user: Any) -> None:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -410,7 +407,6 @@ class TestInstallmentSemanticMethods:
         )
         inst.mark_as_overdue()
         assert inst.status == Installment.StatusChoices.OVERDUE
-        assert inst.is_overdue is True
 
     def test_mark_as_overdue_future_due_date_raises_violation(self, user: Any) -> None:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -429,31 +425,8 @@ class TestInstallmentSemanticMethods:
 
 
 @pytest.mark.django_db
-class TestInstallmentConvenienceProperties:
-    """Testes de propriedades de conveniência em Installment."""
-
-    def test_status_flags(self, user: Any) -> None:
-        expense = _setup_expense(user, actual_amount=Decimal("500.00"))
-        inst = Installment(
-            company=user.company,
-            wedding=expense.wedding,
-            expense=expense,
-            installment_number=1,
-            amount=Decimal("500.00"),
-            due_date=date.today(),
-            status=Installment.StatusChoices.PENDING,
-        )
-        assert inst.is_pending is True
-        assert inst.is_paid is False
-        assert inst.is_overdue is False
-
-        inst.status = Installment.StatusChoices.PAID
-        assert inst.is_paid is True
-        assert inst.is_pending is False
-
-        inst.status = Installment.StatusChoices.OVERDUE
-        assert inst.is_overdue is True
-        assert inst.is_pending is False
+class TestInstallmentDomainProperties:
+    """Testes de propriedades ativas em Installment."""
 
     def test_is_late_flag(self, user: Any) -> None:
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
@@ -491,28 +464,69 @@ class TestInstallmentConvenienceProperties:
         )
         assert inst_paid_past.is_late is False
 
-    def test_days_overdue_and_until_due(self, user: Any) -> None:
+    def test_paid_installment_immutability(self, user: Any) -> None:
+        """clean() impede alteração de dados em parcelas já pagas."""
         expense = _setup_expense(user, actual_amount=Decimal("500.00"))
-        past_inst = Installment(
-            company=user.company,
-            wedding=expense.wedding,
+        inst = InstallmentFactory(
             expense=expense,
             installment_number=1,
             amount=Decimal("500.00"),
-            due_date=date.today() - timedelta(days=5),
-            status=Installment.StatusChoices.OVERDUE,
+            due_date=date.today(),
+            status=Installment.StatusChoices.PAID,
+            paid_date=date.today(),
         )
-        assert past_inst.days_overdue == 5
-        assert past_inst.days_until_due == 0
 
-        future_inst = Installment(
-            company=user.company,
-            wedding=expense.wedding,
+        inst.amount = Decimal("600.00")
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+        inst.amount = Decimal("500.00")
+        inst.due_date = date.today() + timedelta(days=5)
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+        inst.due_date = date.today()
+        inst.installment_number = 2
+        with pytest.raises(ValidationError) as excinfo:
+            inst.clean()
+        assert "Parcelas pagas não podem" in str(excinfo.value)
+
+    def test_validate_chronology_boundaries(self, user: Any) -> None:
+        """validate_chronology valida precedência temporal com parcelas vizinhas."""
+        expense = _setup_expense(user, actual_amount=Decimal("900.00"))
+        base_date = date.today()
+
+        InstallmentFactory(
+            expense=expense,
+            installment_number=1,
+            amount=Decimal("300.00"),
+            due_date=base_date,
+        )
+        i2 = InstallmentFactory(
             expense=expense,
             installment_number=2,
-            amount=Decimal("500.00"),
-            due_date=date.today() + timedelta(days=10),
-            status=Installment.StatusChoices.PENDING,
+            amount=Decimal("300.00"),
+            due_date=base_date + timedelta(days=30),
         )
-        assert future_inst.days_overdue == 0
-        assert future_inst.days_until_due == 10
+        InstallmentFactory(
+            expense=expense,
+            installment_number=3,
+            amount=Decimal("300.00"),
+            due_date=base_date + timedelta(days=60),
+        )
+
+        # Retorna sem erro se expense_id ou installment_number for None
+        unlinked = Installment()
+        unlinked.validate_chronology(base_date)
+
+        # Tentar mover i2 para antes de i1
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            i2.validate_chronology(base_date - timedelta(days=1))
+        assert excinfo.value.code == "due_date_before_previous_installment"
+
+        # Tentar mover i2 para depois de i3
+        with pytest.raises(BusinessRuleViolation) as excinfo:
+            i2.validate_chronology(base_date + timedelta(days=65))
+        assert excinfo.value.code == "due_date_after_next_installment"

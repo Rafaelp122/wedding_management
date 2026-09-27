@@ -3,38 +3,38 @@ title: "Hierarquia Pai-Filho e Termos Aditivos de Contratos"
 domain: logistics
 type: business-rule
 source_code:
-  - backend/apps/logistics/models/contract.py
-  - backend/apps/logistics/services/contract_service.py
-  - backend/apps/logistics/selectors/contract_selectors.py
+  - backend/apps/contracts/models/contract.py
+  - backend/apps/contracts/services/contract_service.py
+  - backend/apps/contracts/selectors/contract_selectors.py
 tests:
-  - backend/apps/logistics/tests/contracts/test_models.py
-  - backend/apps/logistics/tests/contracts/test_services.py
-  - backend/apps/logistics/tests/test_selectors.py
+  - backend/apps/contracts/tests/test_models.py
+  - backend/apps/contracts/tests/test_services.py
+  - backend/apps/contracts/tests/test_selectors.py
 ---
 
 # Hierarquia de Contratos e Termos Aditivos
 
 > **Categoria:** Regra de Negócio (Domínio Logístico)
-> **Relacionados:** [Máquina de Estados de Contratos](contract-state-machine.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md)
+> **Relacionados:** [Catálogo de Regras](../index.md) · [Máquina de Estados de Contratos](contract-state-machine.md) · [Validação de CNPJ](cnpj-validation-rules.md) · [Regras de Integridade Financeira](../finances/financial-integrity-rules.md) · [Domínio de Logística](../../domains/logistics-domain.md)
 
 ---
 
 ## 1. Contexto e Invariantes do Domínio
 
-No ciclo de contratações de um casamento, alterações de escopo, reajustes de valores e contratações complementares de um mesmo fornecedor são formalizadas como **Termos Aditivos**. No modelo de dados, aditivos são contratos filhos vinculados a um contrato principal por meio do campo `parent = ForeignKey("self", on_delete=models.PROTECT, related_name="addendums")`.
+No ciclo de contratações de um casamento, alterações de escopo, reajustes de valores e contratações complementares de um mesmo fornecedor são formalizadas como **Termos Aditivos**. No modelo de dados, aditivos são entidade filha dedicada (`ContractAddendum`) vinculada ao contrato principal por relação 1:N estrita (`contract = ForeignKey(Contract, on_delete=CASCADE, related_name="addendums")`). O auto-relacionamento recursivo (`parent = ForeignKey("self")`) foi removido na Onda 3 da RFC-001 (`logistics/0012`, `contracts/0002`).
 
 ### Invariantes Fundamentais e Travas de Integridade:
-1. **Bloqueio de Auto-vínculo ($C \ne \text{parent}(C)$):** Um contrato não pode ser pai de si mesmo — validado no modelo (`Contract.clean()`) e no serviço (`ContractService._resolve_parent`, disparando `contract_self_parent`).
-2. **Bloqueio Cross-Wedding ($C.\text{wedding\_id} == \text{parent}(C).\text{wedding\_id}$):** O contrato pai deve pertencer obrigatoriamente ao mesmo casamento do aditivo (`contract_cross_wedding_parent`).
-3. **Prevenção de Ciclos no Grafo (Graph Cycle Guard):** O sistema percorre a árvore de ancestrais para garantir que o contrato pai selecionado não seja um descendente do contrato atual (`contract_circular_parent`).
-4. **Proteção na Exclusão (`ProtectedError`):** A exclusão física de um contrato principal que possua termos aditivos é bloqueada pelo banco de dados (`on_delete=models.PROTECT`). O serviço intercepta `ProtectedError` e dispara `DomainIntegrityError('contract_protected_by_addendums')`.
+1. **Alinhamento de Contrato ($A.\text{contract\_id} == C.\text{id}$):** Todo aditivo pertence a exatamente um contrato — validado no modelo (`ContractAddendum._clean_contract_alignment`, herdando `wedding`/`company` do contrato quando vazios) e no serviço (`ContractAddendumService.sign/cancel/delete` disparam `addendum_contract_mismatch`).
+2. **Bloqueio Cross-Wedding ($A.\text{wedding\_id} == C.\text{wedding\_id}$):** O aditivo deve pertencer obrigatoriamente ao mesmo casamento do contrato principal.
+3. **Sem Grafo (Relação Plana 1:N):** Por não existir auto-relacionamento, ciclos hierárquicos são impossíveis por construção — o Graph Cycle Guard legado foi removido com o campo `parent`.
+4. **Deleção em Cascata e Proteções (`CASCADE` + `ProtectedError`):** A exclusão do contrato principal remove seus aditivos (`on_delete=CASCADE`). A exclusão do próprio contrato é bloqueada se `SIGNED` (`cannot_delete_signed_contract`) ou se houver despesas/itens vinculados (`ProtectedError` → `contract_has_protected_dependencies`). Aditivos `SIGNED` não podem ser excluídos (`cannot_delete_signed_addendum`).
 
 ### Fórmulas Matemáticas de Consolidação Financeira:
-Para um contrato principal $C$ com valor de face $V_{\text{principal}}$ e um conjunto de termos aditivos $A \in \text{Addendums}(C)$, o **Valor Total Consolidado** é calculado desconsiderando aditivos com status `CANCELED`:
+Para um contrato principal $C$ com valor de face $V_{\text{principal}}$ e um conjunto de termos aditivos $A \in \text{Addendums}(C)$, o **Valor Efetivo** soma exclusivamente aditivos formalmente assinados. Aditivos `PENDING` são expectativa futura (expostos separadamente em `addendums_pending_total`) e `CANCELED` nunca compõem:
 
-$$V_{\text{consolidado}} = V_{\text{principal}} + \sum_{\substack{A \in \text{Addendums}(C) \\ \text{status}(A) \ne \text{CANCELED}}} V_A$$
+$$V_{\text{efetivo}} = V_{\text{principal}} + \sum_{\substack{A \in \text{Addendums}(C) \\ \text{status}(A) = \text{SIGNED}}} V_A$$
 
-O `ContractQuerySet.with_totals()` anota esse total diretamente no banco de dados via `Subquery` (eliminando problemas de desempenho N+1), e a consulta pontual utiliza o `contract_consolidated_total_selector`.
+O `ContractQuerySet.with_totals()` anota `addendums_total` (SIGNED), `addendums_pending_total` (PENDING) e `effective_amount` diretamente no banco de dados via `Subquery` (eliminando problemas de desempenho N+1), e a consulta pontual utiliza o `contract_consolidated_total_selector` (SIGNED-only).
 
 ---
 
@@ -42,22 +42,21 @@ O `ContractQuerySet.with_totals()` anota esse total diretamente no banco de dado
 
 ```mermaid
 graph TD
-    subgraph "Estrutura Hierárquica Válida (DAG)"
+    subgraph "Estrutura Válida (1:N plano)"
         CP["Contrato Principal (Buffet) <br/> Total: R$ 20.000,00"]
         AD1["Termo Aditivo 1 (Bebidas Extras) <br/> Total: R$ 3.000,00"]
         AD2["Termo Aditivo 2 (Hora Adicional) <br/> Total: R$ 1.500,00"]
 
-        CP -->|parent| AD1
-        CP -->|parent| AD2
+        CP -->|contract FK| AD1
+        CP -->|contract FK| AD2
     end
 
     subgraph "Travas de Integridade Bloqueadas"
-        C_SELF["Contrato A"] -.->|Bloqueio Auto-Vínculo| C_SELF
+        A["Aditivo X"] -.->|Bloqueio Alinhamento (contract_id divergente)| C["Contrato Y"]
 
-        W1["Casamento 1 (Contrato A)"] -.->|Bloqueio Cross-Wedding| W2["Casamento 2 (Contrato B)"]
+        W1["Casamento 1 (Aditivo)"] -.->|Bloqueio Cross-Wedding| W2["Casamento 2 (Contrato)"]
 
-        A1["Contrato 1"] --> A2["Contrato 2"] --> A3["Contrato 3"]
-        A3 -.->|Bloqueio Circular (Graph Cycle Guard)| A1
+        S["Contrato SIGNED"] -.->|Bloqueio Deleção| DEL["Exclusão Física"]
     end
 ```
 
@@ -67,73 +66,47 @@ graph TD
 
 | Código | Regra de Negócio | Gatilho / Condição | Exceção Lançada | Ação do Sistema |
 | :--- | :--- | :--- | :--- | :--- |
-| **BR-L02-A** | **Anti Auto-Vínculo** | `parent_id == instance.pk` | `BusinessRuleViolation` (`contract_self_parent`) | Impede que o contrato aponte para si mesmo como aditivo. |
-| **BR-L02-B** | **Guarda Cross-Wedding** | `parent.wedding_id != instance.wedding_id` | `BusinessRuleViolation` (`contract_cross_wedding_parent`) | Impede contaminação de aditivos entre casamentos diferentes. |
-| **BR-L02-C** | **Prevenção Circular** | Contrato pai é descendente na árvore hierárquica. | `BusinessRuleViolation` (`contract_circular_parent`) | Bloqueia ciclos infinitos na árvore de contratos. |
-| **BR-L02-D** | **Proteção de Deleção** | Deleção de contrato pai que possui aditivos ativos. | `DomainIntegrityError` (`contract_protected_by_addendums`) | Exige a remoção ou desvinculação prévia dos termos aditivos filhos. |
-| **BR-L02-E** | **Exclusão de Cancelados** | Aditivo possui `status = "CANCELED"`. | Nenhuma (Tratamento Seletor) | Subtrai/desconsidera aditivos cancelados da soma consolidada. |
+| **BR-L02-A** | **Alinhamento Contrato-Aditivo** | `addendum.contract_id != contract.id` em sign/cancel/delete | `DomainIntegrityError` (`addendum_contract_mismatch`) | Impede operar aditivo sob contrato divergente. |
+| **BR-L02-B** | **Guarda Cross-Wedding** | `addendum.wedding_id != contract.wedding_id` | `ValidationError` (modelo) | Impede contaminação de aditivos entre casamentos diferentes. |
+| **BR-L02-C** | **Relação Plana 1:N (sem grafo)** | N/A por construção | N/A | Ciclos hierárquicos impossíveis após remoção do `parent` recursivo (Onda 3). |
+| **BR-L02-D** | **Proteção de Deleção** | Deleção de contrato `SIGNED` ou com despesas/itens; deleção de aditivo `SIGNED` | `BusinessRuleViolation` (`cannot_delete_signed_contract` / `cannot_delete_signed_addendum`) / `BusinessRuleViolation` (`contract_has_protected_dependencies`) | Aditivos caem em cascata (`CASCADE`) com o contrato principal. |
+| **BR-L02-E** | **Composição SIGNED-only** | Aditivo com `status != "SIGNED"` | Nenhuma (Tratamento Seletor) | Somente aditivos assinados compõem `effective_amount`; `PENDING` exposto em `addendums_pending_total`. |
 
 ---
 
 ## 4. Implementação no Código-Fonte Real
 
-- **Validação no Modelo:** [`Contract._clean_parent_hierarchy()`](../../../../backend/apps/logistics/models/contract.py)
-- **Resolução e Guarda Circular:** [`ContractService._resolve_parent()`](../../../../backend/apps/logistics/services/contract_service.py)
-- **Consulta de Totais Consolidados:** [`contract_consolidated_total_selector()`](../../../../backend/apps/logistics/selectors/contract_selectors.py)
+- **Validação no Modelo:** [`ContractAddendum._clean_contract_alignment()`](../../../../backend/apps/contracts/models/contract_addendum.py)
+- **Guarda de Alinhamento no Serviço:** [`ContractAddendumService.sign/cancel/delete`](../../../../backend/apps/contracts/services/contract_addendum_service.py) (`addendum_contract_mismatch`)
+- **Consulta de Totais Consolidados:** [`contract_consolidated_total_selector()`](../../../../backend/apps/contracts/selectors/contract_selectors.py) (SIGNED-only) e [`ContractQuerySet.with_totals()`](../../../../backend/apps/contracts/managers.py) (`addendums_total`, `addendums_pending_total`, `effective_amount`)
 
-### A. Validação de Hierarquia no Modelo (`contract.py`)
-
-```python
-def _clean_parent_hierarchy(self) -> None:
-    if self.parent:
-        if self.pk and self.parent_id == self.pk:
-            raise ValidationError("Um contrato não pode ser pai de si mesmo.")
-        if self.wedding_id and self.parent.wedding_id != self.wedding_id:
-            raise ValidationError("O contrato pai pertence a outro casamento.")
-        if self.pk:
-            current: Contract | None = self.parent
-            while current:
-                if current.pk == self.pk:
-                    raise ValidationError(
-                        "Não é possível vincular um contrato pai que é descendente deste contrato."
-                    )
-                current = current.parent
-```
-
-### B. Resolução e Trava Circular no Serviço (`contract_service.py`)
+### A. Alinhamento de Contrato e Wedding no Modelo (`contract_addendum.py`)
 
 ```python
-@staticmethod
-def _resolve_parent(company: Company, instance: Contract, parent_input: Any) -> None:
-    if parent_input == "":
-        instance.parent = None
-        return
-
-    parent = resolve_tenant_resource(Contract, company, parent_input, ...)
-    if parent is not None:
-        if parent.pk == instance.pk:
-            raise BusinessRuleViolation(detail="Um contrato não pode ser pai de si mesmo.", code="contract_self_parent")
-        if parent.wedding_id != instance.wedding_id:
-            raise BusinessRuleViolation(detail="O contrato pai deve pertencer ao mesmo casamento.", code="contract_cross_wedding_parent")
-
-        # Prevenção de loops cíclicos
-        current = parent
-        while current.parent:
-            if current.parent.pk == instance.pk:
-                raise BusinessRuleViolation(detail="Não é possível vincular um contrato pai que é descendente deste contrato.", code="contract_circular_parent")
-            current = current.parent
-        instance.parent = parent
+def _clean_contract_alignment(self) -> None:
+    # Herda wedding/company do contrato quando vazios; senão valida igualdade
+    # (addendum.wedding_id == contract.wedding_id, mesmo company_id).
 ```
 
-### C. Seletor de Valor Total Consolidado (`contract_selectors.py`)
+### B. Guarda de Alinhamento no Serviço (`contract_addendum_service.py`)
+
+```python
+if addendum.contract_id != contract.id:
+    raise DomainIntegrityError(
+        detail="O termo aditivo informado não pertence ao contrato especificado.",
+        code="addendum_contract_mismatch",
+    )
+```
+
+### C. Seletor de Valor Efetivo (`contract_selectors.py`)
 
 ```python
 def contract_consolidated_total_selector(company: Company, contract: Contract) -> Decimal:
     validate_tenant_ownership(company, contract, ...)
     addendums_sum = (
         contract.addendums.for_tenant(company)
-        .exclude(status=Contract.StatusChoices.CANCELED)
-        .aggregate(total=Sum("total_amount"))["total"]
+        .filter(status=ContractAddendum.StatusChoices.SIGNED)
+        .aggregate(total=Sum("amount"))["total"]
     )
     return (contract.total_amount or Decimal("0.00")) + (addendums_sum or Decimal("0.00"))
 ```
@@ -142,12 +115,9 @@ def contract_consolidated_total_selector(company: Company, contract: Contract) -
 
 ## 5. Casos de Teste Automatizados (Pytest)
 
-A suíte de testes unitários em `apps/logistics/tests/contracts/test_models.py`, `apps/logistics/tests/contracts/test_services.py` e `apps/logistics/tests/test_selectors.py` garante 100% de cobertura das regras hierárquicas:
+A suíte de testes unitários em `apps/contracts/tests/test_models.py`, `apps/contracts/tests/test_services.py` e `apps/contracts/tests/test_selectors.py` garante cobertura das regras de aditivos:
 
-- `test_contract_self_parent_fails`: Valida rejeição quando contrato tenta ser pai de si mesmo no model.
-- `test_update_parent_self_raises_error`: Valida erro `contract_self_parent` via `ContractService.update`.
-- `test_contract_cross_wedding_parent_fails`: Valida bloqueio de pais pertencentes a outro casamento no model.
-- `test_create_contract_cross_wedding_parent_raises_error`: Valida bloqueio cross-wedding na criação do serviço.
-- `test_contract_circular_parent_fails`: Valida bloqueio de ciclos circulares na árvore de parentesco.
-- `test_delete_contract_with_addendums_raises_domain_integrity_error`: Valida a proteção `ProtectedError` na exclusão.
-- `test_contract_consolidated_total_selector_ignores_canceled`: Valida a fórmula de soma consolidada ignorando aditivos cancelados.
+- `test_contract_consolidated_total_selector`: Valida a soma SIGNED-only (face + assinados; PENDING e CANCELED fora).
+- `test_with_totals_annotates_pending_addendums`: Valida `addendums_total` vs `addendums_pending_total` separados.
+- `test_with_totals_scopes_subqueries_by_tenant`: Valida isolamento de tenant nas agregações.
+- Testes de `sign/cancel/delete` de aditivos com `addendum_contract_mismatch` e travas de SIGNED.

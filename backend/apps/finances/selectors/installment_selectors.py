@@ -26,6 +26,7 @@ def installment_list_selector(
     status: str | None = None,
     due_date_gte: date | None = None,
     due_date_lte: date | None = None,
+    exclude_paid: bool = False,
 ) -> InstallmentQuerySet:
     """
     Lista parcelas vinculadas ao tenant com filtros opcionais.
@@ -37,6 +38,7 @@ def installment_list_selector(
         status: Status desejado (PENDING, PAID, OVERDUE).
         due_date_gte: Data de vencimento inicial para intervalo (inclusive).
         due_date_lte: Data de vencimento final para intervalo (inclusive).
+        exclude_paid: Se True, exclui parcelas com status PAID.
 
     Returns:
         InstallmentQuerySet filtrado com relacionamentos pré-carregados.
@@ -48,6 +50,8 @@ def installment_list_selector(
         qs = qs.for_expense(expense_id)
     if wedding_id:
         qs = qs.for_wedding(wedding_id)
+    if exclude_paid:
+        qs = qs.exclude(status=Installment.StatusChoices.PAID)
     if status:
         if status == Installment.StatusChoices.PENDING:
             qs = qs.pending()

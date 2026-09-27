@@ -10,6 +10,10 @@ from typing import Any, cast
 import pytest
 from openpyxl import load_workbook
 
+from apps.contracts.models import Contract
+from apps.contracts.tests.factories import (
+    SupplierFactory as _SupplierFactory,
+)
 from apps.core.exceptions import ObjectNotFoundError
 from apps.finances.models import Installment
 from apps.finances.tests.factories import (
@@ -24,12 +28,8 @@ from apps.finances.tests.factories import (
 from apps.finances.tests.factories import (
     InstallmentFactory as _InstallmentFactory,
 )
-from apps.logistics.models import Contract
 from apps.logistics.tests.factories import (
     ContractFactory as _ContractFactory,
-)
-from apps.logistics.tests.factories import (
-    SupplierFactory as _SupplierFactory,
 )
 from apps.reporting.services import ReportGenerationService
 from apps.scheduler.tests.factories import TaskFactory as _TaskFactory

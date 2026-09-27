@@ -11,6 +11,8 @@ from typing import cast
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
 from apps.finances.tests.factories import (
     BudgetCategoryFactory,
@@ -18,11 +20,10 @@ from apps.finances.tests.factories import (
     ExpenseFactory,
     InstallmentFactory,
 )
-from apps.logistics.models import Contract, Item, Supplier
+from apps.logistics.models import Item
 from apps.logistics.tests.factories import (
     ContractFactory,
     ItemFactory,
-    SupplierFactory,
 )
 from apps.scheduler.models import Event, Task
 from apps.scheduler.tests.factories import EventFactory, TaskFactory

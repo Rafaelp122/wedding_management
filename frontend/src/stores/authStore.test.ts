@@ -4,6 +4,7 @@ import type { UserDataOut } from "@/api/generated/v1/models/userDataOut";
 
 const mockUser: UserDataOut = {
   id: 1,
+  uuid: "00000000-0000-0000-0000-000000000001",
   first_name: "Test",
   last_name: "User",
   email: "test@email.com",

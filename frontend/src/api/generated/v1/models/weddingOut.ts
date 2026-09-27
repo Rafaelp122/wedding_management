@@ -4,6 +4,8 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
+import type { PlannerContractOut } from './plannerContractOut';
+import type { WeddingParticipantOut } from './weddingParticipantOut';
 import type { WeddingStatusEnum } from './weddingStatusEnum';
 
 export interface WeddingOut {
@@ -22,4 +24,14 @@ export interface WeddingOut {
   overdue_installments?: number;
   /** @minimum 0 */
   incomplete_tasks?: number;
+  allowed_transitions?: string[];
+  can_complete?: boolean;
+  client_name?: string;
+  client_cpf?: string;
+  client_email?: string;
+  client_phone?: string;
+  client_role?: string;
+  days_before_in_progress?: number;
+  planner_contract?: PlannerContractOut | null;
+  participants?: WeddingParticipantOut[];
 }

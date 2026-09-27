@@ -20,8 +20,13 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CashFlowMonthOut,
+  DashboardChartCashFlowParams,
+  DashboardChartTaskProgressParams,
+  DashboardOperationsOut,
   DashboardSummaryOut,
   ErrorResponse,
+  TaskProgressWeddingOut,
   WeddingDashboardOut
 } from '../../models';
 
@@ -230,6 +235,292 @@ export function useDashboardWedding<TData = Awaited<ReturnType<typeof dashboardW
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getDashboardWeddingQueryOptions(uuid,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Retorna o fluxo de caixa projetado mês a mês (parcelas pagas vs pendentes).
+ *
+ * Filtra as parcelas do tenant pelo ano especificado (padrão: ano corrente).
+ * @summary Dashboard Chart Cash Flow
+ */
+export const dashboardChartCashFlow = (
+    params?: DashboardChartCashFlowParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CashFlowMonthOut[]>(
+      {url: `/api/v1/dashboard/chart/cash-flow/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getDashboardChartCashFlowQueryKey = (params?: DashboardChartCashFlowParams,) => {
+    return [
+    `/api/v1/dashboard/chart/cash-flow/`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getDashboardChartCashFlowQueryOptions = <TData = Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError = ErrorType<ErrorResponse>>(params?: DashboardChartCashFlowParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDashboardChartCashFlowQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof dashboardChartCashFlow>>> = ({ signal }) => dashboardChartCashFlow(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DashboardChartCashFlowQueryResult = NonNullable<Awaited<ReturnType<typeof dashboardChartCashFlow>>>
+export type DashboardChartCashFlowQueryError = ErrorType<ErrorResponse>
+
+
+export function useDashboardChartCashFlow<TData = Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  DashboardChartCashFlowParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardChartCashFlow>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardChartCashFlow>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardChartCashFlow<TData = Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartCashFlowParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardChartCashFlow>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardChartCashFlow>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardChartCashFlow<TData = Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartCashFlowParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dashboard Chart Cash Flow
+ */
+
+export function useDashboardChartCashFlow<TData = Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartCashFlowParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartCashFlow>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDashboardChartCashFlowQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Retorna o progresso percentual e contagem de tarefas dos casamentos.
+ *
+ * Ordenado pelo volume total de tarefas, com filtro opcional por ano do evento.
+ * @summary Dashboard Chart Task Progress
+ */
+export const dashboardChartTaskProgress = (
+    params?: DashboardChartTaskProgressParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<TaskProgressWeddingOut[]>(
+      {url: `/api/v1/dashboard/chart/task-progress/`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getDashboardChartTaskProgressQueryKey = (params?: DashboardChartTaskProgressParams,) => {
+    return [
+    `/api/v1/dashboard/chart/task-progress/`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getDashboardChartTaskProgressQueryOptions = <TData = Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError = ErrorType<ErrorResponse>>(params?: DashboardChartTaskProgressParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDashboardChartTaskProgressQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof dashboardChartTaskProgress>>> = ({ signal }) => dashboardChartTaskProgress(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DashboardChartTaskProgressQueryResult = NonNullable<Awaited<ReturnType<typeof dashboardChartTaskProgress>>>
+export type DashboardChartTaskProgressQueryError = ErrorType<ErrorResponse>
+
+
+export function useDashboardChartTaskProgress<TData = Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError = ErrorType<ErrorResponse>>(
+ params: undefined |  DashboardChartTaskProgressParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardChartTaskProgress>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardChartTaskProgress>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardChartTaskProgress<TData = Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartTaskProgressParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardChartTaskProgress>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardChartTaskProgress>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardChartTaskProgress<TData = Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartTaskProgressParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dashboard Chart Task Progress
+ */
+
+export function useDashboardChartTaskProgress<TData = Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError = ErrorType<ErrorResponse>>(
+ params?: DashboardChartTaskProgressParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardChartTaskProgress>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDashboardChartTaskProgressQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+/**
+ * Retorna o painel operacional consolidado com os Top 5 casamentos futuros,
+ * Top 5 tarefas urgentes e Top 5 contratos pendentes do tenant.
+ * @summary Dashboard Operations
+ */
+export const dashboardOperationsList = (
+
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DashboardOperationsOut>(
+      {url: `/api/v1/dashboard/operations/`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getDashboardOperationsListQueryKey = () => {
+    return [
+    `/api/v1/dashboard/operations/`
+    ] as const;
+    }
+
+
+export const getDashboardOperationsListQueryOptions = <TData = Awaited<ReturnType<typeof dashboardOperationsList>>, TError = ErrorType<ErrorResponse>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDashboardOperationsListQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof dashboardOperationsList>>> = ({ signal }) => dashboardOperationsList(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DashboardOperationsListQueryResult = NonNullable<Awaited<ReturnType<typeof dashboardOperationsList>>>
+export type DashboardOperationsListQueryError = ErrorType<ErrorResponse>
+
+
+export function useDashboardOperationsList<TData = Awaited<ReturnType<typeof dashboardOperationsList>>, TError = ErrorType<ErrorResponse>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardOperationsList>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardOperationsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardOperationsList<TData = Awaited<ReturnType<typeof dashboardOperationsList>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof dashboardOperationsList>>,
+          TError,
+          Awaited<ReturnType<typeof dashboardOperationsList>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDashboardOperationsList<TData = Awaited<ReturnType<typeof dashboardOperationsList>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dashboard Operations
+ */
+
+export function useDashboardOperationsList<TData = Awaited<ReturnType<typeof dashboardOperationsList>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof dashboardOperationsList>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDashboardOperationsListQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -1,9 +1,15 @@
 import { memo, useMemo, useState } from "react";
-import { useFinancesInstallmentsList } from "@/api/generated/v1/endpoints/finances/finances";
-import { useSchedulerTasksList } from "@/api/generated/v1/endpoints/scheduler/scheduler";
-import { useWeddingsByMonth, useWeddingsList } from "@/api/generated/v1/endpoints/weddings/weddings";
+import { useWeddingsByMonth } from "@/api/generated/v1/endpoints/weddings/weddings";
+import {
+  useDashboardChartCashFlow,
+  useDashboardChartTaskProgress,
+} from "@/api/generated/v1/endpoints/dashboard/dashboard";
 import { WeddingMonthlyChartView } from "./WeddingMonthlyChartView";
-import { getMonthlyWeddingsData, getCashFlowData, getTasksProgressData } from "../utils/chart-helpers";
+import {
+  getMonthlyWeddingsData,
+  formatCashFlowData,
+  formatTasksProgressData,
+} from "../utils/chart-helpers";
 
 interface WeddingMonthlyChartProps {
   selectedYear: number;
@@ -16,23 +22,22 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
 }: WeddingMonthlyChartProps) {
   const [activeTab, setActiveTab] = useState<string>("casamentos");
 
-  // API calls for Cash Flow and Tasks
-  const { data: installmentsRes, isLoading: isLoadingInstallments } = useFinancesInstallmentsList(
-    { limit: 200 },
-    { query: { enabled: activeTab === "financeiro" } }
-  );
-
-  const { data: tasksRes, isLoading: isLoadingTasks } = useSchedulerTasksList(
-    { limit: 200 },
-    { query: { enabled: activeTab === "tarefas" } }
-  );
-
   // Chart 1: Weddings per Month
-  const { data: byMonthData } = useWeddingsByMonth(
-    { year: selectedYear },
-  );
+  const { data: byMonthData } = useWeddingsByMonth({ year: selectedYear });
 
-  const { data: weddingsData } = useWeddingsList({ limit: 200 });
+  // Chart 2: Cash Flow
+  const { data: cashFlowRes, isLoading: isLoadingInstallments } =
+    useDashboardChartCashFlow(
+      { year: selectedYear },
+      { query: { enabled: activeTab === "financeiro" } },
+    );
+
+  // Chart 3: Tasks Progress
+  const { data: taskProgressRes, isLoading: isLoadingTasks } =
+    useDashboardChartTaskProgress(
+      { year: selectedYear },
+      { query: { enabled: activeTab === "tarefas" } },
+    );
 
   // Compute monthly weddings data
   const { monthlyData, hasData } = useMemo(() => {
@@ -41,13 +46,13 @@ export const WeddingMonthlyChart = memo(function WeddingMonthlyChart({
 
   // Compute cash flow data
   const { cashFlowData, hasCashFlowData } = useMemo(() => {
-    return getCashFlowData(installmentsRes?.data?.items, selectedYear);
-  }, [installmentsRes, selectedYear]);
+    return formatCashFlowData(cashFlowRes?.data);
+  }, [cashFlowRes]);
 
   // Compute tasks progress data
   const { tasksData, hasTasksData } = useMemo(() => {
-    return getTasksProgressData(weddingsData?.data?.items, tasksRes?.data?.items, selectedYear);
-  }, [weddingsData, tasksRes, selectedYear]);
+    return formatTasksProgressData(taskProgressRes?.data);
+  }, [taskProgressRes]);
 
   return (
     <WeddingMonthlyChartView

@@ -47,6 +47,8 @@ export function WeddingFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Status</SelectItem>
+            <SelectItem value={WeddingStatusEnum.PROPOSAL}>Proposta</SelectItem>
+            <SelectItem value={WeddingStatusEnum.PLANNING}>Planejamento</SelectItem>
             <SelectItem value={WeddingStatusEnum.IN_PROGRESS}>Em Andamento</SelectItem>
             <SelectItem value={WeddingStatusEnum.COMPLETED}>Concluído</SelectItem>
             <SelectItem value={WeddingStatusEnum.CANCELED}>Cancelado</SelectItem>

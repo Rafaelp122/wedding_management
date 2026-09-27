@@ -1,7 +1,7 @@
 # How-To: Executando e Depurando Testes E2E com Playwright
 
 > **Categoria:** Guias Práticos (Frontend & Testes)
-> **Relacionados:** [ADR-018: Testes E2E com Playwright](../../architecture/adr/018-playwright-e2e-testing.md) · [Especificação de Testes E2E](../../reference/testing/e2e-testing-spec.md) · [MOC de Testes](../../reference/testing/index.md)
+> **Relacionados:** [ADR-018: Testes E2E com Playwright](../../architecture/adr/018-playwright-e2e-testing.md) · [Especificação de Testes E2E](../../reference/testing/e2e-testing-spec.md) · [Testes de Frontend](../../reference/testing/frontend-testing-spec.md)
 
 ---
 

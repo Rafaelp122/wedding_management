@@ -36,12 +36,12 @@ describe("SchedulerEventsTable", () => {
       createMockEvent({
         uuid: "ev-1",
         title: "Reunião com fornecedor",
+        wedding_name: "João & Maria",
       }),
     ];
     render(
       <SchedulerEventsTable
         events={events}
-        weddingsByUuid={mockWeddingsMap}
       />,
     );
 
@@ -174,18 +174,18 @@ describe("SchedulerEventsTable", () => {
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
-  it("shows raw wedding UUID when wedding is not found in map", () => {
+  it("shows raw wedding UUID when wedding_name is missing", () => {
     const events = [
       createMockEvent({
         uuid: "ev-1",
         title: "Evento",
         wedding: "unknown-uuid",
+        wedding_name: null,
       }),
     ];
     render(
       <SchedulerEventsTable
         events={events}
-        weddingsByUuid={mockWeddingsMap}
       />,
     );
 

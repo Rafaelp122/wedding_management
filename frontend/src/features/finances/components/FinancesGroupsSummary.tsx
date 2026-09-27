@@ -80,9 +80,10 @@ export function WeddingFinancesGroupsSummary({
             const allocatedBudget = parseDecimal(category.allocated_budget);
             const spentAmount = parseDecimal(category.total_spent);
             const percentage =
-              allocatedBudget > 0
+              category.budget_utilization_percent ??
+              (allocatedBudget > 0
                 ? Math.round((spentAmount / allocatedBudget) * 100)
-                : 0;
+                : 0);
 
             return (
               <div key={category.uuid} className="space-y-2">

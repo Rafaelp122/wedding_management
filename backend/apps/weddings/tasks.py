@@ -49,3 +49,53 @@ def on_wedding_canceled_task(company_id: int | str, wedding_uuid: str) -> None:
         wedding.uuid,
         company.id,
     )
+
+
+@task()
+def on_wedding_activated_task(
+    company_id: int | str,
+    wedding_uuid: str,
+    template: str | None = None,
+) -> None:
+    """
+    Tarefa assíncrona executada após a ativação de um casamento (PROPOSTA -> IN_PROGRESS).
+    Orquestra a geração assíncrona de itens operacionais e notificações reativas.
+
+    Args:
+        company_id: ID numérico ou UUID da empresa tenant.
+        wedding_uuid: Identificador UUID do casamento ativado.
+        template: Nome do template de cronograma, se houver.
+    """
+    from apps.tenants.models import Company
+    from apps.weddings.models import Wedding
+
+    company = (
+        Company.objects.get(pk=company_id)
+        if isinstance(company_id, int)
+        else Company.objects.get(uuid=company_id)
+    )
+
+    wedding = Wedding.objects.for_tenant(company).filter(uuid=wedding_uuid).first()
+    if not wedding:
+        logger.warning(
+            "Casamento %s não encontrado para empresa %s na task de ativação.",
+            wedding_uuid,
+            company.id,
+        )
+        return
+
+    logger.info(
+        "Executando task de ativação pós-commit para casamento %s na empresa %s (template=%s).",
+        wedding.uuid,
+        company.id,
+        template,
+    )
+
+    # Dispara a geração assíncrona do checklist operacional inicial (RFC-001 / ADR-017)
+    from apps.scheduler.interfaces import enqueue_wedding_checklist_generation
+
+    enqueue_wedding_checklist_generation(
+        company_id=company.id,
+        wedding_uuid=str(wedding.uuid),
+        template=template,
+    )

@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useSchedulerTasksList,
-  useSchedulerTasksUpdate,
+  useSchedulerTasksComplete,
+  useSchedulerTasksReopen,
   getSchedulerTasksListQueryKey,
 } from "@/api/generated/v1/endpoints/scheduler/scheduler";
 
@@ -16,29 +17,39 @@ export function useWeddingChecklist(weddingUuid: string) {
 
   const tasks = tasksResponse?.data?.items || [];
 
-  const { mutate: updateTask, isPending: isUpdating } =
-    useSchedulerTasksUpdate({
+  const invalidateTasks = () => {
+    queryClient.invalidateQueries({
+      queryKey: getSchedulerTasksListQueryKey({ wedding_id: weddingUuid }),
+    });
+  };
+
+  const { mutate: completeTask, isPending: isCompleting } =
+    useSchedulerTasksComplete({
       mutation: {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey: getSchedulerTasksListQueryKey({ wedding_id: weddingUuid }),
-          });
-        },
+        onSuccess: invalidateTasks,
+      },
+    });
+
+  const { mutate: reopenTask, isPending: isReopening } =
+    useSchedulerTasksReopen({
+      mutation: {
+        onSuccess: invalidateTasks,
       },
     });
 
   const toggleTaskCompletion = (uuid: string, currentStatus: boolean) => {
-    updateTask({
-      uuid,
-      data: { is_completed: !currentStatus },
-    });
+    if (currentStatus) {
+      reopenTask({ uuid });
+    } else {
+      completeTask({ uuid });
+    }
   };
 
   return {
     tasks,
     isLoading,
     error,
-    isUpdating,
+    isUpdating: isCompleting || isReopening,
     toggleTaskCompletion,
   };
 }

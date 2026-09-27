@@ -1,19 +1,9 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { render, screen, waitFor, server } from "@/test-utils";
-import { http, HttpResponse } from "msw";
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@/test-utils";
 import { WeddingFinancesSummaryCards } from "@/features/finances/components/FinancesSummaryCards";
-
+import { createMockBudget } from "@/test-data";
 
 describe("WeddingFinancesSummaryCards", () => {
-  beforeEach(() => {
-    // Default: empty budgets list via MSW
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({ items: [], count: 0 }),
-      ),
-    );
-  });
-
   it("renders budget and spent cards", () => {
     render(
       <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
@@ -49,120 +39,73 @@ describe("WeddingFinancesSummaryCards", () => {
     expect(screen.getByText("200%")).toBeInTheDocument();
   });
 
-  it("does not render average comparison when there is only one wedding budget", async () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({
-          items: [{ total_estimated: "50000" }],
-          count: 1,
-        }),
-      ),
-    );
+  it("does not render average comparison when comparison_percentage is null or undefined", () => {
+    const budget = createMockBudget({
+      comparison_percentage: null,
+      tenant_average_budget: null,
+    });
 
     render(
-      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
+      <WeddingFinancesSummaryCards
+        budget={budget}
+        totalEstimated={50000}
+        totalSpent={25000}
+      />,
     );
 
-    await waitFor(() => {
-      expect(screen.queryByText(/que a média/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/média dos casamentos/)).not.toBeInTheDocument();
-    });
+    expect(screen.queryByText(/que a média/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/média dos casamentos/)).not.toBeInTheDocument();
   });
 
-  it("renders percentage greater than average when budget is above average", async () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({
-          items: [
-            { total_estimated: "40000" },
-            { total_estimated: "60000" },
-          ],
-          count: 2,
-        }),
-      ),
-    );
+  it("renders percentage greater than average when budget is above average", () => {
+    const budget = createMockBudget({
+      comparison_percentage: 50,
+      tenant_average_budget: "50000.00",
+    });
 
     render(
-      <WeddingFinancesSummaryCards totalEstimated={75000} totalSpent={25000} />,
+      <WeddingFinancesSummaryCards
+        budget={budget}
+        totalEstimated={75000}
+        totalSpent={25000}
+      />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("50% maior que a média")).toBeInTheDocument();
-    });
+    expect(screen.getByText("50% maior que a média")).toBeInTheDocument();
   });
 
-  it("renders percentage less than average when budget is below average", async () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({
-          items: [
-            { total_estimated: "80000" },
-            { total_estimated: "120000" },
-          ],
-          count: 2,
-        }),
-      ),
-    );
+  it("renders percentage less than average when budget is below average", () => {
+    const budget = createMockBudget({
+      comparison_percentage: -30,
+      tenant_average_budget: "100000.00",
+    });
 
     render(
-      <WeddingFinancesSummaryCards totalEstimated={70000} totalSpent={25000} />,
+      <WeddingFinancesSummaryCards
+        budget={budget}
+        totalEstimated={70000}
+        totalSpent={25000}
+      />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("30% menor que a média")).toBeInTheDocument();
-    });
+    expect(screen.getByText("30% menor que a média")).toBeInTheDocument();
   });
 
-  it("renders 'Na média dos casamentos' when budget is equal to average", async () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({
-          items: [
-            { total_estimated: "50000" },
-            { total_estimated: "50000" },
-          ],
-          count: 2,
-        }),
-      ),
-    );
-
-    render(
-      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText("Na média dos casamentos")).toBeInTheDocument();
+  it("renders 'Na média dos casamentos' when budget is equal to average", () => {
+    const budget = createMockBudget({
+      comparison_percentage: 0,
+      tenant_average_budget: "50000.00",
     });
-  });
-
-  it("shows loading skeleton when budgets are loading", () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () => new Promise(() => {})),
-    );
 
     render(
-      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
+      <WeddingFinancesSummaryCards
+        budget={budget}
+        totalEstimated={50000}
+        totalSpent={25000}
+      />,
     );
 
-    const skeletons = document.querySelectorAll(".animate-pulse");
-    expect(skeletons.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("does not render average comparison when budgets fetch fails", async () => {
-    server.use(
-      http.get("*/api/v1/finances/budgets/", () =>
-        HttpResponse.json({ message: "API Error" }, { status: 500 }),
-      ),
-    );
-
-    render(
-      <WeddingFinancesSummaryCards totalEstimated={50000} totalSpent={25000} />,
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByText(/que a média/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/média dos casamentos/)).not.toBeInTheDocument();
-    });
+    expect(screen.getByText("Na média dos casamentos")).toBeInTheDocument();
   });
 
   it("shows 'Dentro do planejado' when budget usage is under 90%", () => {

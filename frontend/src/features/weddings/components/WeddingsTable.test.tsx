@@ -25,6 +25,28 @@ const mockWeddings = [
     overdue_installments: 0,
     incomplete_tasks: 0,
   }),
+  createMockWedding({
+    uuid: "w-3",
+    groom_name: "Lucas",
+    bride_name: "Beatriz",
+    location: "Belo Horizonte",
+    expected_guests: 200,
+    status: "PROPOSAL",
+    total_budget: "40000",
+    overdue_installments: 0,
+    incomplete_tasks: 0,
+  }),
+  createMockWedding({
+    uuid: "w-4",
+    groom_name: "Gabriel",
+    bride_name: "Camila",
+    location: "Curitiba",
+    expected_guests: 180,
+    status: "PLANNING",
+    total_budget: "60000",
+    overdue_installments: 0,
+    incomplete_tasks: 1,
+  }),
 ];
 
 const PAGE_SIZE = 10;
@@ -43,8 +65,11 @@ describe("WeddingsTable", () => {
 
     expect(screen.getByText(/João & Maria/)).toBeInTheDocument();
     expect(screen.getByText(/Pedro & Ana/)).toBeInTheDocument();
+    expect(screen.getByText(/Lucas & Beatriz/)).toBeInTheDocument();
+    expect(screen.getByText(/Gabriel & Camila/)).toBeInTheDocument();
     expect(screen.getByText("São Paulo")).toBeInTheDocument();
     expect(screen.getByText("Rio de Janeiro")).toBeInTheDocument();
+    expect(screen.getByText("Curitiba")).toBeInTheDocument();
   });
 
   it("renders status badges", () => {
@@ -60,6 +85,8 @@ describe("WeddingsTable", () => {
 
     expect(screen.getByText("Em Andamento")).toBeInTheDocument();
     expect(screen.getByText("Concluído")).toBeInTheDocument();
+    expect(screen.getByText("Proposta")).toBeInTheDocument();
+    expect(screen.getByText("Planejamento")).toBeInTheDocument();
   });
 
   it("renders Convidados with value or dash", () => {
@@ -117,8 +144,8 @@ describe("WeddingsTable", () => {
       />,
     );
 
-    expect(screen.getByTitle("Editar")).toBeInTheDocument();
-    expect(screen.getByTitle("Excluir")).toBeInTheDocument();
+    expect(screen.getAllByTitle("Editar").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByTitle("Excluir").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTitle("Ver Detalhes")).toBeInTheDocument();
   });
 
@@ -175,11 +202,11 @@ describe("WeddingsTable", () => {
     await userEvent.click(rowText);
     expect(onWeddingClick).toHaveBeenCalledWith(mockWeddings[0]);
 
-    const editBtn = screen.getByTitle("Editar");
+    const editBtn = screen.getAllByTitle("Editar")[0];
     await userEvent.click(editBtn);
     expect(onEditClick).toHaveBeenCalledWith(mockWeddings[0]);
 
-    const deleteBtn = screen.getByTitle("Excluir");
+    const deleteBtn = screen.getAllByTitle("Excluir")[0];
     await userEvent.click(deleteBtn);
     expect(onDeleteClick).toHaveBeenCalledWith(mockWeddings[0]);
   });

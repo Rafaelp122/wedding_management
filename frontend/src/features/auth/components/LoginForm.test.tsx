@@ -51,6 +51,7 @@ describe("LoginForm", () => {
       refresh: "refresh-token-xyz",
       user: {
         id: 1,
+        uuid: "00000000-0000-0000-0000-000000000001",
         first_name: "Admin",
         last_name: "User",
         email: "admin@test.com",
@@ -160,5 +161,38 @@ describe("LoginForm", () => {
 
     await screen.findByText("Validando credenciais...");
     resolvePromise!();
+  });
+
+  it("displays security alert toast when account is locked", async () => {
+    const { http, HttpResponse } = await import("msw");
+    server.use(
+      http.post("*/api/v1/auth/token/", () => {
+        return HttpResponse.json(
+          {
+            detail: "Conta temporariamente bloqueada por excesso de tentativas. Tente novamente em 900 segundos.",
+            code: "account_locked",
+          },
+          { status: 429 },
+        );
+      }),
+    );
+
+    render(<LoginForm />);
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByPlaceholderText("helena@simaceito.com"),
+      "locked@test.com",
+    );
+    await user.type(screen.getByPlaceholderText("••••••••"), "wrongpass");
+    await user.click(screen.getByRole("button", { name: /acessar painel/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Conta temporariamente bloqueada"),
+        expect.objectContaining({
+          description: expect.stringContaining("segurança"),
+        }),
+      );
+    });
   });
 });

@@ -13,6 +13,7 @@ import type {
 } from 'msw';
 
 import type {
+  LogoutOut,
   PasswordResetResponseOut,
   TokenOut,
   TokenRefreshOutputSchema,
@@ -23,6 +24,7 @@ import type {
 
 import {
   getAuthGoogleLoginResponseMock,
+  getAuthLogoutResponseMock,
   getAuthObtainTokenResponseMock,
   getAuthPasswordResetConfirmResponseMock,
   getAuthPasswordResetRequestResponseMock,
@@ -33,7 +35,7 @@ import {
   getAuthVerifyTokenResponseMock
 } from './auth.faker';
 
-export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock, getAuthPasswordResetRequestResponseMock, getAuthPasswordResetConfirmResponseMock, getAuthVerifyEmailResponseMock, getAuthResendVerificationResponseMock } from './auth.faker';
+export { getAuthRegisterUserResponseMock, getAuthObtainTokenResponseMock, getAuthRefreshTokenResponseMock, getAuthVerifyTokenResponseMock, getAuthGoogleLoginResponseMock, getAuthPasswordResetRequestResponseMock, getAuthPasswordResetConfirmResponseMock, getAuthVerifyEmailResponseMock, getAuthResendVerificationResponseMock, getAuthLogoutResponseMock } from './auth.faker';
 
 
 export const getAuthRegisterUserMockHandler = (overrideResponse?: UserOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<UserOut> | UserOut), options?: RequestHandlerOptions) => {
@@ -143,6 +145,18 @@ export const getAuthResendVerificationMockHandler = (overrideResponse?: VerifyEm
       })
   }, options)
 }
+
+export const getAuthLogoutMockHandler = (overrideResponse?: LogoutOut | ((info: Parameters<Parameters<typeof http.post>[1]>[0]) => Promise<LogoutOut> | LogoutOut), options?: RequestHandlerOptions) => {
+  return http.post('*/api/v1/auth/logout/', async (info: Parameters<Parameters<typeof http.post>[1]>[0]) => {
+
+
+    return HttpResponse.json(overrideResponse !== undefined
+    ? (typeof overrideResponse === "function" ? await overrideResponse(info) : overrideResponse)
+    : getAuthLogoutResponseMock(),
+      { status: 200
+      })
+  }, options)
+}
 export const getAuthMock = () => [
   getAuthRegisterUserMockHandler(),
   getAuthObtainTokenMockHandler(),
@@ -152,5 +166,6 @@ export const getAuthMock = () => [
   getAuthPasswordResetRequestMockHandler(),
   getAuthPasswordResetConfirmMockHandler(),
   getAuthVerifyEmailMockHandler(),
-  getAuthResendVerificationMockHandler()
+  getAuthResendVerificationMockHandler(),
+  getAuthLogoutMockHandler()
 ]

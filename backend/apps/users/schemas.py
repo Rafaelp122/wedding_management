@@ -1,5 +1,5 @@
 from ninja import Schema
-from pydantic import UUID4, EmailStr, Field
+from pydantic import UUID4, ConfigDict, EmailStr, Field
 
 from apps.users.models import User
 
@@ -7,12 +7,16 @@ from apps.users.models import User
 class TokenPayloadIn(Schema):
     """Credenciais para autenticação (obtain token)."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
-    password: str
+    password: str = Field(..., max_length=128)
 
 
 class GoogleAuthIn(Schema):
     """Payload para autenticação via Google OAuth2."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     id_token: str
 
@@ -21,6 +25,7 @@ class UserDataOut(Schema):
     """Dados básicos do usuário retornados no token JWT."""
 
     id: int
+    uuid: UUID4
     email: str
     first_name: str
     last_name: str
@@ -38,8 +43,10 @@ class TokenOut(Schema):
 class RegisterIn(Schema):
     """Schema para entrada de novos usuários (Owners)."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
     first_name: str = ""
     last_name: str = ""
     company_name: str = ""
@@ -69,15 +76,19 @@ class UserOut(Schema):
 class PasswordResetRequestIn(Schema):
     """Schema para solicitação de redefinição de senha."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
 
 
 class PasswordResetConfirmIn(Schema):
     """Schema para confirmação de redefinição de senha."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     uid: str
     token: str
-    new_password: str = Field(min_length=8)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
 class PasswordResetResponseOut(Schema):
@@ -87,13 +98,37 @@ class PasswordResetResponseOut(Schema):
 
 
 class VerifyEmailIn(Schema):
+    """Schema para validação do token de e-mail."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     uid: str
     token: str
 
 
 class ResendVerificationIn(Schema):
+    """Schema para reenvio do e-mail de verificação."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     email: EmailStr
 
 
 class VerifyEmailResponseOut(Schema):
+    """Schema de resposta para operações de verificação de e-mail."""
+
+    message: str
+
+
+class LogoutIn(Schema):
+    """Schema para logout de usuário via revogação de refresh token."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    refresh: str
+
+
+class LogoutOut(Schema):
+    """Schema de resposta para logout bem-sucedido."""
+
     message: str

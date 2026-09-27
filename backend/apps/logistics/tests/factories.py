@@ -15,36 +15,9 @@ from decimal import Decimal
 
 import factory
 
-from apps.logistics.models import Contract, Item, Supplier
+from apps.contracts.models import Contract
+from apps.logistics.models import Item
 from apps.weddings.tests.factories import WeddingFactory
-
-
-class SupplierFactory(factory.django.DjangoModelFactory):
-    """Fábrica para Fornecedores (conforme modelo Supplier)."""
-
-    class Meta:
-        model = Supplier
-
-    # Criamos ou usamos uma empresa existente
-    company = factory.SubFactory("apps.tenants.tests.factories.CompanyFactory")
-
-    name = factory.Faker("company")
-    cnpj = factory.LazyAttribute(
-        lambda _: "00.000.000/0001-00"
-    )  # Exemplo estático ou via Faker se disponível
-
-    # Contacto
-    phone = factory.Faker("phone_number")
-    email = factory.Faker("company_email")
-    website = factory.Faker("url")
-
-    # Endereço
-    address = factory.Faker("street_address")
-    city = factory.Faker("city")
-    state = factory.Faker("state_abbr")  # Garante apenas 2 caracteres
-
-    notes = factory.Faker("sentence")
-    is_active = True
 
 
 class ContractFactory(factory.django.DjangoModelFactory):
@@ -56,7 +29,7 @@ class ContractFactory(factory.django.DjangoModelFactory):
     # Sincroniza a empresa entre contrato, casamento e fornecedor
     company = factory.SelfAttribute("wedding.company")
     supplier = factory.SubFactory(
-        "apps.logistics.tests.factories.SupplierFactory",
+        "apps.contracts.tests.factories.SupplierFactory",
         company=factory.SelfAttribute("..company"),
     )
 
