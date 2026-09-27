@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -8,9 +8,14 @@ from apps.clients.interfaces import (
     get_client_for_tenant,
     get_or_create_client_for_proposal,
 )
-from apps.clients.tests.factories import ClientFactory
+from apps.clients.models import Client
+from apps.clients.tests.factories import ClientFactory as _ClientFactory
 from apps.core.exceptions import ObjectNotFoundError
 from apps.users.tests.factories import UserFactory
+
+
+def ClientFactory(*args: Any, **kwargs: Any) -> Client:
+    return cast(Client, _ClientFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db

@@ -231,26 +231,22 @@ class Wedding(TenantModel):
             client_role: Papel ou parentesco do contratante principal.
             days_before_in_progress: Dias de antecedência para disparo da reta final.
         """
-        if groom_name is not None:
-            self.groom_name = groom_name
-        if bride_name is not None:
-            self.bride_name = bride_name
-        if location is not None:
-            self.location = location
+        attrs: dict[str, Any] = {
+            "groom_name": groom_name,
+            "bride_name": bride_name,
+            "location": location,
+            "client_name": client_name,
+            "client_cpf": client_cpf,
+            "client_email": client_email,
+            "client_phone": client_phone,
+            "client_role": client_role,
+            "days_before_in_progress": days_before_in_progress,
+        }
+        for field_name, value in attrs.items():
+            if value is not None:
+                setattr(self, field_name, value)
         if expected_guests is not ...:
             self.expected_guests = expected_guests  # type: ignore[assignment]
-        if client_name is not None:
-            self.client_name = client_name
-        if client_cpf is not None:
-            self.client_cpf = client_cpf
-        if client_email is not None:
-            self.client_email = client_email
-        if client_phone is not None:
-            self.client_phone = client_phone
-        if client_role is not None:
-            self.client_role = client_role
-        if days_before_in_progress is not None:
-            self.days_before_in_progress = days_before_in_progress
 
     def can_transition_to(self, target_status: str | StatusChoices) -> bool:
         """Verifica se a transição para o status informado é válida."""
@@ -402,12 +398,12 @@ class Wedding(TenantModel):
                 if participant.is_primary_signatory:
                     return participant.client
             return None
-        participant = (
+        primary = (
             self.participants.filter(is_primary_signatory=True)
             .select_related("client")
             .first()
         )
-        return participant.client if participant else None
+        return primary.client if primary else None
 
 
 class WeddingClient(TenantModel, WeddingOwnedMixin):

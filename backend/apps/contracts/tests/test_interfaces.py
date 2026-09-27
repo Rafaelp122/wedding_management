@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -13,9 +13,20 @@ from apps.contracts.interfaces import (
     sign_planner_contract_for_wedding,
 )
 from apps.contracts.models import Contract
-from apps.contracts.tests.factories import PlannerContractFactory
+from apps.contracts.tests.factories import (
+    PlannerContractFactory as _PlannerContractFactory,
+)
 from apps.core.exceptions import BusinessRuleViolation
-from apps.weddings.tests.factories import WeddingFactory
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def PlannerContractFactory(*args: Any, **kwargs: Any) -> Contract:
+    return cast(Contract, _PlannerContractFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db

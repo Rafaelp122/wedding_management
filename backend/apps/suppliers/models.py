@@ -27,7 +27,7 @@ class Supplier(TenantModel):
     de relacionamento no nível organizacional (tenant).
     """
 
-    objects = SupplierManager()  # type: ignore[assignment,misc]
+    objects = SupplierManager()  # type: ignore[misc]
 
     # Informações básicas
     name = models.CharField(

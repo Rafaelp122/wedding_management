@@ -113,7 +113,7 @@ exclude = [
 [tool.ruff.lint]
 
 select = ["E", "F", "W", "I", "B", "RUF", "UP", "DJ", "S", "C90", "G"]
-ignore = ["E203", "RUF012", "G004"]
+ignore = ["E203", "RUF012", "G004", "E501"]
 
 [tool.ruff.lint.mccabe]
 # Define o limite máximo de complexidade (o padrão geralmente é 10)

@@ -12,6 +12,7 @@ from apps.tenants.managers import TenantQuerySet
 
 if TYPE_CHECKING:
     from apps.contracts.models.contract import Contract
+    from apps.logistics.models import SupplyItem  # noqa: F401
     from apps.weddings.models import Wedding
 
 
@@ -20,7 +21,7 @@ __all__ = [
 ]
 
 
-class ItemQuerySet(TenantQuerySet["Item"]):
+class ItemQuerySet(TenantQuerySet["SupplyItem"]):
     """QuerySet customizado para itens de logística."""
 
     def for_contract(

@@ -318,6 +318,21 @@ class WeddingService:
         return wedding
 
     @staticmethod
+    def _handle_status_update(
+        company: Company, instance: Wedding, status_input: str | None
+    ) -> bool:
+        if status_input is None or status_input == instance.status:
+            return False
+        instance.transition_to(status_input)
+        if instance.status == Wedding.StatusChoices.CANCELED:
+            from apps.weddings.tasks import on_wedding_canceled_task
+
+            transaction.on_commit(
+                lambda: on_wedding_canceled_task.enqueue(company.id, str(instance.uuid))
+            )
+        return True
+
+    @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Wedding, payload: WeddingPatchIn) -> Wedding:
         """
@@ -347,31 +362,18 @@ class WeddingService:
         data = payload.model_dump(exclude_unset=True)
         updated_fields: set[str] = set()
 
-        status_input = data.pop("status", None)
-        if status_input is not None and status_input != instance.status:
-            instance.transition_to(status_input)
+        if WeddingService._handle_status_update(
+            company, instance, data.pop("status", None)
+        ):
             updated_fields.add("status")
-            if instance.status == Wedding.StatusChoices.CANCELED:
-                from apps.weddings.tasks import on_wedding_canceled_task
-
-                transaction.on_commit(
-                    lambda: on_wedding_canceled_task.enqueue(
-                        company.id, str(instance.uuid)
-                    )
-                )
 
         new_date = data.pop("date", None)
         if new_date is not None and new_date != instance.date:
             instance.reschedule(new_date)
             updated_fields.add("date")
 
-        guest_count_changed = False
         old_guests = instance.expected_guests or 0
-        new_guests = old_guests
-        if "expected_guests" in data and data["expected_guests"] is not None:
-            if data["expected_guests"] != instance.expected_guests:
-                guest_count_changed = True
-                new_guests = data["expected_guests"]
+        new_guests = data.get("expected_guests")
 
         detail_kwargs: dict[str, Any] = {}
         for field in (
@@ -408,7 +410,7 @@ class WeddingService:
                     code="wedding_validation_error",
                 ) from e
 
-        if guest_count_changed:
+        if new_guests is not None and new_guests != old_guests:
             from apps.contracts.interfaces import enqueue_guest_count_evaluation
 
             enqueue_guest_count_evaluation(

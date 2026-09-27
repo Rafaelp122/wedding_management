@@ -83,7 +83,7 @@ class TestContractSelectors:
             contract_type="PLANNER",
             status="DRAFT",
         )
-        c3 = ContractFactory(
+        _ = ContractFactory(
             company=user.company,
             wedding=wedding_2,
             contract_type="SUPPLIER",
@@ -155,7 +155,7 @@ class TestContractSelectors:
         contract = ContractFactory(company=user.company, wedding=wedding)
 
         add1 = ContractAddendumFactory(company=user.company, contract=contract)
-        add2 = ContractAddendumFactory(company=user.company, contract=contract)
+        _ = ContractAddendumFactory(company=user.company, contract=contract)
 
         addendums = list(
             contract_addendum_list_selector(

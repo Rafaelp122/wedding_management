@@ -218,10 +218,11 @@ def contract_addendum_get_selector(
         ObjectNotFoundError: Se o aditivo não existir ou pertencer a outro tenant/contrato.
     """
     try:
-        return (
+        addendum: ContractAddendum = (
             ContractAddendum.objects.for_tenant(company)
             .select_related("contract")
             .get(uuid=addendum_uuid, contract__uuid=contract_uuid)
         )
+        return addendum
     except (ContractAddendum.DoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(detail="Termo aditivo não encontrado.") from e

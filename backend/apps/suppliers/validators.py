@@ -47,7 +47,10 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     # Cálculo do primeiro dígito verificador (DV1)
     weights_first = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-    sum1 = sum(int(digit) * weight for digit, weight in zip(digits[:12], weights_first))
+    sum1 = sum(
+        int(digit) * weight
+        for digit, weight in zip(digits[:12], weights_first, strict=True)
+    )
     remainder1 = sum1 % 11
     expected_dv1 = 0 if remainder1 < 2 else 11 - remainder1
 
@@ -60,7 +63,8 @@ def validate_cnpj_modulo11(value: str) -> None:
     # Cálculo do segundo dígito verificador (DV2)
     weights_second = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
     sum2 = sum(
-        int(digit) * weight for digit, weight in zip(digits[:13], weights_second)
+        int(digit) * weight
+        for digit, weight in zip(digits[:13], weights_second, strict=True)
     )
     remainder2 = sum2 % 11
     expected_dv2 = 0 if remainder2 < 2 else 11 - remainder2

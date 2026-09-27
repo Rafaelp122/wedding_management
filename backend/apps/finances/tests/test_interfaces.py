@@ -1,13 +1,31 @@
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 import pytest
 
 from apps.finances.interfaces import create_expense_from_planner_contract
-from apps.finances.models import Budget
-from apps.finances.tests.factories import BudgetCategoryFactory, BudgetFactory
-from apps.weddings.tests.factories import WeddingFactory
+from apps.finances.models import Budget, BudgetCategory
+from apps.finances.tests.factories import (
+    BudgetCategoryFactory as _BudgetCategoryFactory,
+)
+from apps.finances.tests.factories import (
+    BudgetFactory as _BudgetFactory,
+)
+from apps.weddings.models import Wedding
+from apps.weddings.tests.factories import WeddingFactory as _WeddingFactory
+
+
+def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
+    return cast(Wedding, _WeddingFactory(*args, **kwargs))
+
+
+def BudgetFactory(*args: Any, **kwargs: Any) -> Budget:
+    return cast(Budget, _BudgetFactory(*args, **kwargs))
+
+
+def BudgetCategoryFactory(*args: Any, **kwargs: Any) -> BudgetCategory:
+    return cast(BudgetCategory, _BudgetCategoryFactory(*args, **kwargs))
 
 
 @pytest.mark.django_db

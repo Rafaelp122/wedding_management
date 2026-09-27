@@ -82,8 +82,10 @@ def create_expense_from_planner_contract(
         )
         budget = category.budget
     else:
-        budget = Budget.objects.filter(company=company, wedding=wedding).first()
-        if not budget:
+        existing_budget = Budget.objects.filter(
+            company=company, wedding=wedding
+        ).first()
+        if not existing_budget:
             budget = Budget(
                 company=company,
                 wedding=wedding,
@@ -92,9 +94,11 @@ def create_expense_from_planner_contract(
             )
             budget.freeze_baseline()
             budget.save()
-        elif budget.total_estimated < budget.total_allocated + fee:
-            budget.total_estimated = budget.total_allocated + fee
-            budget.save(update_fields=["total_estimated", "updated_at"])
+        else:
+            budget = existing_budget
+            if budget.total_estimated < budget.total_allocated + fee:
+                budget.total_estimated = budget.total_allocated + fee
+                budget.save(update_fields=["total_estimated", "updated_at"])
 
         cat = BudgetCategory.objects.filter(
             company=company, budget=budget, name__iexact="Assessoria"

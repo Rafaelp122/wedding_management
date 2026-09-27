@@ -10,6 +10,7 @@ from apps.tenants.managers import TenantManager, TenantQuerySet
 
 
 if TYPE_CHECKING:
+    from apps.suppliers.models import Supplier  # noqa: F401
     from apps.tenants.models import Company
 
 

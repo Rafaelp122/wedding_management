@@ -500,14 +500,15 @@ class TestWeddingRichOperations:
 
     def test_primary_signatory_client_property(self, user: Any) -> None:
         """primary_signatory_client retorna o Client marcado como is_primary_signatory=True."""
+        from apps.clients.models import Client
         from apps.clients.tests.factories import ClientFactory
         from apps.weddings.models import WeddingClient
 
-        wedding = WeddingFactory(company=user.company)
+        wedding = cast(Wedding, WeddingFactory(company=user.company))
         assert wedding.primary_signatory_client is None
 
-        client1 = ClientFactory(company=user.company, name="Noiva")
-        client2 = ClientFactory(company=user.company, name="Pagador")
+        client1 = cast(Client, ClientFactory(company=user.company, name="Noiva"))
+        client2 = cast(Client, ClientFactory(company=user.company, name="Pagador"))
 
         WeddingClient.objects.create(
             company=user.company,
@@ -532,10 +533,13 @@ class TestWeddingRichOperations:
     ) -> None:
         """convert_to_planning deve transitar para StatusChoices.PLANNING."""
         future_date = timezone.now().date() + timedelta(days=60)
-        wedding = WeddingFactory(
-            company=user.company,
-            date=future_date,
-            status=Wedding.StatusChoices.PROPOSAL,
+        wedding = cast(
+            Wedding,
+            WeddingFactory(
+                company=user.company,
+                date=future_date,
+                status=Wedding.StatusChoices.PROPOSAL,
+            ),
         )
         wedding.convert_to_planning()
         assert wedding.status == Wedding.StatusChoices.PLANNING

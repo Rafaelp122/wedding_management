@@ -16,6 +16,9 @@ from apps.tenants.managers import TenantQuerySet
 
 if TYPE_CHECKING:
     from apps.contracts.models.contract import Contract
+    from apps.contracts.models.contract_addendum import (  # noqa: F401
+        ContractAddendum,
+    )
     from apps.weddings.models import Wedding
 
 

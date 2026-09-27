@@ -62,7 +62,7 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         verbose_name="Tipo de Contrato",
     )
 
-    service_tier = models.CharField(
+    service_tier = models.CharField(  # noqa: DJ001
         max_length=50,
         null=True,
         blank=True,
