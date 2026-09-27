@@ -29,7 +29,7 @@ Esse antipadrão ocorre quando a interface precisa exibir uma visão analítica 
 Antipadrão Data-Stitching no Cliente:
 GET /api/v1/weddings/          -> baixa 100+ casamentos
 GET /api/v1/scheduler/tasks/   -> baixa 500+ tarefas
-GET /api/v1/logistics/contracts/ -> baixa 300+ contratos
+GET /api/v1/contracts/ -> baixa 300+ contratos
    └── No Frontend: loops em memória O(W x T), montagem manual de weddingMap,
        filtragem imperativa e ordenação na thread da UI.
 ```
@@ -139,10 +139,10 @@ A proibição do Data-Stitching no frontend estabelece uma ponte arquitetural vi
 
 ### Caso de Estudo 3: `ContractDetailDialog.tsx` (Detalhes Agregados de Contrato)
 
-- **Cenário Anterior (Antipadrão):** Ao abrir os detalhes de um contrato, a interface disparava uma consulta inicial para o contrato, seguida de outra consulta para os itens vinculados (`/logistics/items/?contract_id=...`) e outra para os termos aditivos (`/logistics/contracts/?parent_id=...`), criando um waterfall de 3 etapas.
+- **Cenário Anterior (Antipadrão):** Ao abrir os detalhes de um contrato, a interface disparava uma consulta inicial para o contrato, seguida de outra consulta para os itens vinculados (`/logistics/items/?contract_id=...`) e outra para os termos aditivos (`/contracts/{uuid}/addendums/`), criando um waterfall de 3 etapas.
 - **Implementação Canônica Atual:**
-  - O backend expõe `GET /api/v1/logistics/contracts/{uuid}/details/` suportado pelo seletor [`contract_detail_aggregate_selector()`](../../../backend/apps/logistics/selectors/contract_selectors.py).
-  - O seletor executa uma busca única combinando `select_related("wedding", "supplier", "parent")` e `prefetch_related("items", "addendums")`.
+  - O backend expõe `GET /api/v1/contracts/{uuid}/details/` suportado pelo seletor [`contract_detail_aggregate_selector()`](../../../backend/apps/contracts/selectors/contract_selectors.py).
+  - O seletor executa uma busca única combinando `select_related("wedding", "supplier", "client")` e `prefetch_related("addendums", "items")`.
   - A resposta serializa o DTO `ContractDetailAggregateOut` contendo o contrato, a lista de itens e os termos aditivos associados, resolvendo a renderização do diálogo em um único ciclo de rede.
 
 ---

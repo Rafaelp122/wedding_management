@@ -92,7 +92,7 @@ O catálogo está integrado aos **5 Bounded Contexts operacionais**, cada um dis
 | **BR-L02** | Hierarquia Pai-Filho e Termos Aditivos | Logística | [contract-parent-child-hierarchy.md](logistics/contract-parent-child-hierarchy.md) |
 | **BR-L03** | Compartilhamento Multi-Casamento de Fornecedores | Logística | [contract-state-machine.md](logistics/contract-state-machine.md) |
 | **BR-L04** | Desacoplamento de Aquisição e Pagamento de Itens | Logística | [contract-state-machine.md](logistics/contract-state-machine.md) |
-| **BR-L05** | Validação e Sanitização de CNPJ (Módulo 11) | Logística | [cnpj-validation-rules.md](logistics/cnpj-validation-rules.md) |
+| **BR-L05** | Validação e Sanitização de CNPJ (Módulo 11) | Fornecedores | [cnpj-validation-rules.md](logistics/cnpj-validation-rules.md) |
 | **BR-S01** | Proteção Somente-Leitura de Eventos de Pagamento | Cronograma | [payment-event-readonly-guard.md](scheduler/payment-event-readonly-guard.md) |
 | **BR-S02** | Motor de Regras de Recorrência e Agendamento | Cronograma | [recurrence-rules-engine.md](scheduler/recurrence-rules-engine.md) |
 | **BR-S03** | Detecção de Conflito de Agenda (Soft Overlap) | Cronograma | [schedule-conflict-validation.md](scheduler/schedule-conflict-validation.md) |

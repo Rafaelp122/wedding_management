@@ -1,7 +1,7 @@
 # Arquitetura & System Design da Plataforma
 
 > **Categoria:** Arquitetura (System Design & Decision Records)
-> **Relacionados:** [Matriz de Requisitos](requirements.md) | [Topologia de Domínios](domains/index.md) | [Catálogo de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
+> **Relacionados:** [Modelagem de Negócio & Visão](business-vision.md) | [Especificação de Requisitos (SRS)](requirements.md) | [Topologia de Domínios](domains/index.md) | [Catálogo de Regras de Negócio](business-rules/index.md) | [Índice de ADRs (001–031)](adr/README.md) | [Racional de Design System](concepts/design-system-rationale.md)
 
 <p class="mdx-hero__subtitle" style="font-size: 1.15rem; font-weight: 500; color: var(--md-default-fg-color--light); margin-top: -0.5rem; margin-bottom: 1.5rem;">
 Hub executivo de engenharia, topologia de microsserviços e padrões de projeto do Wedding Management System.
@@ -107,16 +107,16 @@ sequenceDiagram
 
     Note over User,R2: Fluxo de Mutação com Anexo (Upload de Contrato)
     User->>UI: Submete formulário com dados e anexo PDF
-    UI->>API: POST /api/v1/logistics/contracts/presign-upload/
+    UI->>API: POST /api/v1/contracts/upload-url/
     API->>Svc: StorageService.generate_presigned_url(company, filename)
     Svc-->>API: URL Assinada R2 + Storage Key
     API-->>UI: { upload_url, storage_key }
     UI->>R2: PUT binário direto no Cloudflare R2 (Presigned URL)
     R2-->>UI: 200 OK (Upload Concluído)
-    UI->>API: POST /api/v1/logistics/contracts/ (Payload com storage_key)
+    UI->>API: POST /api/v1/contracts/ (Payload com storage_key)
     API->>Svc: ContractService.create(company, payload)
     Note over Svc,DB: Transação Atômica (@transaction.atomic)
-    Svc->>DB: INSERT into logistics_contract + full_clean()
+    Svc->>DB: INSERT into contracts + full_clean()
     DB-->>Svc: Contrato persistido com sucesso
     Svc-->>API: Contract Instance
     API-->>UI: 201 Created (Schema ContractOut)

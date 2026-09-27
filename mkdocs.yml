@@ -111,6 +111,8 @@ nav:
   - Domínios & Negócio:
       - Topologia Geral de Domínios: architecture/domains/index.md
       - Subdomínios Operacionais do Casamento:
+          - Domínio de Clientes & Participantes:
+              - Hub de Clientes: architecture/domains/clients-domain.md
           - Domínio de Casamentos (Weddings):
               - Hub de Casamentos: architecture/domains/weddings-domain.md
               - Ciclo de Vida do Casamento: architecture/business-rules/weddings/wedding-status-lifecycle.md
@@ -122,11 +124,14 @@ nav:
               - Vencimento de Parcelas: architecture/business-rules/finances/installment-overdue-logic.md
               - Integração com Agenda: architecture/business-rules/finances/payment-schedule-integration.md
               - Benchmark da Assessoria: architecture/business-rules/finances/tenant-budget-benchmark.md
-          - Domínio de Logística & Contratos:
-              - Hub de Logística: architecture/domains/logistics-domain.md
+          - Domínio de Contratações & Fornecedores:
+              - Hub de Contratos: architecture/domains/contracts-domain.md
+              - Hub de Fornecedores: architecture/domains/suppliers-domain.md
               - Máquina de Estados de Contratos: architecture/business-rules/logistics/contract-state-machine.md
               - Hierarquia e Aditivos: architecture/business-rules/logistics/contract-parent-child-hierarchy.md
               - Validação de CNPJ: architecture/business-rules/logistics/cnpj-validation-rules.md
+          - Domínio de Suprimentos & Materiais:
+              - Hub de Suprimentos & Materiais: architecture/domains/logistics-domain.md
           - Domínio de Agenda & Cronograma:
               - Hub do Cronograma: architecture/domains/scheduler-domain.md
               - Conflito de Agenda (Soft Overlap): architecture/business-rules/scheduler/schedule-conflict-validation.md
@@ -145,7 +150,11 @@ nav:
 
   - Arquitetura & Engenharia:
       - Visão Geral & System Design: architecture/index.md
-      - Matriz de Requisitos (RF & RNF): architecture/requirements.md
+      - Modelagem de Negócio & Visão: architecture/business-vision.md
+      - Especificação de Requisitos (SRS): architecture/requirements.md
+      - Propostas de Arquitetura (RFCs):
+          - Índice de RFCs: architecture/rfc/README.md
+          - RFC-001 - Macro-Arquitetura e Redesenho de Domínios: architecture/rfc/001-macro-architecture-and-domain-redesign.md
       - Padrões Arquiteturais:
           - Visão Geral do Sistema: architecture/concepts/system-overview.md
           - Estratégia Multi-Tenancy: architecture/concepts/multi-tenancy-strategy.md

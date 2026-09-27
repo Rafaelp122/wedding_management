@@ -4,12 +4,12 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/core/services/storage/cloudflare_r2.py
-  - backend/apps/logistics/services/contract_service.py
-  - frontend/src/features/logistics/hooks/useContractUploadForm.ts
+  - backend/apps/contracts/services/contract_service.py
+  - frontend/src/features/contracts/hooks/useContractUploadForm.ts
 tests:
   - backend/apps/core/tests/test_storage_service.py
-  - backend/apps/logistics/tests/contracts/test_services.py
-  - frontend/src/features/logistics/hooks/useContractUploadForm.test.ts
+  - backend/apps/contracts/tests/test_services.py
+  - frontend/src/features/contracts/hooks/useContractUploadForm.test.ts
 ---
 
 # Fluxo de Upload de Contratos PDF (Cloudflare R2 Direct Upload)
@@ -44,7 +44,7 @@ sequenceDiagram
     participant DB as PostgreSQL (Neon DB)
 
     User->>UI: Seleciona PDF e preenche dados do Contrato
-    UI->>API: POST /api/v1/logistics/contracts/upload-url/ (Payload: {filename, wedding_id})
+    UI->>API: POST /api/v1/contracts/upload-url/ (Payload: {filename, wedding_id})
     API->>Storage: generate_presigned_put_url(bucket, key, content_type)
     Storage-->>API: URL pré-assinada com validade de 900 segundos (15 min)
     API-->>UI: HTTP 200 OK ({upload_url, key})
@@ -54,8 +54,8 @@ sequenceDiagram
     R2-->>UI: HTTP 200 OK (Upload Concluído no Bucket)
 
     Note over UI,API: Persistência Atômica do Contrato e Entidades Vinculadas
-    UI->>API: POST /api/v1/logistics/contracts/full/ (Payload: dados + key do R2)
-    API->>Service: ContractService.create_full(company, payload)
+    UI->>API: POST /api/v1/contracts/full/ (Payload: dados + key do R2)
+    API->>Service: ContractService.create_full_from_payload(company, payload)
     Note over Service: Executa em transação atômica (@transaction.atomic)
     Service->>DB: 1. Cria Contract com chave do PDF no R2
     Service->>DB: 2. Cria Expense + Installments (Domínio Finances)
@@ -66,13 +66,15 @@ sequenceDiagram
     UI-->>User: Feedback de sucesso e atualização imediata da lista
 ```
 
+> **Prefixo canônico:** `/api/v1/contracts/` (`apps/contracts/api/contracts.py`). O prefixo legado `/api/v1/logistics/contracts/` foi removido na Onda 4.
+
 ---
 
 ## 3. Implementação Técnica
 
 - **Serviço de Armazenamento:** [`CloudflareR2StorageService.generate_presigned_put_url()`](../../../backend/apps/core/services/storage/cloudflare_r2.py)
-- **Hook de Upload Direto:** [`useContractUploadForm`](../../../frontend/src/features/logistics/hooks/useContractUploadForm.ts)
-- **Orquestração de Contrato:** [`ContractService.generate_upload_url()`](../../../backend/apps/logistics/services/contract_service.py)
+- **Hook de Upload Direto:** [`useContractUploadForm`](../../../frontend/src/features/contracts/hooks/useContractUploadForm.ts)
+- **Orquestração de Contrato:** [`ContractService.generate_upload_url()`](../../../backend/apps/contracts/services/contract_service.py)
 
 ### A. Geração de URLs Pré-Assinadas no Backend (`cloudflare_r2.py`)
 O serviço de storage gera URLs assinadas criptograficamente com parâmetros de cabeçalho estritos (`Bucket`, `Key`, `ContentType`) e tempo de expiração de 15 minutos:
@@ -122,7 +124,7 @@ await createFull({
 ```
 
 #### Detalhes do Envio e Cabeçalho `Content-Type`:
-No serviço [`uploadFileToR2`](../../../frontend/src/services/r2.ts), a requisição `PUT` é despachada diretamente para a URL pré-assinada com o cabeçalho `Content-Type: file.type || "application/octet-stream"` (para arquivos PDF, `application/pdf`). Esse cabeçalho coincide estritamente com o `ContentType` especificado na assinatura criptográfica gerada pelo backend (`generate_presigned_put_url`), garantindo que o Cloudflare R2 valide a integridade do upload sem rejeições de CORS ou assinatura inválida (*SignatureDoesNotMatch*), prevenindo waterfalls ou requisições intermediárias desnecessárias. Testes automatizados do hook residem em [`useContractUploadForm.test.ts`](../../../frontend/src/features/logistics/hooks/useContractUploadForm.test.ts).
+No serviço [`uploadFileToR2`](../../../frontend/src/services/r2.ts), a requisição `PUT` é despachada diretamente para a URL pré-assinada com o cabeçalho `Content-Type: file.type || "application/octet-stream"` (para arquivos PDF, `application/pdf`). Esse cabeçalho coincide estritamente com o `ContentType` especificado na assinatura criptográfica gerada pelo backend (`generate_presigned_put_url`), garantindo que o Cloudflare R2 valide a integridade do upload sem rejeições de CORS ou assinatura inválida (*SignatureDoesNotMatch*), prevenindo waterfalls ou requisições intermediárias desnecessárias. Testes automatizados do hook residem em [`useContractUploadForm.test.ts`](../../../frontend/src/features/contracts/hooks/useContractUploadForm.test.ts).
 
 ---
 

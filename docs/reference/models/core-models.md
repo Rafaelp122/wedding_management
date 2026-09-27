@@ -190,11 +190,12 @@ Conforme estabelecido no [ADR-008: Soft Delete Seletivo](../../architecture/adr/
 | **`BudgetCategory`** | `finances` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
 | **`Expense`** | `finances` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
 | **`Installment`** | `finances` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
-| **`Supplier`** | `logistics` | `TenantModel` | — | `uuid` | `company_id` |
-| **`Contract`** | `logistics` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
+| **`Supplier`** | `contracts` | `TenantModel` | — | `uuid` | `company_id` |
+| **`Contract`** | `contracts` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
+| **`ContractAddendum`** | `contracts` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
 | **`Item`** | `logistics` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
 | **`Event`** | `scheduler` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
-| **`Task`** | `scheduler` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
+| **`ChecklistItem`** | `scheduler` | `TenantModel` | `WeddingOwnedMixin` | `uuid` | `company` + `wedding` |
 | **`Notification`** | `notifications` | `TenantModel` | — | `uuid` | `company` + `user` |
 
 ---

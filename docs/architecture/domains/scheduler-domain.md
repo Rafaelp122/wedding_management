@@ -3,7 +3,7 @@
 > **Categoria:** Domínios de Arquitetura (Bounded Contexts)
 > **Relacionados:** [Catálogo Canônico de Regras de Negócio](../business-rules/index.md) · [ADR-006: Service Layer](../adr/006-service-layer.md) · [ADR-023: Desacoplamento de Módulos](../adr/023-desacoplamento-modulos-scheduler-finances-weddings.md) · [ADR-030: Rich Domain Model](../adr/030-rich-domain-model-service-layer.md) · [ADR-031: Comunicação Entre Módulos](../adr/031-inter-module-communication.md)
 
-O **Domínio de Agenda e Cronograma (`scheduler`)** é o centro nervoso da coordenação temporal e operacional do *Wedding Management System*. Ele gerencia a agenda interativa de compromissos (`Event`), o checklist operacional de tarefas por fases (`Task`), o motor de recorrência inteligente e a aplicação de modelos canônicos (*templates*) para a jornada do casamento.
+O **Domínio de Agenda e Cronograma (`scheduler`)** é o centro nervoso da coordenação temporal e operacional do *Wedding Management System*. Ele gerencia a agenda interativa de compromissos (`Event`), o checklist operacional de tarefas por fases (`ChecklistItem`), o motor de recorrência inteligente e a aplicação de modelos canônicos (*templates*) para a jornada do casamento.
 
 ---
 
@@ -50,7 +50,7 @@ Para compromissos manuais (não-financeiros), o sistema analisa sobreposições 
 ```mermaid
 erDiagram
     Wedding ||--o{ Event : "agenda (CASCADE)"
-    Wedding ||--o{ Task : "contém (CASCADE)"
+    Wedding ||--o{ ChecklistItem : "contém (CASCADE)"
     Installment |o--o{ Event : "projeta parcela (0..1:N / SET_NULL)"
 
     Event {
@@ -70,7 +70,7 @@ erDiagram
         text description
     }
 
-    Task {
+    ChecklistItem {
         bigint id PK
         uuid uuid UK
         bigint company_id FK "Company (Tenant)"
@@ -87,7 +87,7 @@ erDiagram
 | Entidade | Papel & Relações | Campos & Tipos | Invariantes de Persistência & Regras Temporais |
 | :--- | :--- | :--- | :--- |
 | **`Event`** | Compromisso na Agenda (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `source_installment` (`ForeignKey`, `SET_NULL`, nullable), `title`, `event_type` (`TypeChoices`), `start_time`, `end_time`, `recurrence_rule`, `reminder_enabled`, `reminder_minutes_before` | **Imutabilidade Financeira (BR-S01):** Eventos com `event_type == 'pagamento'` não aceitam mutação manual direta via API.<br/>**Trava de Data Passada (BR-S02):** Na criação manual, `timezone.localdate(start_time) >= hoje`.<br/>**Detecção de Sobreposição (BR-S03):** Validação de colisão de horários contornável por `force_overlap=True`.<br/>**Ordenação:** `ordering = ["start_time"]`. |
-| **`Task`** | Item do Checklist (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `title`, `description`, `due_date`, `is_completed` (boolean) | **Ciclo de Vida:** Métodos semânticos `complete()` e `reopen()`.<br/>**Ordenação Padrão:** `ordering = ["is_completed", "due_date", "created_at"]` (prioriza pendentes urgentes). |
+| **`ChecklistItem`** | Item do Checklist (`TenantModel`, `WeddingOwnedMixin`) | `wedding` (`ForeignKey`, `CASCADE`), `title`, `description`, `due_date`, `is_completed` (boolean) | **Ciclo de Vida:** Métodos semânticos `complete()` e `reopen()`.<br/>**Ordenação Padrão:** `ordering = ["is_completed", "due_date", "created_at"]` (prioriza pendentes urgentes). |
 
 ---
 
@@ -96,7 +96,7 @@ erDiagram
 | Código Canônico | Regra / Especificação | Escopo / Responsabilidade | Entidades Envolvidas | Nota Detalhada |
 | :--- | :--- | :--- | :--- | :--- |
 | **`BR-S01`** | **Proteção Somente-Leitura de Pagamentos** | Blindagem tríplice (criação, edição e exclusão manuais bloqueadas) de eventos do tipo `pagamento`, espelhados a partir de parcelas financeiras. | `Event`, `Installment` | [payment-event-readonly-guard.md](../business-rules/scheduler/payment-event-readonly-guard.md) |
-| **`BR-S02`** | **Motor de Regras de Recorrência** | Validação de datas futuras, intervalos canônicos (`semanal`, `quinzenal`, `mensal`), lembretes preventivos e cálculo de limites de ocorrências. | `Event`, `Task` | [recurrence-rules-engine.md](../business-rules/scheduler/recurrence-rules-engine.md) |
+| **`BR-S02`** | **Motor de Regras de Recorrência** | Validação de datas futuras, intervalos canônicos (`semanal`, `quinzenal`, `mensal`), lembretes preventivos e cálculo de limites de ocorrências. | `Event`, `ChecklistItem` | [recurrence-rules-engine.md](../business-rules/scheduler/recurrence-rules-engine.md) |
 | **`BR-S03`** | **Conflito de Agenda (Soft Overlap)** | Detecção matemática de colisão de intervalos temporais no mesmo casamento com mecanismo de confirmação voluntária (`force_overlap = True`). | `Event`, `Wedding` | [schedule-conflict-validation.md](../business-rules/scheduler/schedule-conflict-validation.md) |
 
 ### Matriz de Integração e Relações Cruzadas
@@ -113,10 +113,10 @@ O módulo segue rigorosamente a **ADR-030** (Rich Domain Model & Service Layer) 
 ### Backend (`backend/apps/scheduler/`)
 - **Modelos de Domínio Ricos (Nível 2):**
   - `Event`: Encapsula invariantes temporais em `clean()` (`end_time >= start_time`), propriedade semântica `is_payment_event`, configuração de lembretes e método de reprogramação `reschedule()`.
-  - `Task`: Encapsula métodos de ciclo de vida (`complete()`, `reopen()`, `update_details()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
+  - `ChecklistItem`: Encapsula métodos de ciclo de vida (`complete()`, `reopen()`, `update_details()`) e propriedades dinâmicas de atraso (`is_overdue`, `days_overdue`).
 - **Casos de Uso e Serviços (Nível 3):**
   - `EventService`: Orquestra criação e mutações sob `@transaction.atomic`, validando proteção de pagamentos (BR-S01), data futura na criação manual (BR-S02), detecção de sobreposição com *soft override* `force_overlap` (BR-S03) e salvando estritamente com `update_fields`.
-  - `TaskService`: Coordena o checklist e transições de status.
+  - `TaskService` (`ChecklistItemService`): Coordena o checklist e transições de status.
   - `TemplateEngine`: Define e provisiona cronogramas de casamentos parametrizados por marcos temporais relativos.
 - **Seletores de Leitura CQRS:**
   - `event_list_selector`, `event_get_selector`: Consultas lazy otimizadas com relacionamentos pré-carregados (`select_related=["wedding", "company"]`) e ordenação cronológica.
