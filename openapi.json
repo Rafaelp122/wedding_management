@@ -799,6 +799,349 @@
         }
       }
     },
+    "/api/v1/clients/": {
+      "get": {
+        "operationId": "list_clients",
+        "summary": "List Clients",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedClientOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Lista todos os clientes cadastrados pela assessoria com paginação e busca textual.",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "create_client",
+        "summary": "Create Client",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cadastra um novo cliente/contato no tenant autenticado.",
+        "tags": [
+          "Clients"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/clients/{uuid}/": {
+      "get": {
+        "operationId": "get_client",
+        "summary": "Get Client",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Recupera os detalhes de um cliente específico pelo UUID.",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "update_client",
+        "summary": "Update Client",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Atualiza parcialmente os dados de um cliente existente.",
+        "tags": [
+          "Clients"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete_client",
+        "summary": "Delete Client",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Remove um cliente garantindo que não esteja vinculado a casamentos.",
+        "tags": [
+          "Clients"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/weddings/lookup/": {
       "get": {
         "operationId": "weddings_lookup",
@@ -1011,6 +1354,84 @@
         "tags": [
           "Weddings"
         ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/weddings/proposals/": {
+      "post": {
+        "operationId": "create_wedding_proposal",
+        "summary": "Create Wedding Proposal",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeddingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cria uma proposta de casamento com status inicial PROPOSAL.",
+        "tags": [
+          "Weddings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeddingProposalIn"
+              }
+            }
+          },
+          "required": true
+        },
         "security": [
           {
             "JWTAuth": []
@@ -1458,6 +1879,372 @@
         ]
       }
     },
+    "/api/v1/weddings/{uuid}/planner-contract/": {
+      "post": {
+        "operationId": "save_planner_contract",
+        "summary": "Save Planner Contract Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerContractOut"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlannerContractOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cria ou atualiza o contrato de honorários da assessoria para o casamento.",
+        "tags": [
+          "Weddings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlannerContractIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/weddings/{uuid}/convert-to-planning/": {
+      "post": {
+        "operationId": "convert_wedding_to_planning",
+        "summary": "Convert To Planning Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeddingOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Converte uma proposta em planejamento ativo gerando as despesas de honorários.",
+        "tags": [
+          "Weddings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ConvertToPlanningIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "required": false
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/weddings/{uuid}/participants/": {
+      "post": {
+        "operationId": "add_wedding_participant",
+        "summary": "Add Wedding Participant Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeddingParticipantOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Adiciona um cliente como participante vinculado a um casamento.",
+        "tags": [
+          "Weddings"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeddingParticipantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/weddings/{uuid}/participants/{participant_uuid}/": {
+      "delete": {
+        "operationId": "remove_wedding_participant",
+        "summary": "Remove Wedding Participant Endpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "participant_uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Participant Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Remove um participante vinculado a um casamento.",
+        "tags": [
+          "Weddings"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/dashboard/summary/": {
       "get": {
         "operationId": "dashboard_summary",
@@ -1747,368 +2534,9 @@
         ]
       }
     },
-    "/api/v1/logistics/suppliers/": {
+    "/api/v1/contracts/": {
       "get": {
-        "operationId": "logistics_suppliers_list",
-        "summary": "List Suppliers",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "search",
-            "schema": {
-              "default": "",
-              "title": "Search",
-              "type": "string"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "is_active",
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Is Active"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "default": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            },
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            },
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PagedSupplierOut"
-                }
-              }
-            }
-          }
-        },
-        "description": "Lista todos os fornecedores cadastrados pelo Planner logado.\nAceita filtros de busca textual e status.",
-        "tags": [
-          "Logistics"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      },
-      "post": {
-        "operationId": "logistics_suppliers_create",
-        "summary": "Create Supplier",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierOut"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Cadastra um novo fornecedor no sistema.",
-        "tags": [
-          "Logistics"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SupplierIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/logistics/suppliers/{uuid}/": {
-      "get": {
-        "operationId": "logistics_suppliers_read",
-        "summary": "Retrieve Supplier",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierOut"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Retorna os detalhes de um fornecedor específico.",
-        "tags": [
-          "Logistics"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "logistics_suppliers_update",
-        "summary": "Update Supplier",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupplierOut"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Atualiza informações específicas de um fornecedor (nome, contato, categorias).",
-        "tags": [
-          "Logistics"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SupplierPatchIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "logistics_suppliers_delete",
-        "summary": "Delete Supplier",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Remove o cadastro de um fornecedor do sistema.",
-        "tags": [
-          "Logistics"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/logistics/contracts/": {
-      "get": {
-        "operationId": "logistics_contracts_list",
+        "operationId": "contracts_list",
         "summary": "List Contracts",
         "parameters": [
           {
@@ -2146,6 +2574,22 @@
           },
           {
             "in": "query",
+            "name": "contract_type",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contract Type"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "supplier_id",
             "schema": {
               "anyOf": [
@@ -2158,6 +2602,23 @@
                 }
               ],
               "title": "Supplier Id"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "client_id",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid4",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Id"
             },
             "required": false
           },
@@ -2213,9 +2674,9 @@
             }
           }
         },
-        "description": "Lista os contratos de fornecedores associados aos casamentos do Planner.\nPermite filtrar por casamento, status, fornecedor e contrato pai (aditivos).",
+        "description": "Lista contratos associados aos casamentos do usuário autenticado.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "security": [
           {
@@ -2224,7 +2685,7 @@
         ]
       },
       "post": {
-        "operationId": "logistics_contracts_create",
+        "operationId": "contracts_create",
         "summary": "Create Contract",
         "parameters": [],
         "responses": {
@@ -2279,9 +2740,9 @@
             }
           }
         },
-        "description": "Associa um fornecedor a um casamento através de um novo contrato logístico.",
+        "description": "Cria um novo contrato básico para o casamento.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
@@ -2300,9 +2761,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/details/": {
+    "/api/v1/contracts/{uuid}/details/": {
       "get": {
-        "operationId": "logistics_contracts_details_read",
+        "operationId": "contracts_details_read",
         "summary": "Retrieve Contract Details",
         "parameters": [
           {
@@ -2338,9 +2799,9 @@
             }
           }
         },
-        "description": "Exibe as cláusulas, itens e aditivos agregados de um contrato.",
+        "description": "Exibe cláusulas, itens e termos aditivos agregados de um contrato.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "security": [
           {
@@ -2349,9 +2810,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/": {
+    "/api/v1/contracts/{uuid}/": {
       "get": {
-        "operationId": "logistics_contracts_read",
+        "operationId": "contracts_read",
         "summary": "Retrieve Contract",
         "parameters": [
           {
@@ -2387,9 +2848,9 @@
             }
           }
         },
-        "description": "Exibe as cláusulas e informações completas de um contrato.",
+        "description": "Exibe cláusulas e dados cadastrais completos de um contrato.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "security": [
           {
@@ -2398,7 +2859,7 @@
         ]
       },
       "patch": {
-        "operationId": "logistics_contracts_update",
+        "operationId": "contracts_update",
         "summary": "Update Contract",
         "parameters": [
           {
@@ -2464,9 +2925,9 @@
             }
           }
         },
-        "description": "Altera o status, valores agregados ou observações de um contrato existente na base.",
+        "description": "Atualiza parcialmente os campos de um contrato existente.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
@@ -2485,7 +2946,7 @@
         ]
       },
       "delete": {
-        "operationId": "logistics_contracts_delete",
+        "operationId": "contracts_delete",
         "summary": "Delete Contract",
         "parameters": [
           {
@@ -2544,9 +3005,9 @@
             }
           }
         },
-        "description": "Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.",
+        "description": "Exclui um contrato do sistema garantindo validações de integridade.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "security": [
           {
@@ -2555,9 +3016,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/upload-url/": {
+    "/api/v1/contracts/upload-url/": {
       "post": {
-        "operationId": "logistics_contracts_upload_url",
+        "operationId": "contracts_upload_url",
         "summary": "Generate Upload Url",
         "parameters": [],
         "responses": {
@@ -2612,9 +3073,9 @@
             }
           }
         },
-        "description": "Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.",
+        "description": "Gera URL pré-assinada para upload direto de arquivo no Storage.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
@@ -2633,87 +3094,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/full/": {
+    "/api/v1/contracts/{uuid}/upload/": {
       "post": {
-        "operationId": "logistics_contracts_create_full",
-        "summary": "Create Contract Full",
-        "parameters": [],
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContractOut"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Cria contrato com arquivo, itens e despesa em uma única transação atômica.",
-        "tags": [
-          "Logistics"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ContractFullCreateIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/logistics/contracts/{uuid}/upload/": {
-      "post": {
-        "operationId": "logistics_contracts_upload",
+        "operationId": "contracts_upload_file",
         "summary": "Upload Contract File",
         "parameters": [
           {
@@ -2779,9 +3162,9 @@
             }
           }
         },
-        "description": "Associa um arquivo já carregado no R2/S3 (chave) ao contrato.",
+        "description": "Associa a chave de um arquivo enviado no storage ao contrato.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
@@ -2798,97 +3181,16 @@
             "JWTAuth": []
           }
         ]
-      },
-      "delete": {
-        "operationId": "logistics_contracts_delete_upload",
-        "summary": "Delete Contract File",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Remove o arquivo vinculado ao contrato.",
-        "tags": [
-          "Logistics"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/transition-status/": {
+    "/api/v1/contracts/full/": {
       "post": {
-        "operationId": "logistics_contracts_transition_status",
-        "summary": "Transition Contract Status",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
+        "operationId": "contracts_create_full",
+        "summary": "Create Full Contract",
+        "parameters": [],
         "responses": {
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -2938,15 +3240,15 @@
             }
           }
         },
-        "description": "Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).",
+        "description": "Cria contrato completo, itens e despesa opcional em transação atômica.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContractStatusTransitionIn"
+                "$ref": "#/components/schemas/ContractFullCreateIn"
               }
             }
           },
@@ -2959,88 +3261,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/send-to-pending/": {
+    "/api/v1/contracts/{uuid}/sign/": {
       "post": {
-        "operationId": "logistics_contracts_send_to_pending",
-        "summary": "Send Contract To Pending",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "uuid",
-            "schema": {
-              "format": "uuid4",
-              "title": "Uuid",
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContractOut"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "description": "Transita o contrato de rascunho para pendente de assinaturas externas.",
-        "tags": [
-          "Logistics"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/logistics/contracts/{uuid}/sign/": {
-      "post": {
-        "operationId": "logistics_contracts_sign",
+        "operationId": "contracts_sign",
         "summary": "Sign Contract",
         "parameters": [
           {
@@ -3106,9 +3329,9 @@
             }
           }
         },
-        "description": "Formaliza a assinatura do contrato com data e/ou anexo comprobatório.",
+        "description": "Formaliza a assinatura do contrato.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "requestBody": {
           "content": {
@@ -3134,9 +3357,177 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/cancel/": {
+    "/api/v1/contracts/{uuid}/transition/": {
       "post": {
-        "operationId": "logistics_contracts_cancel",
+        "operationId": "contracts_status_transition",
+        "summary": "Transition Contract Status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Executa a transição de status do contrato.",
+        "tags": [
+          "Contracts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractStatusTransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{uuid}/send-to-pending/": {
+      "post": {
+        "operationId": "contracts_send_to_pending",
+        "summary": "Send Contract To Pending",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Envia o contrato para assinatura externa.",
+        "tags": [
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{uuid}/cancel/": {
+      "post": {
+        "operationId": "contracts_cancel",
         "summary": "Cancel Contract",
         "parameters": [
           {
@@ -3202,9 +3593,9 @@
             }
           }
         },
-        "description": "Cancela/distrata o contrato de fornecedor.",
+        "description": "Cancela formalmente o contrato.",
         "tags": [
-          "Logistics"
+          "Contracts"
         ],
         "security": [
           {
@@ -3213,9 +3604,9 @@
         ]
       }
     },
-    "/api/v1/logistics/contracts/{uuid}/revert-to-draft/": {
+    "/api/v1/contracts/{uuid}/revert-to-draft/": {
       "post": {
-        "operationId": "logistics_contracts_revert_to_draft",
+        "operationId": "contracts_revert_to_draft",
         "summary": "Revert Contract To Draft",
         "parameters": [
           {
@@ -3281,9 +3672,854 @@
             }
           }
         },
-        "description": "Reverte o contrato para estado de rascunho.",
+        "description": "Reverte o contrato para rascunho de trabalho.",
         "tags": [
-          "Logistics"
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{uuid}/detach-file/": {
+      "post": {
+        "operationId": "contracts_detach_file",
+        "summary": "Detach Contract File",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Remove o anexo PDF de um contrato não assinado.",
+        "tags": [
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{contract_id}/addendums/": {
+      "get": {
+        "operationId": "contracts_addendums_list",
+        "summary": "List Contract Addendums",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContractAddendumOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "description": "Lista todos os termos aditivos pertencentes ao contrato.",
+        "tags": [
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "contracts_addendums_create",
+        "summary": "Create Contract Addendum",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractAddendumOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cria um novo termo aditivo formalizado vinculado ao contrato.",
+        "tags": [
+          "Contracts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractAddendumIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{contract_id}/addendums/{addendum_id}/sign/": {
+      "post": {
+        "operationId": "contracts_addendums_sign",
+        "summary": "Sign Contract Addendum",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "addendum_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Addendum Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractAddendumOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Formaliza a assinatura de um termo aditivo e atualiza despesa vinculada.",
+        "tags": [
+          "Contracts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ContractAddendumSignIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "required": false
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{contract_id}/addendums/{addendum_id}/cancel/": {
+      "post": {
+        "operationId": "contracts_addendums_cancel",
+        "summary": "Cancel Contract Addendum",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "addendum_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Addendum Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractAddendumOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cancela um termo aditivo formalmente.",
+        "tags": [
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/contracts/{contract_id}/addendums/{addendum_id}/": {
+      "delete": {
+        "operationId": "contracts_addendums_delete",
+        "summary": "Delete Contract Addendum",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "contract_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Contract Id",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "addendum_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Addendum Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Exclui um termo aditivo em estado pendente.",
+        "tags": [
+          "Contracts"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/suppliers/": {
+      "get": {
+        "operationId": "suppliers_list",
+        "summary": "List Suppliers",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "default": "",
+              "title": "Search",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedSupplierOut"
+                }
+              }
+            }
+          }
+        },
+        "description": "Lista todos os fornecedores cadastrados pelo tenant autenticado.\n\nAceita filtros de busca textual e status ativo.",
+        "tags": [
+          "Suppliers"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "suppliers_create",
+        "summary": "Create Supplier",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Cadastra um novo fornecedor no sistema.",
+        "tags": [
+          "Suppliers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/suppliers/{uuid}/": {
+      "get": {
+        "operationId": "suppliers_read",
+        "summary": "Retrieve Supplier",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna os detalhes de um fornecedor específico.",
+        "tags": [
+          "Suppliers"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "suppliers_update",
+        "summary": "Update Supplier",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Atualiza informações específicas de um fornecedor (nome, contato, endereço, status).",
+        "tags": [
+          "Suppliers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupplierPatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "suppliers_delete",
+        "summary": "Delete Supplier",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Remove o cadastro de um fornecedor do sistema.",
+        "tags": [
+          "Suppliers"
         ],
         "security": [
           {
@@ -3365,6 +4601,38 @@
           },
           {
             "in": "query",
+            "name": "scope_status",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope Status"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "delivery_status",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Delivery Status"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
             "name": "limit",
             "schema": {
               "default": 100,
@@ -3398,7 +4666,7 @@
             }
           }
         },
-        "description": "Lista os itens e materiais logísticos gerados nas tabelas de aprovação.\nPermite filtrar por casamento, status de aquisição, busca textual e contrato.",
+        "description": "Lista os itens e materiais logísticos gerados nas tabelas de aprovação.\nPermite filtrar por casamento, status de aquisição, busca textual, contrato, escopo e entrega.",
         "tags": [
           "Logistics"
         ],
@@ -4086,6 +5354,332 @@
           }
         },
         "description": "Reverte o item logístico de volta para PENDENTE.",
+        "tags": [
+          "Logistics"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/logistics/items/{uuid}/discard/": {
+      "post": {
+        "operationId": "logistics_items_discard",
+        "summary": "Discard Item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Descarta um item do escopo registrando compulsoriamente a justificativa (RF-15).",
+        "tags": [
+          "Logistics"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDiscardIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/logistics/items/{uuid}/include/": {
+      "post": {
+        "operationId": "logistics_items_include",
+        "summary": "Include Item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Reintegra um item previamente descartado de volta ao escopo aprovado do evento.",
+        "tags": [
+          "Logistics"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/logistics/items/{uuid}/deliver/": {
+      "post": {
+        "operationId": "logistics_items_deliver",
+        "summary": "Deliver Item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Registra a conferência física e entrega do material no local do evento (RF-15).",
+        "tags": [
+          "Logistics"
+        ],
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/logistics/items/{uuid}/return/": {
+      "post": {
+        "operationId": "logistics_items_return",
+        "summary": "Return Item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uuid",
+            "schema": {
+              "format": "uuid4",
+              "title": "Uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Registra a devolução física do material após o término do evento.",
         "tags": [
           "Logistics"
         ],
@@ -5723,6 +7317,55 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/scheduler/timeline-compression/": {
+      "get": {
+        "operationId": "scheduler_timeline_compression_get",
+        "summary": "Get Timeline Compression",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "wedding_id",
+            "schema": {
+              "format": "uuid4",
+              "title": "Wedding Id",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineCompressionOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001).",
+        "tags": [
+          "Scheduler"
+        ],
         "security": [
           {
             "JWTAuth": []
@@ -7536,6 +9179,213 @@
         "title": "LogoutIn",
         "type": "object"
       },
+      "Input": {
+        "properties": {
+          "limit": {
+            "default": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "title": "Input",
+        "type": "object"
+      },
+      "ClientOut": {
+        "description": "Schema de saída para representação de cliente.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "cpf": {
+            "default": "",
+            "title": "Cpf",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "title": "Email",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "title": "Phone",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ClientOut",
+        "type": "object"
+      },
+      "PagedClientOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClientOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "PagedClientOut",
+        "type": "object"
+      },
+      "ClientIn": {
+        "description": "Schema para criação de um novo cliente.",
+        "properties": {
+          "name": {
+            "description": "Nome Completo",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "cpf": {
+            "default": "",
+            "description": "CPF do cliente",
+            "maxLength": 14,
+            "title": "Cpf",
+            "type": "string"
+          },
+          "email": {
+            "default": "",
+            "description": "E-mail de contato",
+            "maxLength": 255,
+            "title": "Email",
+            "type": "string"
+          },
+          "phone": {
+            "default": "",
+            "description": "Telefone com DDD",
+            "maxLength": 20,
+            "title": "Phone",
+            "type": "string"
+          },
+          "notes": {
+            "default": "",
+            "description": "Observações cadastrais",
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ClientIn",
+        "type": "object"
+      },
+      "ClientPatchIn": {
+        "description": "Schema para atualização parcial de um cliente existente.",
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nome Completo",
+            "title": "Name"
+          },
+          "cpf": {
+            "anyOf": [
+              {
+                "maxLength": 14,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CPF do cliente",
+            "title": "Cpf"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "E-mail de contato",
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Telefone com DDD",
+            "title": "Phone"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Observações cadastrais",
+            "title": "Notes"
+          }
+        },
+        "title": "ClientPatchIn",
+        "type": "object"
+      },
       "WeddingLookupOut": {
         "properties": {
           "uuid": {
@@ -7560,24 +9410,6 @@
         "title": "WeddingLookupOut",
         "type": "object"
       },
-      "Input": {
-        "properties": {
-          "limit": {
-            "default": 100,
-            "minimum": 1,
-            "title": "Limit",
-            "type": "integer"
-          },
-          "offset": {
-            "default": 0,
-            "minimum": 0,
-            "title": "Offset",
-            "type": "integer"
-          }
-        },
-        "title": "Input",
-        "type": "object"
-      },
       "PagedWeddingOut": {
         "properties": {
           "items": {
@@ -7597,6 +9429,76 @@
           "count"
         ],
         "title": "PagedWeddingOut",
+        "type": "object"
+      },
+      "PlannerContractOut": {
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "service_tier": {
+            "title": "Service Tier",
+            "type": "string"
+          },
+          "effective_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Effective Amount",
+            "type": "string"
+          },
+          "installments_count": {
+            "title": "Installments Count",
+            "type": "integer"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "pdf_file": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "service_tier",
+          "effective_amount",
+          "installments_count",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PlannerContractOut",
         "type": "object"
       },
       "WeddingOut": {
@@ -7693,6 +9595,53 @@
             "default": false,
             "title": "Can Complete",
             "type": "boolean"
+          },
+          "client_name": {
+            "default": "",
+            "title": "Client Name",
+            "type": "string"
+          },
+          "client_cpf": {
+            "default": "",
+            "title": "Client Cpf",
+            "type": "string"
+          },
+          "client_email": {
+            "default": "",
+            "title": "Client Email",
+            "type": "string"
+          },
+          "client_phone": {
+            "default": "",
+            "title": "Client Phone",
+            "type": "string"
+          },
+          "client_role": {
+            "default": "",
+            "title": "Client Role",
+            "type": "string"
+          },
+          "days_before_in_progress": {
+            "default": 7,
+            "title": "Days Before In Progress",
+            "type": "integer"
+          },
+          "planner_contract": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannerContractOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/WeddingParticipantOut"
+            },
+            "title": "Participants",
+            "type": "array"
           }
         },
         "required": [
@@ -7710,8 +9659,83 @@
         "title": "WeddingOut",
         "type": "object"
       },
+      "WeddingParticipantOut": {
+        "description": "Schema de saída para representação de participantes do casamento.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "client_id": {
+            "format": "uuid4",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_name": {
+            "title": "Client Name",
+            "type": "string"
+          },
+          "client_cpf": {
+            "default": "",
+            "title": "Client Cpf",
+            "type": "string"
+          },
+          "client_email": {
+            "default": "",
+            "title": "Client Email",
+            "type": "string"
+          },
+          "client_phone": {
+            "default": "",
+            "title": "Client Phone",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "role_display": {
+            "default": "",
+            "title": "Role Display",
+            "type": "string"
+          },
+          "is_primary_signatory": {
+            "default": false,
+            "title": "Is Primary Signatory",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "client_id",
+          "client_name",
+          "role",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WeddingParticipantOut",
+        "type": "object"
+      },
       "WeddingStatusEnum": {
         "enum": [
+          "PROPOSAL",
+          "PLANNING",
           "IN_PROGRESS",
           "COMPLETED",
           "CANCELED"
@@ -7767,6 +9791,42 @@
               }
             ],
             "title": "Template"
+          },
+          "client_name": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "client_cpf": {
+            "default": "",
+            "maxLength": 14,
+            "title": "Client Cpf",
+            "type": "string"
+          },
+          "client_email": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Client Email",
+            "type": "string"
+          },
+          "client_phone": {
+            "default": "",
+            "maxLength": 20,
+            "title": "Client Phone",
+            "type": "string"
+          },
+          "client_role": {
+            "default": "NOIVO",
+            "maxLength": 50,
+            "title": "Client Role",
+            "type": "string"
+          },
+          "days_before_in_progress": {
+            "default": 7,
+            "minimum": 0,
+            "title": "Days Before In Progress",
+            "type": "integer"
           }
         },
         "required": [
@@ -7797,6 +9857,100 @@
           "count"
         ],
         "title": "WeddingByMonthOut",
+        "type": "object"
+      },
+      "WeddingProposalIn": {
+        "properties": {
+          "groom_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Groom Name",
+            "type": "string"
+          },
+          "bride_name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Bride Name",
+            "type": "string"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "location": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Location",
+            "type": "string"
+          },
+          "expected_guests": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Guests"
+          },
+          "template": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template"
+          },
+          "client_name": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Client Name",
+            "type": "string"
+          },
+          "client_cpf": {
+            "default": "",
+            "maxLength": 14,
+            "title": "Client Cpf",
+            "type": "string"
+          },
+          "client_email": {
+            "default": "",
+            "maxLength": 255,
+            "title": "Client Email",
+            "type": "string"
+          },
+          "client_phone": {
+            "default": "",
+            "maxLength": 20,
+            "title": "Client Phone",
+            "type": "string"
+          },
+          "client_role": {
+            "default": "NOIVO",
+            "maxLength": 50,
+            "title": "Client Role",
+            "type": "string"
+          },
+          "days_before_in_progress": {
+            "default": 7,
+            "minimum": 0,
+            "title": "Days Before In Progress",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "groom_name",
+          "bride_name",
+          "date"
+        ],
+        "title": "WeddingProposalIn",
         "type": "object"
       },
       "WeddingPatchIn": {
@@ -7873,10 +10027,230 @@
                 "type": "null"
               }
             ]
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "client_cpf": {
+            "anyOf": [
+              {
+                "maxLength": 14,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Cpf"
+          },
+          "client_email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Email"
+          },
+          "client_phone": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Phone"
+          },
+          "client_role": {
+            "anyOf": [
+              {
+                "maxLength": 50,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Role"
+          },
+          "days_before_in_progress": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Before In Progress"
           }
         },
         "title": "WeddingPatchIn",
         "type": "object"
+      },
+      "PlannerContractIn": {
+        "properties": {
+          "service_tier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannerContractServiceTierEnum"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "COMPLETA",
+            "title": "Service Tier"
+          },
+          "effective_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Effective Amount"
+          },
+          "installments_count": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Installments Count",
+            "type": "integer"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlannerContractStatusEnum"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "DRAFT",
+            "title": "Status"
+          }
+        },
+        "required": [
+          "effective_amount"
+        ],
+        "title": "PlannerContractIn",
+        "type": "object"
+      },
+      "PlannerContractServiceTierEnum": {
+        "enum": [
+          "COMPLETA",
+          "PARCIAL",
+          "FINAL"
+        ],
+        "title": "PlannerContractServiceTierEnum",
+        "type": "string"
+      },
+      "PlannerContractStatusEnum": {
+        "enum": [
+          "DRAFT",
+          "SIGNED",
+          "CANCELED"
+        ],
+        "title": "PlannerContractStatusEnum",
+        "type": "string"
+      },
+      "ConvertToPlanningIn": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          }
+        },
+        "title": "ConvertToPlanningIn",
+        "type": "object"
+      },
+      "WeddingParticipantIn": {
+        "description": "Schema de entrada para vincular um cliente a um casamento.",
+        "properties": {
+          "client_id": {
+            "format": "uuid4",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeddingParticipantRoleEnum"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "BRIDE",
+            "title": "Role"
+          },
+          "is_primary_signatory": {
+            "default": false,
+            "title": "Is Primary Signatory",
+            "type": "boolean"
+          },
+          "notes": {
+            "default": "",
+            "title": "Notes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "title": "WeddingParticipantIn",
+        "type": "object"
+      },
+      "WeddingParticipantRoleEnum": {
+        "enum": [
+          "BRIDE",
+          "GROOM",
+          "FINANCIAL_PAYER",
+          "LEGAL_REPRESENTATIVE",
+          "OTHER"
+        ],
+        "title": "WeddingParticipantRoleEnum",
+        "type": "string"
       },
       "CriticalWeddingOut": {
         "description": "Métricas de atenção de um casamento crítico nos próximos 90 dias.",
@@ -8409,6 +10783,1130 @@
         "title": "UpcomingWeddingOut",
         "type": "object"
       },
+      "ContractAddendumOut": {
+        "description": "Schema de saída para representação de termo aditivo.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "contract_id": {
+            "format": "uuid4",
+            "title": "Contract Id",
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "justification": {
+            "title": "Justification",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "has_file": {
+            "default": false,
+            "title": "Has File",
+            "type": "boolean"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "contract_id",
+          "amount",
+          "justification",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ContractAddendumOut",
+        "type": "object"
+      },
+      "ContractOut": {
+        "description": "Schema de saída para exibição de contrato.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "contract_type": {
+            "default": "SUPPLIER",
+            "title": "Contract Type",
+            "type": "string"
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Tier"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier"
+          },
+          "client": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "total_amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount",
+            "type": "string"
+          },
+          "installments_count": {
+            "default": 1,
+            "title": "Installments Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "expiration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration Date"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "supplier_name": {
+            "default": "",
+            "title": "Supplier Name",
+            "type": "string"
+          },
+          "supplier_phone": {
+            "default": "",
+            "title": "Supplier Phone",
+            "type": "string"
+          },
+          "supplier_email": {
+            "default": "",
+            "title": "Supplier Email",
+            "type": "string"
+          },
+          "client_name": {
+            "default": "",
+            "title": "Client Name",
+            "type": "string"
+          },
+          "has_linked_expense": {
+            "default": false,
+            "title": "Has Linked Expense",
+            "type": "boolean"
+          },
+          "progress_percent": {
+            "default": 0,
+            "title": "Progress Percent",
+            "type": "integer"
+          },
+          "alert_days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Days Before"
+          },
+          "expense_uuid": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense Uuid"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "addendums_count": {
+            "default": 0,
+            "title": "Addendums Count",
+            "type": "integer"
+          },
+          "addendums_total_amount": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Addendums Total Amount",
+            "type": "string"
+          },
+          "total_amount_with_addendums": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Total Amount With Addendums",
+            "type": "string"
+          },
+          "base_amount": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Base Amount",
+            "type": "string"
+          },
+          "addendums_total": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Addendums Total",
+            "type": "string"
+          },
+          "effective_amount": {
+            "default": "0.00",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Effective Amount",
+            "type": "string"
+          },
+          "addendums": {
+            "items": {
+              "$ref": "#/components/schemas/ContractAddendumOut"
+            },
+            "title": "Addendums",
+            "type": "array"
+          },
+          "has_file": {
+            "default": false,
+            "title": "Has File",
+            "type": "boolean"
+          },
+          "file_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Name"
+          },
+          "is_addendum": {
+            "default": false,
+            "title": "Is Addendum",
+            "type": "boolean"
+          },
+          "allowed_transitions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding",
+          "total_amount",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ContractOut",
+        "type": "object"
+      },
+      "PagedContractOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ContractOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "PagedContractOut",
+        "type": "object"
+      },
+      "ContractIn": {
+        "description": "Schema de entrada para criação de contrato.",
+        "properties": {
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "contract_type": {
+            "default": "SUPPLIER",
+            "title": "Contract Type",
+            "type": "string"
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Tier"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier"
+          },
+          "client": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "total_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Total Amount"
+          },
+          "status": {
+            "default": "DRAFT",
+            "title": "Status",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "installments_count": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Installments Count",
+            "type": "integer"
+          },
+          "expiration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration Date"
+          },
+          "alert_days_before": {
+            "default": 30,
+            "title": "Alert Days Before",
+            "type": "integer"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
+          }
+        },
+        "required": [
+          "wedding",
+          "name",
+          "total_amount"
+        ],
+        "title": "ContractIn",
+        "type": "object"
+      },
+      "ContractDetailAggregateOut": {
+        "description": "Schema de saída agregado com contrato, itens e aditivos.",
+        "properties": {
+          "contract": {
+            "$ref": "#/components/schemas/ContractOut"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "addendums": {
+            "items": {
+              "$ref": "#/components/schemas/ContractAddendumOut"
+            },
+            "title": "Addendums",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contract",
+          "items",
+          "addendums"
+        ],
+        "title": "ContractDetailAggregateOut",
+        "type": "object"
+      },
+      "ItemOut": {
+        "description": "Schema de saída para exibição de item de logística.",
+        "properties": {
+          "uuid": {
+            "format": "uuid4",
+            "title": "Uuid",
+            "type": "string"
+          },
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "contract": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "scope_status": {
+            "default": "INCLUDED",
+            "title": "Scope Status",
+            "type": "string"
+          },
+          "rejection_reason": {
+            "default": "",
+            "title": "Rejection Reason",
+            "type": "string"
+          },
+          "procurement_status": {
+            "default": "CONTRATADO",
+            "title": "Procurement Status",
+            "type": "string"
+          },
+          "delivery_status": {
+            "default": "PENDING",
+            "title": "Delivery Status",
+            "type": "string"
+          },
+          "acquisition_status": {
+            "title": "Acquisition Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uuid",
+          "wedding",
+          "name",
+          "description",
+          "quantity",
+          "acquisition_status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ItemOut",
+        "type": "object"
+      },
+      "ContractPatchIn": {
+        "description": "Schema de entrada para atualização parcial de contrato.",
+        "properties": {
+          "contract_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contract Type"
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Tier"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier"
+          },
+          "client": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "total_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Amount"
+          },
+          "installments_count": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installments Count"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
+          },
+          "expiration_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiration Date"
+          },
+          "alert_days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Days Before"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          }
+        },
+        "title": "ContractPatchIn",
+        "type": "object"
+      },
+      "ContractUploadUrlOut": {
+        "description": "Schema de saída com URL pré-assinada e chave do objeto no R2/S3.",
+        "properties": {
+          "upload_url": {
+            "title": "Upload Url",
+            "type": "string"
+          },
+          "object_key": {
+            "title": "Object Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "upload_url",
+          "object_key"
+        ],
+        "title": "ContractUploadUrlOut",
+        "type": "object"
+      },
+      "ContractUploadUrlIn": {
+        "description": "Schema de entrada para requisição de URL de upload pré-assinada.",
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "wedding_id": {
+            "format": "uuid4",
+            "title": "Wedding Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "wedding_id"
+        ],
+        "title": "ContractUploadUrlIn",
+        "type": "object"
+      },
+      "ContractUploadIn": {
+        "description": "Schema de entrada para associar a chave do arquivo enviado.",
+        "properties": {
+          "pdf_file_key": {
+            "title": "Pdf File Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pdf_file_key"
+        ],
+        "title": "ContractUploadIn",
+        "type": "object"
+      },
+      "ContractFullCreateIn": {
+        "description": "Schema de entrada para criação de contrato com itens e despesa opcional.",
+        "properties": {
+          "wedding": {
+            "format": "uuid4",
+            "title": "Wedding",
+            "type": "string"
+          },
+          "contract_type": {
+            "default": "SUPPLIER",
+            "title": "Contract Type",
+            "type": "string"
+          },
+          "service_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Service Tier"
+          },
+          "supplier": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supplier"
+          },
+          "client": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "total_amount": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Total Amount"
+          },
+          "installments_count": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Installments Count",
+            "type": "integer"
+          },
+          "status": {
+            "default": "DRAFT",
+            "title": "Status",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
+          },
+          "items": {
+            "items": {},
+            "title": "Items",
+            "type": "array"
+          },
+          "items_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Items Data"
+          },
+          "create_expense": {
+            "default": false,
+            "title": "Create Expense",
+            "type": "boolean"
+          },
+          "expense_category": {
+            "anyOf": [
+              {
+                "format": "uuid4",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense Category"
+          },
+          "expense_num_installments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense Num Installments"
+          },
+          "expense_first_due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expense First Due Date"
+          }
+        },
+        "required": [
+          "wedding",
+          "name",
+          "total_amount"
+        ],
+        "title": "ContractFullCreateIn",
+        "type": "object"
+      },
+      "ContractSignIn": {
+        "description": "Schema de entrada para formalização de assinatura de contrato.",
+        "properties": {
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
+          }
+        },
+        "title": "ContractSignIn",
+        "type": "object"
+      },
+      "ContractStatusTransitionIn": {
+        "description": "Schema de entrada para transição de status de contrato.",
+        "properties": {
+          "status": {
+            "minLength": 1,
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ContractStatusTransitionIn",
+        "type": "object"
+      },
+      "ContractAddendumIn": {
+        "description": "Schema de entrada para criação de aditivo contratual.",
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "description": "Valor positivo do aditivo",
+            "title": "Amount"
+          },
+          "justification": {
+            "description": "Justificativa formal do aditivo",
+            "minLength": 1,
+            "title": "Justification",
+            "type": "string"
+          },
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          },
+          "pdf_file_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf File Key"
+          }
+        },
+        "required": [
+          "amount",
+          "justification"
+        ],
+        "title": "ContractAddendumIn",
+        "type": "object"
+      },
+      "ContractAddendumSignIn": {
+        "description": "Schema de entrada para formalização da assinatura do aditivo.",
+        "properties": {
+          "signed_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Date"
+          }
+        },
+        "title": "ContractAddendumSignIn",
+        "type": "object"
+      },
       "PagedSupplierOut": {
         "properties": {
           "items": {
@@ -8690,200 +12188,11 @@
         "title": "SupplierPatchIn",
         "type": "object"
       },
-      "ContractOut": {
-        "description": "Schema de saída para exibição de contrato.",
-        "properties": {
-          "uuid": {
-            "format": "uuid4",
-            "title": "Uuid",
-            "type": "string"
-          },
-          "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
-          },
-          "supplier": {
-            "format": "uuid4",
-            "title": "Supplier",
-            "type": "string"
-          },
-          "name": {
-            "default": "",
-            "title": "Name",
-            "type": "string"
-          },
-          "total_amount": {
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Amount",
-            "type": "string"
-          },
-          "status": {
-            "title": "Status",
-            "type": "string"
-          },
-          "description": {
-            "default": "",
-            "title": "Description",
-            "type": "string"
-          },
-          "expiration_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expiration Date"
-          },
-          "signed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signed Date"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          },
-          "supplier_name": {
-            "default": "",
-            "title": "Supplier Name",
-            "type": "string"
-          },
-          "supplier_phone": {
-            "default": "",
-            "title": "Supplier Phone",
-            "type": "string"
-          },
-          "supplier_email": {
-            "default": "",
-            "title": "Supplier Email",
-            "type": "string"
-          },
-          "has_linked_expense": {
-            "default": false,
-            "title": "Has Linked Expense",
-            "type": "boolean"
-          },
-          "progress_percent": {
-            "default": 0,
-            "title": "Progress Percent",
-            "type": "integer"
-          },
-          "alert_days_before": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Alert Days Before"
-          },
-          "expense_uuid": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expense Uuid"
-          },
-          "parent": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent"
-          },
-          "addendums_count": {
-            "default": 0,
-            "title": "Addendums Count",
-            "type": "integer"
-          },
-          "addendums_total_amount": {
-            "default": "0.00",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Addendums Total Amount",
-            "type": "string"
-          },
-          "total_amount_with_addendums": {
-            "default": "0.00",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Amount With Addendums",
-            "type": "string"
-          },
-          "has_file": {
-            "default": false,
-            "title": "Has File",
-            "type": "boolean"
-          },
-          "file_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "File Name"
-          },
-          "is_addendum": {
-            "default": false,
-            "title": "Is Addendum",
-            "type": "boolean"
-          },
-          "allowed_transitions": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Allowed Transitions",
-            "type": "array"
-          }
-        },
-        "required": [
-          "uuid",
-          "wedding",
-          "supplier",
-          "total_amount",
-          "status",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ContractOut",
-        "type": "object"
-      },
-      "PagedContractOut": {
+      "PagedItemOut": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ContractOut"
+              "$ref": "#/components/schemas/ItemOut"
             },
             "title": "Items",
             "type": "array"
@@ -8897,458 +12206,7 @@
           "items",
           "count"
         ],
-        "title": "PagedContractOut",
-        "type": "object"
-      },
-      "ContractIn": {
-        "description": "Schema de entrada para criação de contrato.",
-        "properties": {
-          "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
-          },
-          "supplier": {
-            "format": "uuid4",
-            "title": "Supplier",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "total_amount": {
-            "anyOf": [
-              {
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              }
-            ],
-            "title": "Total Amount"
-          },
-          "status": {
-            "default": "DRAFT",
-            "title": "Status",
-            "type": "string"
-          },
-          "description": {
-            "default": "",
-            "title": "Description",
-            "type": "string"
-          },
-          "parent": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent"
-          },
-          "pdf_file_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pdf File Key"
-          }
-        },
-        "required": [
-          "wedding",
-          "supplier",
-          "name",
-          "total_amount"
-        ],
-        "title": "ContractIn",
-        "type": "object"
-      },
-      "ContractDetailAggregateOut": {
-        "description": "Schema de saída agregado com contrato, itens e aditivos.",
-        "properties": {
-          "contract": {
-            "$ref": "#/components/schemas/ContractOut"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ItemOut"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "addendums": {
-            "items": {
-              "$ref": "#/components/schemas/ContractOut"
-            },
-            "title": "Addendums",
-            "type": "array"
-          }
-        },
-        "required": [
-          "contract",
-          "items",
-          "addendums"
-        ],
-        "title": "ContractDetailAggregateOut",
-        "type": "object"
-      },
-      "ItemOut": {
-        "description": "Schema de saída para exibição de item de logística.",
-        "properties": {
-          "uuid": {
-            "format": "uuid4",
-            "title": "Uuid",
-            "type": "string"
-          },
-          "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
-          },
-          "contract": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contract"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "description": {
-            "title": "Description",
-            "type": "string"
-          },
-          "quantity": {
-            "title": "Quantity",
-            "type": "integer"
-          },
-          "acquisition_status": {
-            "title": "Acquisition Status",
-            "type": "string"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          }
-        },
-        "required": [
-          "uuid",
-          "wedding",
-          "name",
-          "description",
-          "quantity",
-          "acquisition_status",
-          "created_at",
-          "updated_at"
-        ],
-        "title": "ItemOut",
-        "type": "object"
-      },
-      "ContractPatchIn": {
-        "description": "Schema de entrada para atualização parcial de contrato.",
-        "properties": {
-          "supplier": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Supplier"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "maxLength": 255,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "total_amount": {
-            "anyOf": [
-              {
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Amount"
-          },
-          "status": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Status"
-          },
-          "description": {
-            "default": "",
-            "title": "Description",
-            "type": "string"
-          },
-          "parent": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent"
-          },
-          "pdf_file_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pdf File Key"
-          },
-          "expiration_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expiration Date"
-          },
-          "alert_days_before": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Alert Days Before"
-          }
-        },
-        "title": "ContractPatchIn",
-        "type": "object"
-      },
-      "ContractUploadUrlOut": {
-        "description": "Schema de saída com URL pré-assinada e chave do objeto no R2/S3.",
-        "properties": {
-          "upload_url": {
-            "title": "Upload Url",
-            "type": "string"
-          },
-          "object_key": {
-            "title": "Object Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "upload_url",
-          "object_key"
-        ],
-        "title": "ContractUploadUrlOut",
-        "type": "object"
-      },
-      "ContractUploadUrlIn": {
-        "description": "Schema de entrada para requisição de URL de upload pré-assinada.",
-        "properties": {
-          "filename": {
-            "title": "Filename",
-            "type": "string"
-          },
-          "wedding_id": {
-            "format": "uuid4",
-            "title": "Wedding Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "filename",
-          "wedding_id"
-        ],
-        "title": "ContractUploadUrlIn",
-        "type": "object"
-      },
-      "ContractFullCreateIn": {
-        "description": "Schema de entrada para criação de contrato com itens e despesa opcional.",
-        "properties": {
-          "wedding": {
-            "format": "uuid4",
-            "title": "Wedding",
-            "type": "string"
-          },
-          "supplier": {
-            "format": "uuid4",
-            "title": "Supplier",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "total_amount": {
-            "anyOf": [
-              {
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-                "type": "string"
-              }
-            ],
-            "title": "Total Amount"
-          },
-          "status": {
-            "default": "DRAFT",
-            "title": "Status",
-            "type": "string"
-          },
-          "description": {
-            "default": "",
-            "title": "Description",
-            "type": "string"
-          },
-          "parent": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parent"
-          },
-          "pdf_file_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pdf File Key"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ItemIn"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "items_data": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Items Data"
-          },
-          "create_expense": {
-            "default": false,
-            "title": "Create Expense",
-            "type": "boolean"
-          },
-          "expense_category": {
-            "anyOf": [
-              {
-                "format": "uuid4",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expense Category"
-          },
-          "expense_num_installments": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expense Num Installments"
-          },
-          "expense_first_due_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expense First Due Date"
-          }
-        },
-        "required": [
-          "wedding",
-          "supplier",
-          "name",
-          "total_amount"
-        ],
-        "title": "ContractFullCreateIn",
+        "title": "PagedItemOut",
         "type": "object"
       },
       "ItemIn": {
@@ -9395,6 +12253,26 @@
             "title": "Quantity",
             "type": "integer"
           },
+          "scope_status": {
+            "default": "INCLUDED",
+            "title": "Scope Status",
+            "type": "string"
+          },
+          "rejection_reason": {
+            "default": "",
+            "title": "Rejection Reason",
+            "type": "string"
+          },
+          "procurement_status": {
+            "default": "CONTRATADO",
+            "title": "Procurement Status",
+            "type": "string"
+          },
+          "delivery_status": {
+            "default": "PENDING",
+            "title": "Delivery Status",
+            "type": "string"
+          },
           "acquisition_status": {
             "default": "PENDING",
             "title": "Acquisition Status",
@@ -9405,86 +12283,6 @@
           "name"
         ],
         "title": "ItemIn",
-        "type": "object"
-      },
-      "ContractUploadIn": {
-        "description": "Schema de entrada para associar a chave do arquivo enviado.",
-        "properties": {
-          "pdf_file_key": {
-            "title": "Pdf File Key",
-            "type": "string"
-          }
-        },
-        "required": [
-          "pdf_file_key"
-        ],
-        "title": "ContractUploadIn",
-        "type": "object"
-      },
-      "ContractStatusTransitionIn": {
-        "description": "Schema de entrada para transição de status de contrato.",
-        "properties": {
-          "status": {
-            "minLength": 1,
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "status"
-        ],
-        "title": "ContractStatusTransitionIn",
-        "type": "object"
-      },
-      "ContractSignIn": {
-        "description": "Schema de entrada para formalização de assinatura de contrato.",
-        "properties": {
-          "signed_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signed Date"
-          },
-          "pdf_file_key": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pdf File Key"
-          }
-        },
-        "title": "ContractSignIn",
-        "type": "object"
-      },
-      "PagedItemOut": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ItemOut"
-            },
-            "title": "Items",
-            "type": "array"
-          },
-          "count": {
-            "title": "Count",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "items",
-          "count"
-        ],
-        "title": "PagedItemOut",
         "type": "object"
       },
       "ItemPatchIn": {
@@ -9532,6 +12330,50 @@
             ],
             "title": "Quantity"
           },
+          "scope_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Status"
+          },
+          "rejection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejection Reason"
+          },
+          "procurement_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Procurement Status"
+          },
+          "delivery_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Status"
+          },
           "acquisition_status": {
             "anyOf": [
               {
@@ -9560,6 +12402,22 @@
           "acquisition_status"
         ],
         "title": "ItemStatusTransitionIn",
+        "type": "object"
+      },
+      "ItemDiscardIn": {
+        "description": "Schema de entrada para descarte justificado de item de suprimento (RF-15).",
+        "properties": {
+          "rejection_reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Rejection Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rejection_reason"
+        ],
+        "title": "ItemDiscardIn",
         "type": "object"
       },
       "BudgetOut": {
@@ -10445,6 +13303,42 @@
         "title": "InstallmentAdjustIn",
         "type": "object"
       },
+      "TimelineCompressionOut": {
+        "description": "Schema de saída para análise de compressão da linha do tempo do casamento.",
+        "properties": {
+          "is_timeline_compressed": {
+            "title": "Is Timeline Compressed",
+            "type": "boolean"
+          },
+          "compressed_timeline_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compressed Timeline Message"
+          },
+          "days_until_wedding": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Wedding"
+          }
+        },
+        "required": [
+          "is_timeline_compressed"
+        ],
+        "title": "TimelineCompressionOut",
+        "type": "object"
+      },
       "EventOut": {
         "description": "Schema de saída para exibição de evento/compromisso.",
         "properties": {
@@ -10860,9 +13754,26 @@
             ],
             "title": "Due Date"
           },
+          "priority": {
+            "default": "MEDIUM",
+            "title": "Priority",
+            "type": "string"
+          },
           "is_completed": {
             "title": "Is Completed",
             "type": "boolean"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
           },
           "is_overdue": {
             "default": false,
@@ -10916,6 +13827,11 @@
             ],
             "title": "Due Date"
           },
+          "priority": {
+            "default": "MEDIUM",
+            "title": "Priority",
+            "type": "string"
+          },
           "is_completed": {
             "default": false,
             "title": "Is Completed",
@@ -10961,6 +13877,17 @@
               }
             ],
             "title": "Due Date"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
           },
           "is_completed": {
             "anyOf": [

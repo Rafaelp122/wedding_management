@@ -4,6 +4,7 @@ from .event_selectors import (
     scheduler_summary_selector,
 )
 from .task_selectors import (
+    get_wedding_timeline_compression_selector,
     task_get_selector,
     task_list_selector,
     task_urgent_list_selector,
@@ -13,6 +14,7 @@ from .task_selectors import (
 __all__ = [
     "event_get_selector",
     "event_list_selector",
+    "get_wedding_timeline_compression_selector",
     "scheduler_summary_selector",
     "task_get_selector",
     "task_list_selector",

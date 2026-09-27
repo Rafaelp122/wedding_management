@@ -4,6 +4,7 @@
  * Wedding Management API (Ninja)
  * OpenAPI spec version: 1.0.0
  */
+import type { ContractAddendumOut } from './contractAddendumOut';
 import type { ContractOut } from './contractOut';
 import type { ItemOut } from './itemOut';
 
@@ -13,5 +14,5 @@ import type { ItemOut } from './itemOut';
 export interface ContractDetailAggregateOut {
   contract: ContractOut;
   items: ItemOut[];
-  addendums: ContractOut[];
+  addendums: ContractAddendumOut[];
 }

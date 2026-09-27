@@ -14,14 +14,14 @@ import pytest
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.schemas import ContractFullCreateIn
+from apps.contracts.services.contract_service import ContractService
+from apps.contracts.tests.factories import SupplierFactory
 from apps.finances.models import BudgetCategory
 from apps.finances.schemas import ExpenseIn
 from apps.finances.services.expense_service import ExpenseService
 from apps.finances.tests.factories import BudgetCategoryFactory
-from apps.logistics.models import Contract, Supplier
-from apps.logistics.schemas import ContractFullCreateIn
-from apps.logistics.services.contract_service import ContractService
-from apps.logistics.tests.factories import SupplierFactory
 from apps.weddings.models import Wedding
 from apps.weddings.tests.factories import WeddingFactory
 

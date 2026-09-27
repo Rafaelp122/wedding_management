@@ -53,4 +53,30 @@ describe("WeddingFilters", () => {
       screen.getByPlaceholderText(/buscar por noivos ou local/i),
     ).toHaveValue("maria");
   });
+
+  it("renders with PROPOSAL status filter", () => {
+    render(
+      <WeddingFilters
+        search=""
+        onSearchChange={vi.fn()}
+        statusFilter="PROPOSAL"
+        onStatusFilterChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Proposta")).toBeInTheDocument();
+  });
+
+  it("renders with PLANNING status filter", () => {
+    render(
+      <WeddingFilters
+        search=""
+        onSearchChange={vi.fn()}
+        statusFilter="PLANNING"
+        onStatusFilterChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Planejamento")).toBeInTheDocument();
+  });
 });

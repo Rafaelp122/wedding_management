@@ -9,8 +9,9 @@ from datetime import date, timedelta
 import pytest
 from django.core.management import call_command
 
+from apps.contracts.models import Contract, Supplier
 from apps.finances.models import Budget, BudgetCategory, Expense, Installment
-from apps.logistics.models import Contract, Item, Supplier
+from apps.logistics.models import Item
 from apps.scheduler.models import Event, Task
 from apps.users.models import User
 from apps.weddings.models import Wedding

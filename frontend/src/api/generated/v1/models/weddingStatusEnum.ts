@@ -9,6 +9,8 @@ export type WeddingStatusEnum = typeof WeddingStatusEnum[keyof typeof WeddingSta
 
 
 export const WeddingStatusEnum = {
+  PROPOSAL: 'PROPOSAL',
+  PLANNING: 'PLANNING',
   IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',
   CANCELED: 'CANCELED',

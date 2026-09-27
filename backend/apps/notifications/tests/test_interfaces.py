@@ -10,6 +10,7 @@ import pytest
 
 from apps.notifications.interfaces import (
     create_notification,
+    notify_contract_addendum_signed,
     notify_installment_overdue,
     send_notification_async,
 )
@@ -83,6 +84,64 @@ class TestNotificationInterfaces:
             installment_number=1,
             amount=Decimal("500.00"),
             due_date=date(2026, 9, 1),
+            users=[],
+        )
+        mock_task.enqueue.assert_not_called()
+
+    def test_notify_contract_addendum_signed_enqueues_task(
+        self, user: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Garante que notify_contract_addendum_signed enfileira para cada usuário."""
+        user2: Any = UserFactory(company=user.company)
+        addendum_uuid = uuid4()
+        wedding_uuid = uuid4()
+        mock_task = MagicMock()
+
+        monkeypatch.setattr(
+            "apps.notifications.interfaces.dispatch_async_notification_task",
+            mock_task,
+        )
+        monkeypatch.setattr("django.db.transaction.on_commit", lambda fn: fn())
+
+        notify_contract_addendum_signed(
+            company=user.company,
+            contract_name="Buffet Completo",
+            addendum_amount=Decimal("2500.00"),
+            addendum_uuid=addendum_uuid,
+            wedding_uuid=wedding_uuid,
+            wedding_name="João & Maria",
+            users=[user, user2],
+        )
+
+        assert mock_task.enqueue.call_count == 2
+        mock_task.enqueue.assert_any_call(
+            company_id=user.company.id,
+            user_id=user.id,
+            title="Termo Aditivo Assinado",
+            message="Termo aditivo de R$ 2500.00 assinado no contrato 'Buffet Completo'.",
+            notification_type="ADDENDUM_SIGNED",
+            link="/contracts",
+            target_type="contract",
+            target_id=str(addendum_uuid),
+            wedding_id=str(wedding_uuid),
+            wedding_name="João & Maria",
+        )
+
+    def test_notify_contract_addendum_signed_empty_users(
+        self, user: Any, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Garante retorno rápido quando não houver usuários informados."""
+        mock_task = MagicMock()
+        monkeypatch.setattr(
+            "apps.notifications.interfaces.dispatch_async_notification_task",
+            mock_task,
+        )
+
+        notify_contract_addendum_signed(
+            company=user.company,
+            contract_name="Buffet Completo",
+            addendum_amount=Decimal("2500.00"),
+            addendum_uuid=uuid4(),
             users=[],
         )
         mock_task.enqueue.assert_not_called()

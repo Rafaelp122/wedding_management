@@ -21,9 +21,9 @@ Importe o schema base gerado pelo Orval e estenda suas propriedades para enrique
 ```typescript
 // src/features/logistics/schemas/supplierFormSchema.ts
 import { z } from "zod";
-import { logisticsSuppliersCreateBody } from "@/api/generated/v1/zod/logisticsSuppliersCreateBody";
+import { suppliersCreateBody } from "@/api/generated/v1/zod/suppliers/suppliers";
 
-export const supplierFormSchema = logisticsSuppliersCreateBody.extend({
+export const supplierFormSchema = suppliersCreateBody.extend({
   name: z
     .string()
     .min(3, "O nome do fornecedor deve ter no mínimo 3 caracteres.")

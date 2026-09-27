@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ItemOut } from "@/api/generated/v1/models/itemOut";
 import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logistics/logistics";
@@ -7,12 +6,14 @@ import { getLogisticsItemsListQueryKey } from "@/api/generated/v1/endpoints/logi
 /**
  * Hook orquestrador para gerenciar estados de exibição e fluxo de contratos, aditivos e itens de fornecedores.
  *
- * @returns Estados e funções de controle para diálogos, edição de itens e atualização de listagem.
+ * Recebe o UUID inicial via props (lido da rota pelo container) em vez de
+ * acessar `useSearchParams` diretamente.
  */
-export function useVendorsItemsOrchestrator() {
+export function useVendorsItemsOrchestrator(
+  options: { initialContractUuid?: string | null } = {},
+) {
   const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const contractIdParam = searchParams.get("contract_id");
+  const contractIdParam = options.initialContractUuid ?? null;
   const openedContractRef = useRef<string | null>(null);
 
   const [detailContractUuid, setDetailContractUuid] = useState<string | null>(contractIdParam);

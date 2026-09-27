@@ -4,11 +4,11 @@ domain: architecture
 type: concept
 source_code:
   - backend/apps/finances/selectors/expense_selectors.py
-  - backend/apps/logistics/selectors/contract_selectors.py
-  - backend/apps/logistics/managers.py
+  - backend/apps/contracts/selectors/contract_selectors.py
+  - backend/apps/contracts/managers.py
 tests:
   - backend/apps/finances/tests/test_selectors.py
-  - backend/apps/logistics/tests/test_selectors.py
+  - backend/apps/contracts/tests/test_selectors.py
 ---
 
 # Padrão Query Selectors & Custom QuerySets
@@ -41,7 +41,7 @@ sequenceDiagram
     participant DB as PostgreSQL (Neon DB)
 
     User->>UI: Abre painel de Contratos
-    UI->>API: HTTP GET /api/v1/logistics/contracts/?page=1&status=SIGNED
+    UI->>API: HTTP GET /api/v1/contracts/?page=1&status=SIGNED
     Note over API: Injeta company de AuthRequest e chama selector
     API->>Selector: contract_list_selector(company, status="SIGNED")
     Selector->>Manager: Contract.objects.for_tenant(company).with_totals().by_status("SIGNED")
@@ -130,7 +130,7 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
 ### C. Busca Individual Segura (`*_get_selector`)
 Os seletores de registro individual encapsulam a resolução segura por UUID dentro do escopo do tenant e retornam `ObjectNotFoundError` (HTTP 404) quando o recurso não existe ou pertence a outro tenant:
 
-Exemplo canônico em [`contract_get_selector()`](../../../backend/apps/logistics/selectors/contract_selectors.py):
+Exemplo canônico em [`contract_get_selector()`](../../../backend/apps/contracts/selectors/contract_selectors.py):
 ```python
 def contract_get_selector(company: Company, uuid: UUID | str) -> Contract:
     try:

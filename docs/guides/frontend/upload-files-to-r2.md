@@ -22,7 +22,7 @@ sequenceDiagram
     autonumber
     actor User as Usuário (Cerimonialista)
     participant UI as Frontend React 19 (Componente / Form)
-    participant API as Django Ninja API (/api/v1/logistics/contracts/)
+    participant API as Django Ninja API (/api/v1/contracts/)
     participant R2 as Cloudflare R2 (S3 Storage)
 
     User->>UI: Seleciona o arquivo PDF
@@ -138,10 +138,10 @@ try {
 
 ## 4. Integração Completa com Formulário (`react-hook-form` + `zod`)
 
-No hook customizado [`useContractUploadForm.ts`](../../../frontend/src/features/logistics/hooks/useContractUploadForm.ts), o fluxo de upload é orquestrado de forma transacional no cliente: o upload binário precede o cadastro do contrato. Se o upload falhar, nenhuma entidade órfã é criada na API.
+No hook customizado [`useContractUploadForm.ts`](../../../frontend/src/features/contracts/hooks/useContractUploadForm.ts), o fluxo de upload é orquestrado de forma transacional no cliente: o upload binário precede o cadastro do contrato. Se o upload falhar, nenhuma entidade órfã é criada na API.
 
 ```typescript
-// frontend/src/features/logistics/hooks/useContractUploadForm.ts
+// frontend/src/features/contracts/hooks/useContractUploadForm.ts
 import { useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -233,10 +233,10 @@ export function useContractUploadForm({
 
 ## 5. Visualização e Upload em Componentes Separados (`ContractDocumentSection.tsx`)
 
-Para anexar documentos em contratos já existentes, o componente de visualização [`ContractDocumentSection.tsx`](../../../frontend/src/features/logistics/components/contracts/ContractDocumentSection.tsx) gerencia o estado de envio, progresso e invalidação de cache no TanStack Query:
+Para anexar documentos em contratos já existentes, o componente de visualização [`ContractDocumentSection.tsx`](../../../frontend/src/features/contracts/components/ContractDocumentSection.tsx) gerencia o estado de envio, progresso e invalidação de cache no TanStack Query:
 
 ```tsx
-// frontend/src/features/logistics/components/contracts/ContractDocumentSection.tsx
+// frontend/src/features/contracts/components/ContractDocumentSection.tsx
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Upload, Loader2, X } from "lucide-react";

@@ -13,4 +13,10 @@ export interface WeddingPatchIn {
   location?: string | null;
   expected_guests?: number | null;
   status?: WeddingStatusEnum | null;
+  client_name?: string | null;
+  client_cpf?: string | null;
+  client_email?: string | null;
+  client_phone?: string | null;
+  client_role?: string | null;
+  days_before_in_progress?: number | null;
 }

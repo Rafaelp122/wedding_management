@@ -146,6 +146,8 @@ it("submete formulário de fornecedor e exibe toast de sucesso", async () => {
 });
 ```
 
+> **Origem do endpoint:** a rota `POST /api/v1/logistics/suppliers/` é servida pelo código em `backend/apps/contracts/api/suppliers.py` (domínio de Contratações, Onda 4) — o prefixo da URL foi preservado.
+
 ---
 
 ## Passo 3: Mocks de Bibliotecas Visuais em `test-setup.ts`

@@ -6,7 +6,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
-from apps.logistics.schemas import (
+from apps.contracts.schemas import (
     ContractDetailAggregateOut,
     ContractFullCreateIn,
     ContractIn,
@@ -15,11 +15,15 @@ from apps.logistics.schemas import (
     ContractStatusTransitionIn,
     ContractUploadIn,
     ContractUploadUrlIn,
+)
+from apps.contracts.schemas.supplier import (
+    SupplierIn,
+    SupplierPatchIn,
+)
+from apps.logistics.schemas import (
     ItemIn,
     ItemPatchIn,
     ItemStatusTransitionIn,
-    SupplierIn,
-    SupplierPatchIn,
 )
 
 
@@ -205,7 +209,7 @@ class TestContractSchemas:
 
     def test_contract_out_allowed_transitions(self) -> None:
         """ContractOut resolve allowed_transitions conforme máquina de estados."""
-        from apps.logistics.models.contract import Contract
+        from apps.contracts.models import Contract
 
         # Simula objeto com status e ALLOWED_TRANSITIONS
         class DummyContract:

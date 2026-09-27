@@ -310,7 +310,8 @@ class TestExpenseDomainProperties:
         """clean() valida equivalência de valor e casamento entre despesa e contrato."""
         from django.core.exceptions import ValidationError
 
-        from apps.logistics.tests.factories import ContractFactory, SupplierFactory
+        from apps.contracts.tests.factories import SupplierFactory
+        from apps.logistics.tests.factories import ContractFactory
         from apps.weddings.tests.factories import WeddingFactory
 
         wedding, category = _setup_expense(user)

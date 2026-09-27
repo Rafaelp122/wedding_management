@@ -86,6 +86,62 @@ def notify_installment_overdue(
     transaction.on_commit(_enqueue_notifications)
 
 
+def notify_contract_addendum_signed(
+    *,
+    company: Company,
+    contract_name: str,
+    addendum_amount: Decimal | str,
+    addendum_uuid: UUID | str,
+    wedding_uuid: UUID | str | None = None,
+    wedding_name: str | None = None,
+    users: Sequence[User],
+) -> None:
+    """Enfileira notificações de termo aditivo assinado para os usuários do tenant.
+
+    Registra o despacho assíncrono exclusivamente após a confirmação da transação
+    (transaction.on_commit) para mitigar envio de notificações em caso de rollback.
+
+    Args:
+        company: Empresa (tenant) proprietária do contrato.
+        contract_name: Nome descritivo do contrato principal.
+        addendum_amount: Valor monetário do aditivo formalizado.
+        addendum_uuid: Identificador único do termo aditivo.
+        wedding_uuid: UUID opcional do casamento relacionado.
+        wedding_name: Nome formatado opcional do casamento.
+        users: Lista de usuários destinatários da notificação.
+    """
+    if not users:
+        return
+
+    company_id = company.id
+    target_id_str = str(addendum_uuid)
+    wedding_id_str = str(wedding_uuid) if wedding_uuid else None
+    resolved_wedding_name = wedding_name or ""
+    link = "/contracts"
+    message = (
+        f"Termo aditivo de R$ {addendum_amount} assinado no contrato '{contract_name}'."
+    )
+
+    user_ids = [u.id for u in users if u.is_active]
+
+    def _enqueue_notifications() -> None:
+        for user_id in user_ids:
+            dispatch_async_notification_task.enqueue(
+                company_id=company_id,
+                user_id=user_id,
+                title="Termo Aditivo Assinado",
+                message=message,
+                notification_type="ADDENDUM_SIGNED",
+                link=link,
+                target_type="contract",
+                target_id=target_id_str,
+                wedding_id=wedding_id_str,
+                wedding_name=resolved_wedding_name,
+            )
+
+    transaction.on_commit(_enqueue_notifications)
+
+
 def send_notification_async(
     *,
     company_id: int | str,

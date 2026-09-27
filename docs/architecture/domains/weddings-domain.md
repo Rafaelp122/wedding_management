@@ -18,17 +18,34 @@ O casamento é a entidade raiz em torno da qual todos os módulos operacionais o
 - **Proteção Relacional e de Integridade:** Bloqueio de deleção acidental de casamentos com contratos assinados ou despesas vinculadas (`models.PROTECT`).
 
 ### Ciclo de Vida e Máquina de Estados
-A entidade `Wedding` encapsula uma máquina de estados finita:
-- **`IN_PROGRESS` (Em Andamento):** Estado inicial padrão na criação. A data deve ser futura ou o dia corrente (`date >= hoje`).
-- **`COMPLETED` (Concluído):** O casamento foi realizado com sucesso. Trava arquitetural (BR-W01) impede que um casamento seja marcado como concluído antes da data efetiva da cerimônia (`date <= hoje`).
-- **`CANCELED` (Cancelado):** O evento foi cancelado. Permite reabertura sem perda de dados históricos via método semântico `reopen()`.
+A entidade `Wedding` encapsula uma máquina de estados finita com 4 estados canônicos e estados de exceção:
+- **`PROPOSAL` (Proposta):** Estado de captação comercial e simulação orçamentária preliminar com os noivos.
+- **`PLANNING` (Planejamento):** Estado ativo após formalização da assessoria, estruturação do cronograma e gestão orçamentária. Promovido a partir de proposta via método semântico `convert_to_planning()`.
+- **`IN_PROGRESS` (Em Andamento):** Reta final da preparação e operação no dia do evento (disparado pelo gatilho temporal configurável `days_before_in_progress`, padrão: 7 dias antes do evento).
+- **`COMPLETED` (Concluído):** O casamento foi realizado com sucesso. Trava arquitetural (BR-W01) impede conclusão antes da data efetiva da cerimônia (`date <= hoje`).
+- **`CANCELED` (Cancelado):** O evento foi cancelado ou suspenso. Permite reabertura sem perda de dados históricos via método semântico `reopen()`.
+
+#### Conversão para Planejamento (`convert_to_planning()`) e Contrato Unificado
+A transição de `PROPOSAL` para `PLANNING` marca a efetivação comercial do casamento:
+1. **Validação de Data:** Exige que a data da cerimônia seja estritamente no presente ou futuro (`date >= hoje`).
+2. **Contrato de Assessoria Unificado (`apps.contracts`):** A criação de entidade separada (`PlannerContract`) foi descartada em favor do modelo único `Contract` com `contract_type="PLANNER"`. Em estrita conformidade com a [ADR-031](../adr/031-inter-module-communication.md), o domínio de casamentos consome esse contrato exclusivamente através de `apps.contracts.interfaces` (`get_planner_contract_for_wedding`, `save_planner_contract_for_wedding`), erradicando acoplamento direto de modelos.
+3. **Congelamento da Baseline Orçamentária:** Na conversão, invoca-se `apps.finances.interfaces.freeze_budget_baseline_for_wedding()`, congelando o teto orçamentário original como linha de base histórica imutável.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> IN_PROGRESS : Criação (data >= hoje)
-    IN_PROGRESS --> COMPLETED : Concluir (exige data <= hoje - BR-W01)
-    IN_PROGRESS --> CANCELED : Cancelar
-    CANCELED --> IN_PROGRESS : Reabrir (reopen - BR-W06)
+    [*] --> PROPOSAL : Criação (Proposta Comercial)
+    [*] --> PLANNING : Criação Direta (Planejamento)
+    [*] --> IN_PROGRESS : Criação Direta (Em Andamento)
+    PROPOSAL --> PLANNING : convert_to_planning()
+    PROPOSAL --> IN_PROGRESS : convert_to_planning()
+    PROPOSAL --> CANCELED : cancel()
+    PLANNING --> IN_PROGRESS : Entrada na Reta Final (days_before_in_progress)
+    PLANNING --> CANCELED : cancel()
+    IN_PROGRESS --> COMPLETED : complete() (exige data <= hoje - BR-W01)
+    IN_PROGRESS --> CANCELED : cancel()
+    CANCELED --> PLANNING : reopen() (BR-W06)
+    CANCELED --> IN_PROGRESS : reopen() (BR-W06)
+    CANCELED --> PROPOSAL : reopen() (BR-W06)
     COMPLETED --> [*] : Arquivado com Sucesso
     CANCELED --> [*] : Encerrado
 ```
@@ -43,7 +60,9 @@ erDiagram
     Wedding ||--o| Budget : "possui orçamento (CASCADE)"
     Wedding ||--o{ Contract : "possui contratos (PROTECT)"
     Wedding ||--o{ Event : "agenda eventos (CASCADE)"
-    Wedding ||--o{ Task : "possui checklist (CASCADE)"
+    Wedding ||--o{ ChecklistItem : "possui checklist (CASCADE)"
+    Wedding ||--o{ WeddingClient : "possui participantes (CASCADE)"
+    Client ||--o{ WeddingClient : "participa (PROTECT)"
 
     Wedding {
         bigint id PK
@@ -54,8 +73,9 @@ erDiagram
         date date "Data do Evento (Futura na criação)"
         string location "Local do Casamento"
         integer expected_guests "Estimativa de Convidados"
-        string status "IN_PROGRESS | COMPLETED | CANCELED"
+        string status "PROPOSAL | PLANNING | IN_PROGRESS | COMPLETED | CANCELED"
         string template "Template de Cronograma Aplicado"
+        integer days_before_in_progress "Dias para Reta Final"
         datetime created_at
         datetime updated_at
     }
@@ -65,7 +85,8 @@ erDiagram
 
 | Entidade | Papel & Relações | Campos & Tipos | Invariantes de Persistência & Regras de Domínio |
 | :--- | :--- | :--- | :--- |
-| **`Wedding`** | Agregador Raiz (`TenantModel`) | `groom_name` (max 100), `bride_name` (max 100), `date` (DateField), `location` (max 255), `expected_guests` (PositiveInt, nullable), `status` (`StatusChoices`), `template` (string, nullable) | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= hoje`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
+| **`Wedding`** | Agregador Raiz (`TenantModel`) | `groom_name`, `bride_name`, `date` (DateField), `location`, `expected_guests`, `status` (`StatusChoices`), `template`, `days_before_in_progress` | **Máquina de Estados (ADR-030):** Métodos de ciclo de vida `convert_to_planning()`, `complete()`, `cancel()`, `reopen()` e `transition_to()`.<br/>**Regra de Conclusão (BR-W01):** Um casamento só pode ser concluído se `date <= hoje`.<br/>**Proteção de Deleção (BR-W03):** Bloqueio de exclusão em cascata se existirem contratos ou despesas protegidos (`ProtectedError`). |
+| **`WeddingClient`** | Associação de Participantes (`TenantModel`) | `wedding` (FK `Wedding`), `client` (FK `Client`), `role` (`RoleChoices`), `is_primary_signatory` (bool) | **Vínculo com SSOT de Clientes:** Conecta a pessoa física ao evento com papel específico e indica o signatário principal. |
 
 ---
 

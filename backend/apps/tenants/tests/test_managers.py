@@ -86,13 +86,14 @@ class TestTenantManager:
         NOTA: Ao adicionar novos modelos TenantModel, inclua-os nesta lista
         para manter o guard de regressão ativo.
         """
+        from apps.contracts.models import Contract, Supplier
         from apps.finances.models import (
             Budget,
             BudgetCategory,
             Expense,
             Installment,
         )
-        from apps.logistics.models import Contract, Item, Supplier
+        from apps.logistics.models import Item
         from apps.notifications.models import Notification
         from apps.scheduler.models import Event, Task
         from apps.weddings.models import Wedding

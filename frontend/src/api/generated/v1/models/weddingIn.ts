@@ -24,4 +24,16 @@ export interface WeddingIn {
   location: string;
   expected_guests?: number | null;
   template?: string | null;
+  /** @maxLength 255 */
+  client_name?: string;
+  /** @maxLength 14 */
+  client_cpf?: string;
+  /** @maxLength 255 */
+  client_email?: string;
+  /** @maxLength 20 */
+  client_phone?: string;
+  /** @maxLength 50 */
+  client_role?: string;
+  /** @minimum 0 */
+  days_before_in_progress?: number;
 }

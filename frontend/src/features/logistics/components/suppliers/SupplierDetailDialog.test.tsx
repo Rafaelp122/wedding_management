@@ -36,7 +36,7 @@ describe("SupplierDetailDialog", () => {
 
   it("shows loading skeleton when data is loading", () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return new Promise(() => {}); // never resolve
       }),
     );
@@ -59,7 +59,7 @@ describe("SupplierDetailDialog", () => {
 
   it("shows error alert when query fails", async () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return new HttpResponse(null, { status: 500 });
       }),
     );
@@ -81,7 +81,7 @@ describe("SupplierDetailDialog", () => {
 
   it("shows not-found message when supplier is null", async () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(null);
       }),
     );
@@ -95,7 +95,7 @@ describe("SupplierDetailDialog", () => {
 
   it("renders supplier name, status badge, email, phone, WhatsApp link and CNPJ", async () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(baseSupplier);
       }),
     );
@@ -130,7 +130,7 @@ describe("SupplierDetailDialog", () => {
 
   it("WhatsApp link has correct href with country code +55", async () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(baseSupplier);
       }),
     );
@@ -151,7 +151,7 @@ describe("SupplierDetailDialog", () => {
 
   it("email link has mailto href", async () => {
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(baseSupplier);
       }),
     );
@@ -168,7 +168,7 @@ describe("SupplierDetailDialog", () => {
     const inactive = createMockSupplier({ is_active: false, name: "Fotógrafo Arte" });
 
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(inactive);
       }),
     );
@@ -194,7 +194,7 @@ describe("SupplierDetailDialog", () => {
     });
 
     server.use(
-      http.get("*/api/v1/logistics/suppliers/:uuid/", () => {
+      http.get("*/api/v1/suppliers/:uuid/", () => {
         return HttpResponse.json(sameDates);
       }),
     );

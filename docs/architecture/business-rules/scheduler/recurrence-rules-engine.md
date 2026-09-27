@@ -22,7 +22,7 @@ tests:
 
 ## 1. Contexto e Invariantes do Domínio
 
-O motor do módulo `scheduler` orquestra dois pilares fundamentais da assessoria de casamentos: **Compromissos de Calendário** (`Event`) e o **Checklist Operacional de Tarefas** (`Task`). O motor garante consistência temporal, parametrização de recorrência periódica e configuração de lembretes preventivos.
+O motor do módulo `scheduler` orquestra dois pilares fundamentais da assessoria de casamentos: **Compromissos de Calendário** (`Event`) e o **Checklist Operacional de Tarefas** (`ChecklistItem`). O motor garante consistência temporal, parametrização de recorrência periódica e configuração de lembretes preventivos.
 
 ### Invariantes Fundamentais:
 1. **Regras de Recorrência Parametrizadas (`RecurrenceChoices`):** Eventos suportam frequência definida em português:
@@ -33,7 +33,7 @@ O motor do módulo `scheduler` orquestra dois pilares fundamentais da assessoria
 2. **Invariante de Data Futura na Criação Manual (BR-VAL02):** A data/hora de início (`start_time`) não pode ser anterior à data corrente (`timezone.localdate()`) na criação manual via API (`EventService.create`), disparando `BusinessRuleViolation('event_start_time_in_past')`.
 3. **Exceção de Marcos Retroativos (`_allow_historical_start=True`):** Apenas o provisionamento automatizado de templates de casamento (`WeddingService`) pode persistir eventos com datas relativas retroativas.
 4. **Motor de Lembretes Preventivos:** Suporta ativação booleana (`reminder_enabled = True`) e antecedência configurável em minutos (`reminder_minutes_before = 60` por padrão).
-5. **Checklist e Prazos de Tarefas (`Task`):** As tarefas possuem controle atômico de conclusão (`is_completed = True/False`) e ordenação canônica por pendência e vencimento: `ordering = ["is_completed", "due_date", "created_at"]`.
+5. **Checklist e Prazos de Tarefas (`ChecklistItem`):** Os itens do checklist possuem controle atômico de conclusão (`is_completed = True/False`) e ordenação canônica por pendência e vencimento: `ordering = ["is_completed", "due_date", "created_at"]`.
 
 ### Fórmulas Matemáticas de Recorrência e Lembrete:
 Para um evento base agendado no instante $t_0$, as ocorrências recorrentes $k \in \{1, 2, \dots\}$ e o instante de disparo do lembrete $t_{\text{reminder}}$ são calculados por:
@@ -79,7 +79,7 @@ graph TD
 | **BR-S02-A** | **Data Inicial no Futuro** | `start_time` no passado com `_allow_historical_start=False`. | `BusinessRuleViolation` (`event_start_time_in_past`) | Bloqueia agendamento de eventos retroativos na criação manual. |
 | **BR-S02-B** | **Edição com Data Passada** | Atualização parcial via `EventService.update` para ajuste histórico. | Nenhuma (Permitido) | Permite reprogramação e correções cadastrais de eventos passados. |
 | **BR-S02-C** | **Recorrência Canônica** | Seleção de `recurrence_rule`. | `ValidationError` se fora dos choices | Aplica intervalos padronizados (`semanal`, `quinzenal`, `mensal`). |
-| **BR-S02-D** | **Ordenação de Tarefas** | Consulta via `TaskQuerySet`. | Nenhuma | Prioriza tarefas não concluídas (`is_completed=False`) e mais próximas do vencimento. |
+| **BR-S02-D** | **Ordenação de Tarefas do Checklist** | Consulta via `ChecklistItemQuerySet` (ou `TaskQuerySet`). | Nenhuma | Prioriza tarefas não concluídas (`is_completed=False`) e mais próximas do vencimento. |
 
 ---
 
@@ -108,8 +108,8 @@ if (
     )
 ```
 
-### C. Modelo de Tarefas do Checklist (`Task`)
-Implementado em [`Task`](../../../../backend/apps/scheduler/models/task.py):
+### C. Modelo de Tarefas do Checklist (`ChecklistItem`)
+Implementado em [`ChecklistItem`](../../../../backend/apps/scheduler/models/task.py) (alias legado `Task` mantido):
 - Ordenação canônica: `ordering = ["is_completed", "due_date", "created_at"]`.
 - Métodos semânticos de ciclo de vida: `complete()`, `reopen()`.
 - Propriedades temporais: `is_overdue`, `days_overdue`.

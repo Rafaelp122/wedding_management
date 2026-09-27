@@ -3,17 +3,18 @@ from uuid import uuid4
 
 import pytest
 
+from apps.contracts.models import Contract, Supplier
+from apps.contracts.tests.factories import SupplierFactory as _SupplierFactory
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
     ObjectNotFoundError,
 )
-from apps.logistics.models import Contract, Item, Supplier
+from apps.logistics.models import Item
 from apps.logistics.schemas import ItemIn, ItemPatchIn
 from apps.logistics.services.item_service import ItemService
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
 from apps.logistics.tests.factories import ItemFactory as _ItemFactory
-from apps.logistics.tests.factories import SupplierFactory as _SupplierFactory
 from apps.users.models import User
 from apps.users.tests.factories import UserFactory as _UserFactory
 from apps.weddings.models import Wedding

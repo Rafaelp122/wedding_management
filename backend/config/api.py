@@ -13,6 +13,8 @@ from ninja_extra import NinjaExtraAPI
 from ninja_jwt.authentication import JWTAuth
 from pydantic import ValidationError as PydanticValidationError
 
+from apps.clients.api import clients_router
+from apps.contracts.api import contracts_router
 from apps.core.cron_api import cron_router
 from apps.core.exceptions import ApplicationError
 from apps.finances.api import (
@@ -21,7 +23,9 @@ from apps.finances.api import (
     expenses_router,
     installments_router,
 )
-from apps.logistics.api import contracts_router, items_router, suppliers_router
+from apps.logistics.api import (
+    items_router,
+)
 from apps.notifications.api import notifications_router
 from apps.reporting.api import dashboard_router, reports_router
 from apps.scheduler.api import (
@@ -33,6 +37,7 @@ from apps.scheduler.api import (
 from apps.scheduler.api import (
     tasks_router as scheduler_tasks_router,
 )
+from apps.suppliers.api import suppliers_router
 from apps.users.api import router as auth_router
 from apps.weddings.api import router as weddings_router
 
@@ -165,12 +170,14 @@ def health_check(request: HttpRequest):  # type: ignore[no-untyped-def]
 api.add_router("/auth/", auth_router, auth=None)
 
 # Registra os routers das apps
+api.add_router("/clients/", clients_router, tags=["Clients"])
 api.add_router("/weddings/", weddings_router)
 api.add_router("/dashboard/", dashboard_router)
 api.add_router("/reports/", reports_router)
-api.add_router("/logistics/suppliers/", suppliers_router)
-api.add_router("/logistics/contracts/", contracts_router)
+api.add_router("/contracts/", contracts_router)
+api.add_router("/suppliers/", suppliers_router, tags=["Suppliers"])
 api.add_router("/logistics/items/", items_router)
+
 
 api.add_router("/finances/budgets/", budgets_router)
 api.add_router("/finances/categories/", budget_categories_router)

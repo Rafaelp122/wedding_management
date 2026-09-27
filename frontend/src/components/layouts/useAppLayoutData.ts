@@ -5,6 +5,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard Geral",
   "/weddings": "Casamentos",
+  "/contracts": "Contratos",
   "/scheduler": "Scheduler",
   "/suppliers": "Fornecedores",
   "/settings": "Configurações",

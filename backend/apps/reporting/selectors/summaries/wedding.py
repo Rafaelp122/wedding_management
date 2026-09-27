@@ -50,6 +50,7 @@ class WeddingSummarySelector:
         qs = (
             Wedding.objects.for_tenant(company)
             .select_related("company")
+            .prefetch_related("contracts", "participants__client")
             .search(search)
             .by_status(status)
         )

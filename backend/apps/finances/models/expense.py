@@ -30,7 +30,7 @@ class Expense(TenantModel, WeddingOwnedMixin):
         "finances.BudgetCategory", on_delete=models.PROTECT, related_name="expenses"
     )
     contract = models.OneToOneField(
-        "logistics.Contract",
+        "contracts.Contract",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -82,11 +82,14 @@ class Expense(TenantModel, WeddingOwnedMixin):
 
         # BR-F02: Valor da despesa vinculado ao valor do contrato
         if self.contract and self.actual_amount is not None:
-            if self.actual_amount != self.contract.total_amount:
+            expected_amount = getattr(
+                self.contract, "effective_amount", self.contract.total_amount
+            )
+            if self.actual_amount != expected_amount:
                 raise ValidationError(
                     f"BR-F02: O valor da despesa (R${self.actual_amount}) "
                     f"deve ser igual ao valor do contrato "
-                    f"(R${self.contract.total_amount})."
+                    f"(R${expected_amount})."
                 )
 
         # Fronteira Cross-Wedding entre contrato e despesa

@@ -6,6 +6,7 @@ from uuid import UUID
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 
+from apps.contracts.interfaces import get_contract_for_company
 from apps.core.exceptions import (
     BusinessRuleViolation,
     DomainIntegrityError,
@@ -15,7 +16,6 @@ from apps.core.tenant import validate_tenant_ownership
 from apps.finances.models import BudgetCategory, Expense
 from apps.finances.schemas import ExpenseIn, ExpensePatchIn
 from apps.finances.services.installment_service import InstallmentService
-from apps.logistics.interfaces import get_contract_for_company
 from apps.tenants.models import Company
 
 
@@ -76,7 +76,11 @@ class ExpenseService:
             "name": (
                 contract.name
                 or contract.description
-                or f"Despesa - {contract.supplier.name}"
+                or (
+                    f"Despesa - {contract.supplier.name}"
+                    if contract.supplier
+                    else "Despesa de Contrato"
+                )
             ),
             "description": contract.description or "",
             "contract": str(contract.uuid),
@@ -210,15 +214,19 @@ class ExpenseService:
         """
         effective_contract = instance.contract
         effective_amount = data.get("actual_amount", instance.actual_amount)
-        if effective_contract and effective_amount != effective_contract.total_amount:
-            raise BusinessRuleViolation(
-                detail=(
-                    f"BR-F02: O valor da despesa (R${effective_amount}) "
-                    f"deve ser igual ao valor do contrato "
-                    f"(R${effective_contract.total_amount})."
-                ),
-                code="br_f02_violation",
+        if effective_contract:
+            expected_amount = getattr(
+                effective_contract, "effective_amount", effective_contract.total_amount
             )
+            if effective_amount != expected_amount:
+                raise BusinessRuleViolation(
+                    detail=(
+                        f"BR-F02: O valor da despesa (R${effective_amount}) "
+                        f"deve ser igual ao valor do contrato "
+                        f"(R${expected_amount})."
+                    ),
+                    code="br_f02_violation",
+                )
 
     @staticmethod
     def _resolve_contract(

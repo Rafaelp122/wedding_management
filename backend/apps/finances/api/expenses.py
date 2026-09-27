@@ -3,6 +3,7 @@ from ninja.pagination import paginate
 from ninja_extra import Router
 from pydantic import UUID4
 
+from apps.contracts.interfaces import list_contracts_for_wedding
 from apps.core.constants import MUTATION_ERROR_RESPONSES, READ_ERROR_RESPONSES
 from apps.finances.models.expense import Expense
 from apps.finances.schemas import (
@@ -15,7 +16,6 @@ from apps.finances.schemas import (
 )
 from apps.finances.selectors import expense_get_selector, expense_list_selector
 from apps.finances.services.expense_service import ExpenseService
-from apps.logistics.interfaces import list_contracts_for_wedding
 from apps.users.types import AuthRequest
 
 

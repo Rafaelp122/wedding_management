@@ -15,6 +15,10 @@ export interface ItemOut {
   name: string;
   description: string;
   quantity: number;
+  scope_status?: string;
+  rejection_reason?: string;
+  procurement_status?: string;
+  delivery_status?: string;
   acquisition_status: string;
   created_at: string;
   updated_at: string;

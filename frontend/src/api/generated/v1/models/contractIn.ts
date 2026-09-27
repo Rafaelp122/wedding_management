@@ -10,7 +10,10 @@
  */
 export interface ContractIn {
   wedding: string;
-  supplier: string;
+  contract_type?: string;
+  service_tier?: string | null;
+  supplier?: string | null;
+  client?: string | null;
   /**
      * @minLength 1
      * @maxLength 255
@@ -19,6 +22,11 @@ export interface ContractIn {
   total_amount: number | string;
   status?: string;
   description?: string;
+  /** @minimum 1 */
+  installments_count?: number;
+  expiration_date?: string | null;
+  alert_days_before?: number;
+  signed_date?: string | null;
   parent?: string | null;
   pdf_file_key?: string | null;
 }

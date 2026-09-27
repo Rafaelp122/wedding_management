@@ -63,7 +63,7 @@ class Installment(TenantModel, WeddingOwnedMixin):
         ]
 
     def __str__(self) -> str:
-        return f"Parcela {self.installment_number} - {self.expense.description} ({self.status})"  # noqa
+        return f"Parcela {self.installment_number} - {self.expense.description} ({self.status})"
 
     def clean(self) -> None:
         """Validações de consistência paid_date ↔ status."""

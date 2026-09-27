@@ -42,9 +42,14 @@ const WeddingChecklistTab = lazy(() =>
 interface WeddingDetailTabsProps {
   wedding: WeddingOut;
   overview?: WeddingDashboardOut | null;
+  onEditContract?: () => void;
 }
 
-export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps) {
+export function WeddingDetailTabs({
+  wedding,
+  overview,
+  onEditContract,
+}: WeddingDetailTabsProps) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab");
@@ -113,6 +118,7 @@ export function WeddingDetailTabs({ wedding, overview }: WeddingDetailTabsProps)
         <WeddingOverview
           wedding={wedding}
           overview={overview}
+          onEditContract={onEditContract}
           onNavigateToPlanning={() => {
             setSearchParams((prev) => {
               prev.set("tab", "planning");

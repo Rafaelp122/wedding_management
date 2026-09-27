@@ -3,8 +3,9 @@ from typing import Any, cast
 import pytest
 from django.core.exceptions import ValidationError
 
+from apps.contracts.models import Contract
 from apps.core.exceptions import BusinessRuleViolation, DomainIntegrityError
-from apps.logistics.models import Contract, Item
+from apps.logistics.models import Item
 from apps.logistics.tests.factories import ContractFactory as _ContractFactory
 from apps.logistics.tests.factories import ItemFactory as _ItemFactory
 from apps.users.models import User

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { useState, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
@@ -12,10 +12,22 @@ import { getApiErrorInfo } from "@/api/error-utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, CheckCircle2, MapPin, Pencil, RotateCcw, Users, XCircle } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  MapPin,
+  Pencil,
+  RotateCcw,
+  Users,
+  XCircle,
+  FileSignature,
+  Sparkles,
+} from "lucide-react";
 import { getWeddingStatusBadgeStyle, getWeddingStatusLabel } from "@/features/weddings/utils/wedding-status";
 import { cn } from "@/lib/utils";
 import { TEMPLATE_MAP } from "../constants";
+import { PlannerContractDialog } from "./PlannerContractDialog";
+import { ConvertToPlanningDialog } from "./ConvertToPlanningDialog";
 
 interface WeddingHeaderProps {
   wedding: WeddingOut;
@@ -26,6 +38,8 @@ interface WeddingHeaderProps {
   onCompleteClick?: () => void;
   onCancelClick?: () => void;
   onReopenClick?: () => void;
+  onPlannerContractClick?: () => void;
+  onConvertToPlanningClick?: () => void;
 }
 
 export const WeddingHeader = memo(function WeddingHeader({
@@ -37,7 +51,11 @@ export const WeddingHeader = memo(function WeddingHeader({
   onCompleteClick,
   onCancelClick,
   onReopenClick,
+  onPlannerContractClick,
+  onConvertToPlanningClick,
 }: WeddingHeaderProps) {
+  const [internalContractOpen, setInternalContractOpen] = useState(false);
+  const [internalConvertOpen, setInternalConvertOpen] = useState(false);
   const queryClient = useQueryClient();
   const { mutate: reopenWedding, isPending: isReopening } = useWeddingsReopen();
 
@@ -60,6 +78,22 @@ export const WeddingHeader = memo(function WeddingHeader({
   const canReopen =
     wedding.status === "CANCELED" ||
     (wedding.allowed_transitions?.includes("IN_PROGRESS") ?? false);
+
+  const handleOpenContract = () => {
+    if (onPlannerContractClick) {
+      onPlannerContractClick();
+    } else {
+      setInternalContractOpen(true);
+    }
+  };
+
+  const handleOpenConvert = () => {
+    if (onConvertToPlanningClick) {
+      onConvertToPlanningClick();
+    } else {
+      setInternalConvertOpen(true);
+    }
+  };
 
   const handleReopen = () => {
     if (onReopenClick) {
@@ -131,6 +165,29 @@ export const WeddingHeader = memo(function WeddingHeader({
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
+            {(wedding.status === "PROPOSAL" || wedding.status === "PLANNING") && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs gap-1.5 cursor-pointer font-medium"
+                onClick={handleOpenContract}
+                title="Contrato da Assessoria"
+              >
+                <FileSignature className="h-3.5 w-3.5" />
+                Contrato da Assessoria
+              </Button>
+            )}
+            {wedding.status === "PROPOSAL" && (
+              <Button
+                size="sm"
+                className="h-7 px-2.5 text-xs gap-1.5 cursor-pointer font-medium"
+                onClick={handleOpenConvert}
+                title="Efetivar Casamento"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Efetivar Casamento
+              </Button>
+            )}
             {wedding.status === "IN_PROGRESS" && onCompleteClick && (
               <Button
                 variant="ghost"
@@ -164,7 +221,7 @@ export const WeddingHeader = memo(function WeddingHeader({
                 <RotateCcw className="h-3.5 w-3.5" />
               </Button>
             )}
-            {wedding.status === "IN_PROGRESS" && onCancelClick && (
+            {(wedding.status === "IN_PROGRESS" || wedding.status === "PLANNING") && onCancelClick && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -220,6 +277,23 @@ export const WeddingHeader = memo(function WeddingHeader({
           </div>
         </div>
       </div>
+
+      {internalContractOpen && (
+        <PlannerContractDialog
+          weddingUuid={wedding.uuid}
+          contract={wedding.planner_contract}
+          open={internalContractOpen}
+          onOpenChange={setInternalContractOpen}
+        />
+      )}
+      {internalConvertOpen && (
+        <ConvertToPlanningDialog
+          wedding={wedding}
+          open={internalConvertOpen}
+          onOpenChange={setInternalConvertOpen}
+          onOpenContractDialog={handleOpenContract}
+        />
+      )}
     </div>
   );
 });

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+from apps.contracts.models import Contract
 from apps.finances.models import BudgetCategory, Installment
-from apps.logistics.models import Contract
 from apps.reporting.selectors.dashboard_selectors import (
     wedding_overview_selector,
 )

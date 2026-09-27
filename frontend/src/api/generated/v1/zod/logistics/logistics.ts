@@ -8,1032 +8,8 @@ import * as zod from 'zod';
 
 
 /**
- * Lista todos os fornecedores cadastrados pelo Planner logado.
- * Aceita filtros de busca textual e status.
- * @summary List Suppliers
- */
-export const logisticsSuppliersListQuerySearchDefault = ``;
-export const logisticsSuppliersListQueryLimitDefault = 100;
-
-export const logisticsSuppliersListQueryOffsetDefault = 0;
-export const logisticsSuppliersListQueryOffsetMin = 0;
-
-
-
-export const LogisticsSuppliersListQueryParams = zod.object({
-  "search": zod.string().default(logisticsSuppliersListQuerySearchDefault),
-  "is_active": zod.union([zod.boolean(),zod.null()]).optional(),
-  "limit": zod.int().min(1).default(logisticsSuppliersListQueryLimitDefault),
-  "offset": zod.int().min(logisticsSuppliersListQueryOffsetMin).default(logisticsSuppliersListQueryOffsetDefault)
-})
-
-export const logisticsSuppliersListResponseItemsItemAddressDefault = ``;
-export const logisticsSuppliersListResponseItemsItemCityDefault = ``;
-export const logisticsSuppliersListResponseItemsItemStateDefault = ``;
-export const logisticsSuppliersListResponseItemsItemStateMin = 0;
-export const logisticsSuppliersListResponseItemsItemStateMax = 2;
-
-export const logisticsSuppliersListResponseItemsItemWebsiteDefault = ``;
-export const logisticsSuppliersListResponseItemsItemNotesDefault = ``;
-
-export const LogisticsSuppliersListResponse = zod.object({
-  "items": zod.array(zod.object({
-  "uuid": zod.string(),
-  "name": zod.string(),
-  "cnpj": zod.string(),
-  "phone": zod.string(),
-  "email": zod.string(),
-  "is_active": zod.boolean(),
-  "address": zod.string().default(logisticsSuppliersListResponseItemsItemAddressDefault),
-  "city": zod.string().default(logisticsSuppliersListResponseItemsItemCityDefault),
-  "state": zod.string().min(logisticsSuppliersListResponseItemsItemStateMin).max(logisticsSuppliersListResponseItemsItemStateMax).default(logisticsSuppliersListResponseItemsItemStateDefault),
-  "website": zod.string().default(logisticsSuppliersListResponseItemsItemWebsiteDefault),
-  "notes": zod.string().default(logisticsSuppliersListResponseItemsItemNotesDefault),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true})
-}).describe('Schema de saída para exibição de fornecedor.')),
-  "count": zod.int()
-})
-
-/**
- * Cadastra um novo fornecedor no sistema.
- * @summary Create Supplier
- */
-export const logisticsSuppliersCreateBodyCnpjDefault = ``;
-export const logisticsSuppliersCreateBodyCnpjMax = 18;
-
-export const logisticsSuppliersCreateBodyIsActiveDefault = true;
-export const logisticsSuppliersCreateBodyAddressDefault = ``;
-export const logisticsSuppliersCreateBodyCityDefault = ``;
-export const logisticsSuppliersCreateBodyStateDefault = ``;
-export const logisticsSuppliersCreateBodyStateRegExp = new RegExp('^$|^[A-Z]{2}$');
-export const logisticsSuppliersCreateBodyWebsiteDefault = ``;
-export const logisticsSuppliersCreateBodyWebsiteRegExp = new RegExp('^(?:https?://\\S+)?$');
-export const logisticsSuppliersCreateBodyNotesDefault = ``;
-
-export const LogisticsSuppliersCreateBody = zod.object({
-  "name": zod.string(),
-  "cnpj": zod.string().max(logisticsSuppliersCreateBodyCnpjMax).default(logisticsSuppliersCreateBodyCnpjDefault),
-  "phone": zod.string(),
-  "email": zod.string(),
-  "is_active": zod.boolean().default(logisticsSuppliersCreateBodyIsActiveDefault),
-  "address": zod.string().default(logisticsSuppliersCreateBodyAddressDefault),
-  "city": zod.string().default(logisticsSuppliersCreateBodyCityDefault),
-  "state": zod.string().regex(logisticsSuppliersCreateBodyStateRegExp).default(logisticsSuppliersCreateBodyStateDefault),
-  "website": zod.string().regex(logisticsSuppliersCreateBodyWebsiteRegExp).default(logisticsSuppliersCreateBodyWebsiteDefault),
-  "notes": zod.string().default(logisticsSuppliersCreateBodyNotesDefault)
-}).describe('Schema de entrada para criação de fornecedor.')
-
-export const logisticsSuppliersCreateResponseAddressDefault = ``;
-export const logisticsSuppliersCreateResponseCityDefault = ``;
-export const logisticsSuppliersCreateResponseStateDefault = ``;
-export const logisticsSuppliersCreateResponseStateMin = 0;
-export const logisticsSuppliersCreateResponseStateMax = 2;
-
-export const logisticsSuppliersCreateResponseWebsiteDefault = ``;
-export const logisticsSuppliersCreateResponseNotesDefault = ``;
-
-export const LogisticsSuppliersCreateResponse = zod.object({
-  "uuid": zod.string(),
-  "name": zod.string(),
-  "cnpj": zod.string(),
-  "phone": zod.string(),
-  "email": zod.string(),
-  "is_active": zod.boolean(),
-  "address": zod.string().default(logisticsSuppliersCreateResponseAddressDefault),
-  "city": zod.string().default(logisticsSuppliersCreateResponseCityDefault),
-  "state": zod.string().min(logisticsSuppliersCreateResponseStateMin).max(logisticsSuppliersCreateResponseStateMax).default(logisticsSuppliersCreateResponseStateDefault),
-  "website": zod.string().default(logisticsSuppliersCreateResponseWebsiteDefault),
-  "notes": zod.string().default(logisticsSuppliersCreateResponseNotesDefault),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true})
-}).describe('Schema de saída para exibição de fornecedor.')
-
-/**
- * Retorna os detalhes de um fornecedor específico.
- * @summary Retrieve Supplier
- */
-export const LogisticsSuppliersReadParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsSuppliersReadResponseAddressDefault = ``;
-export const logisticsSuppliersReadResponseCityDefault = ``;
-export const logisticsSuppliersReadResponseStateDefault = ``;
-export const logisticsSuppliersReadResponseStateMin = 0;
-export const logisticsSuppliersReadResponseStateMax = 2;
-
-export const logisticsSuppliersReadResponseWebsiteDefault = ``;
-export const logisticsSuppliersReadResponseNotesDefault = ``;
-
-export const LogisticsSuppliersReadResponse = zod.object({
-  "uuid": zod.string(),
-  "name": zod.string(),
-  "cnpj": zod.string(),
-  "phone": zod.string(),
-  "email": zod.string(),
-  "is_active": zod.boolean(),
-  "address": zod.string().default(logisticsSuppliersReadResponseAddressDefault),
-  "city": zod.string().default(logisticsSuppliersReadResponseCityDefault),
-  "state": zod.string().min(logisticsSuppliersReadResponseStateMin).max(logisticsSuppliersReadResponseStateMax).default(logisticsSuppliersReadResponseStateDefault),
-  "website": zod.string().default(logisticsSuppliersReadResponseWebsiteDefault),
-  "notes": zod.string().default(logisticsSuppliersReadResponseNotesDefault),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true})
-}).describe('Schema de saída para exibição de fornecedor.')
-
-/**
- * Atualiza informações específicas de um fornecedor (nome, contato, categorias).
- * @summary Update Supplier
- */
-export const LogisticsSuppliersUpdateParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsSuppliersUpdateBodyCnpjOneMax = 18;
-
-export const logisticsSuppliersUpdateBodyStateOneRegExp = new RegExp('^$|^[A-Z]{2}$');
-
-
-export const LogisticsSuppliersUpdateBody = zod.object({
-  "name": zod.union([zod.string(),zod.null()]).optional(),
-  "cnpj": zod.union([zod.string().max(logisticsSuppliersUpdateBodyCnpjOneMax),zod.null()]).optional(),
-  "phone": zod.union([zod.string(),zod.null()]).optional(),
-  "email": zod.union([zod.string(),zod.null()]).optional(),
-  "is_active": zod.union([zod.boolean(),zod.null()]).optional(),
-  "address": zod.union([zod.string(),zod.null()]).optional(),
-  "city": zod.union([zod.string(),zod.null()]).optional(),
-  "state": zod.union([zod.string().regex(logisticsSuppliersUpdateBodyStateOneRegExp),zod.null()]).optional(),
-  "website": zod.union([zod.string(),zod.null()]).optional(),
-  "notes": zod.union([zod.string(),zod.null()]).optional()
-}).describe('Schema de entrada para atualização parcial de fornecedor.')
-
-export const logisticsSuppliersUpdateResponseAddressDefault = ``;
-export const logisticsSuppliersUpdateResponseCityDefault = ``;
-export const logisticsSuppliersUpdateResponseStateDefault = ``;
-export const logisticsSuppliersUpdateResponseStateMin = 0;
-export const logisticsSuppliersUpdateResponseStateMax = 2;
-
-export const logisticsSuppliersUpdateResponseWebsiteDefault = ``;
-export const logisticsSuppliersUpdateResponseNotesDefault = ``;
-
-export const LogisticsSuppliersUpdateResponse = zod.object({
-  "uuid": zod.string(),
-  "name": zod.string(),
-  "cnpj": zod.string(),
-  "phone": zod.string(),
-  "email": zod.string(),
-  "is_active": zod.boolean(),
-  "address": zod.string().default(logisticsSuppliersUpdateResponseAddressDefault),
-  "city": zod.string().default(logisticsSuppliersUpdateResponseCityDefault),
-  "state": zod.string().min(logisticsSuppliersUpdateResponseStateMin).max(logisticsSuppliersUpdateResponseStateMax).default(logisticsSuppliersUpdateResponseStateDefault),
-  "website": zod.string().default(logisticsSuppliersUpdateResponseWebsiteDefault),
-  "notes": zod.string().default(logisticsSuppliersUpdateResponseNotesDefault),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true})
-}).describe('Schema de saída para exibição de fornecedor.')
-
-/**
- * Remove o cadastro de um fornecedor do sistema.
- * @summary Delete Supplier
- */
-export const LogisticsSuppliersDeleteParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const LogisticsSuppliersDeleteResponse = zod.void()
-
-/**
- * Lista os contratos de fornecedores associados aos casamentos do Planner.
- * Permite filtrar por casamento, status, fornecedor e contrato pai (aditivos).
- * @summary List Contracts
- */
-export const logisticsContractsListQueryLimitDefault = 100;
-
-export const logisticsContractsListQueryOffsetDefault = 0;
-export const logisticsContractsListQueryOffsetMin = 0;
-
-
-
-export const LogisticsContractsListQueryParams = zod.object({
-  "wedding_id": zod.union([zod.string(),zod.null()]).optional(),
-  "status": zod.union([zod.string(),zod.null()]).optional(),
-  "supplier_id": zod.union([zod.string(),zod.null()]).optional(),
-  "parent_id": zod.union([zod.string(),zod.null()]).optional(),
-  "limit": zod.int().min(1).default(logisticsContractsListQueryLimitDefault),
-  "offset": zod.int().min(logisticsContractsListQueryOffsetMin).default(logisticsContractsListQueryOffsetDefault)
-})
-
-export const logisticsContractsListResponseItemsItemNameDefault = ``;
-export const logisticsContractsListResponseItemsItemTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsListResponseItemsItemDescriptionDefault = ``;
-export const logisticsContractsListResponseItemsItemSupplierNameDefault = ``;
-export const logisticsContractsListResponseItemsItemSupplierPhoneDefault = ``;
-export const logisticsContractsListResponseItemsItemSupplierEmailDefault = ``;
-export const logisticsContractsListResponseItemsItemHasLinkedExpenseDefault = false;
-export const logisticsContractsListResponseItemsItemProgressPercentDefault = 0;
-export const logisticsContractsListResponseItemsItemAddendumsCountDefault = 0;
-export const logisticsContractsListResponseItemsItemAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsListResponseItemsItemAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsListResponseItemsItemTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsListResponseItemsItemTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsListResponseItemsItemHasFileDefault = false;
-export const logisticsContractsListResponseItemsItemIsAddendumDefault = false;
-
-export const LogisticsContractsListResponse = zod.object({
-  "items": zod.array(zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsListResponseItemsItemNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsListResponseItemsItemTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsListResponseItemsItemDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsListResponseItemsItemSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsListResponseItemsItemSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsListResponseItemsItemSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsListResponseItemsItemHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsListResponseItemsItemProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsListResponseItemsItemAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsListResponseItemsItemAddendumsTotalAmountRegExp).default(logisticsContractsListResponseItemsItemAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsListResponseItemsItemTotalAmountWithAddendumsRegExp).default(logisticsContractsListResponseItemsItemTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsListResponseItemsItemHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsListResponseItemsItemIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')),
-  "count": zod.int()
-})
-
-/**
- * Associa um fornecedor a um casamento através de um novo contrato logístico.
- * @summary Create Contract
- */
-export const logisticsContractsCreateBodyNameMax = 255;
-
-export const logisticsContractsCreateBodyTotalAmountOneMin = 0;
-
-export const logisticsContractsCreateBodyTotalAmountTwoRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateBodyStatusDefault = `DRAFT`;
-export const logisticsContractsCreateBodyDescriptionDefault = ``;
-
-export const LogisticsContractsCreateBody = zod.object({
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().min(1).max(logisticsContractsCreateBodyNameMax),
-  "total_amount": zod.union([zod.number().min(logisticsContractsCreateBodyTotalAmountOneMin),zod.string().regex(logisticsContractsCreateBodyTotalAmountTwoRegExp)]),
-  "status": zod.string().default(logisticsContractsCreateBodyStatusDefault),
-  "description": zod.string().default(logisticsContractsCreateBodyDescriptionDefault),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "pdf_file_key": zod.union([zod.string(),zod.null()]).optional()
-}).describe('Schema de entrada para criação de contrato.')
-
-export const logisticsContractsCreateResponseNameDefault = ``;
-export const logisticsContractsCreateResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateResponseDescriptionDefault = ``;
-export const logisticsContractsCreateResponseSupplierNameDefault = ``;
-export const logisticsContractsCreateResponseSupplierPhoneDefault = ``;
-export const logisticsContractsCreateResponseSupplierEmailDefault = ``;
-export const logisticsContractsCreateResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsCreateResponseProgressPercentDefault = 0;
-export const logisticsContractsCreateResponseAddendumsCountDefault = 0;
-export const logisticsContractsCreateResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsCreateResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsCreateResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateResponseHasFileDefault = false;
-export const logisticsContractsCreateResponseIsAddendumDefault = false;
-
-export const LogisticsContractsCreateResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsCreateResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsCreateResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsCreateResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsCreateResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsCreateResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsCreateResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsCreateResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsCreateResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsCreateResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsCreateResponseAddendumsTotalAmountRegExp).default(logisticsContractsCreateResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsCreateResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsCreateResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsCreateResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsCreateResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Exibe as cláusulas, itens e aditivos agregados de um contrato.
- * @summary Retrieve Contract Details
- */
-export const LogisticsContractsDetailsReadParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsDetailsReadResponseContractNameDefault = ``;
-export const logisticsContractsDetailsReadResponseContractTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseContractDescriptionDefault = ``;
-export const logisticsContractsDetailsReadResponseContractSupplierNameDefault = ``;
-export const logisticsContractsDetailsReadResponseContractSupplierPhoneDefault = ``;
-export const logisticsContractsDetailsReadResponseContractSupplierEmailDefault = ``;
-export const logisticsContractsDetailsReadResponseContractHasLinkedExpenseDefault = false;
-export const logisticsContractsDetailsReadResponseContractProgressPercentDefault = 0;
-export const logisticsContractsDetailsReadResponseContractAddendumsCountDefault = 0;
-export const logisticsContractsDetailsReadResponseContractAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsDetailsReadResponseContractAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseContractTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsDetailsReadResponseContractTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseContractHasFileDefault = false;
-export const logisticsContractsDetailsReadResponseContractIsAddendumDefault = false;
-export const logisticsContractsDetailsReadResponseAddendumsItemNameDefault = ``;
-export const logisticsContractsDetailsReadResponseAddendumsItemTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseAddendumsItemDescriptionDefault = ``;
-export const logisticsContractsDetailsReadResponseAddendumsItemSupplierNameDefault = ``;
-export const logisticsContractsDetailsReadResponseAddendumsItemSupplierPhoneDefault = ``;
-export const logisticsContractsDetailsReadResponseAddendumsItemSupplierEmailDefault = ``;
-export const logisticsContractsDetailsReadResponseAddendumsItemHasLinkedExpenseDefault = false;
-export const logisticsContractsDetailsReadResponseAddendumsItemProgressPercentDefault = 0;
-export const logisticsContractsDetailsReadResponseAddendumsItemAddendumsCountDefault = 0;
-export const logisticsContractsDetailsReadResponseAddendumsItemAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsDetailsReadResponseAddendumsItemAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseAddendumsItemTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsDetailsReadResponseAddendumsItemTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsDetailsReadResponseAddendumsItemHasFileDefault = false;
-export const logisticsContractsDetailsReadResponseAddendumsItemIsAddendumDefault = false;
-
-export const LogisticsContractsDetailsReadResponse = zod.object({
-  "contract": zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsDetailsReadResponseContractNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsDetailsReadResponseContractTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsDetailsReadResponseContractDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsDetailsReadResponseContractSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsDetailsReadResponseContractSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsDetailsReadResponseContractSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsDetailsReadResponseContractHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsDetailsReadResponseContractProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsDetailsReadResponseContractAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsDetailsReadResponseContractAddendumsTotalAmountRegExp).default(logisticsContractsDetailsReadResponseContractAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsDetailsReadResponseContractTotalAmountWithAddendumsRegExp).default(logisticsContractsDetailsReadResponseContractTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsDetailsReadResponseContractHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsDetailsReadResponseContractIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.'),
-  "items": zod.array(zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "contract": zod.union([zod.string(),zod.null()]).optional(),
-  "name": zod.string(),
-  "description": zod.string(),
-  "quantity": zod.int(),
-  "acquisition_status": zod.string(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true})
-}).describe('Schema de saída para exibição de item de logística.')),
-  "addendums": zod.array(zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsDetailsReadResponseAddendumsItemNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsDetailsReadResponseAddendumsItemTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsDetailsReadResponseAddendumsItemDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsDetailsReadResponseAddendumsItemSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsDetailsReadResponseAddendumsItemSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsDetailsReadResponseAddendumsItemSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsDetailsReadResponseAddendumsItemHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsDetailsReadResponseAddendumsItemProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsDetailsReadResponseAddendumsItemAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsDetailsReadResponseAddendumsItemAddendumsTotalAmountRegExp).default(logisticsContractsDetailsReadResponseAddendumsItemAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsDetailsReadResponseAddendumsItemTotalAmountWithAddendumsRegExp).default(logisticsContractsDetailsReadResponseAddendumsItemTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsDetailsReadResponseAddendumsItemHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsDetailsReadResponseAddendumsItemIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.'))
-}).describe('Schema de saída agregado com contrato, itens e aditivos.')
-
-/**
- * Exibe as cláusulas e informações completas de um contrato.
- * @summary Retrieve Contract
- */
-export const LogisticsContractsReadParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsReadResponseNameDefault = ``;
-export const logisticsContractsReadResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsReadResponseDescriptionDefault = ``;
-export const logisticsContractsReadResponseSupplierNameDefault = ``;
-export const logisticsContractsReadResponseSupplierPhoneDefault = ``;
-export const logisticsContractsReadResponseSupplierEmailDefault = ``;
-export const logisticsContractsReadResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsReadResponseProgressPercentDefault = 0;
-export const logisticsContractsReadResponseAddendumsCountDefault = 0;
-export const logisticsContractsReadResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsReadResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsReadResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsReadResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsReadResponseHasFileDefault = false;
-export const logisticsContractsReadResponseIsAddendumDefault = false;
-
-export const LogisticsContractsReadResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsReadResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsReadResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsReadResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsReadResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsReadResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsReadResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsReadResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsReadResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsReadResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsReadResponseAddendumsTotalAmountRegExp).default(logisticsContractsReadResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsReadResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsReadResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsReadResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsReadResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Altera o status, valores agregados ou observações de um contrato existente na base.
- * @summary Update Contract
- */
-export const LogisticsContractsUpdateParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsUpdateBodyNameOneMax = 255;
-
-export const logisticsContractsUpdateBodyTotalAmountOneMin = 0;
-
-export const logisticsContractsUpdateBodyTotalAmountTwoRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUpdateBodyDescriptionDefault = ``;
-
-export const LogisticsContractsUpdateBody = zod.object({
-  "supplier": zod.union([zod.string(),zod.null()]).optional(),
-  "name": zod.union([zod.string().min(1).max(logisticsContractsUpdateBodyNameOneMax),zod.null()]).optional(),
-  "total_amount": zod.union([zod.number().min(logisticsContractsUpdateBodyTotalAmountOneMin),zod.string().regex(logisticsContractsUpdateBodyTotalAmountTwoRegExp),zod.null()]).optional(),
-  "status": zod.union([zod.string(),zod.null()]).optional(),
-  "description": zod.string().default(logisticsContractsUpdateBodyDescriptionDefault),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "pdf_file_key": zod.union([zod.string(),zod.null()]).optional(),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional()
-}).describe('Schema de entrada para atualização parcial de contrato.')
-
-export const logisticsContractsUpdateResponseNameDefault = ``;
-export const logisticsContractsUpdateResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUpdateResponseDescriptionDefault = ``;
-export const logisticsContractsUpdateResponseSupplierNameDefault = ``;
-export const logisticsContractsUpdateResponseSupplierPhoneDefault = ``;
-export const logisticsContractsUpdateResponseSupplierEmailDefault = ``;
-export const logisticsContractsUpdateResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsUpdateResponseProgressPercentDefault = 0;
-export const logisticsContractsUpdateResponseAddendumsCountDefault = 0;
-export const logisticsContractsUpdateResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsUpdateResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUpdateResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsUpdateResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUpdateResponseHasFileDefault = false;
-export const logisticsContractsUpdateResponseIsAddendumDefault = false;
-
-export const LogisticsContractsUpdateResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsUpdateResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsUpdateResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsUpdateResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsUpdateResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsUpdateResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsUpdateResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsUpdateResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsUpdateResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsUpdateResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsUpdateResponseAddendumsTotalAmountRegExp).default(logisticsContractsUpdateResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsUpdateResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsUpdateResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsUpdateResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsUpdateResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Deleta o contrato e rompe o vínculo entre o fornecedor e a organização do evento.
- * @summary Delete Contract
- */
-export const LogisticsContractsDeleteParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const LogisticsContractsDeleteResponse = zod.void()
-
-/**
- * Gera uma URL pré-assinada para upload direto de um arquivo PDF/imagem para o R2/S3.
- * @summary Generate Upload Url
- */
-export const LogisticsContractsUploadUrlBody = zod.object({
-  "filename": zod.string(),
-  "wedding_id": zod.string()
-}).describe('Schema de entrada para requisição de URL de upload pré-assinada.')
-
-export const LogisticsContractsUploadUrlResponse = zod.object({
-  "upload_url": zod.string(),
-  "object_key": zod.string()
-}).describe('Schema de saída com URL pré-assinada e chave do objeto no R2\/S3.')
-
-/**
- * Cria contrato com arquivo, itens e despesa em uma única transação atômica.
- * @summary Create Contract Full
- */
-export const logisticsContractsCreateFullBodyNameMax = 255;
-
-export const logisticsContractsCreateFullBodyTotalAmountOneMin = 0;
-
-export const logisticsContractsCreateFullBodyTotalAmountTwoRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateFullBodyStatusDefault = `DRAFT`;
-export const logisticsContractsCreateFullBodyDescriptionDefault = ``;
-export const logisticsContractsCreateFullBodyItemsItemNameMax = 255;
-
-export const logisticsContractsCreateFullBodyItemsItemDescriptionDefault = ``;
-export const logisticsContractsCreateFullBodyItemsItemQuantityDefault = 1;
-export const logisticsContractsCreateFullBodyItemsItemQuantityExclusiveMin = 0;
-
-export const logisticsContractsCreateFullBodyItemsItemAcquisitionStatusDefault = `PENDING`;
-export const logisticsContractsCreateFullBodyCreateExpenseDefault = false;
-
-export const LogisticsContractsCreateFullBody = zod.object({
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().min(1).max(logisticsContractsCreateFullBodyNameMax),
-  "total_amount": zod.union([zod.number().min(logisticsContractsCreateFullBodyTotalAmountOneMin),zod.string().regex(logisticsContractsCreateFullBodyTotalAmountTwoRegExp)]),
-  "status": zod.string().default(logisticsContractsCreateFullBodyStatusDefault),
-  "description": zod.string().default(logisticsContractsCreateFullBodyDescriptionDefault),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "pdf_file_key": zod.union([zod.string(),zod.null()]).optional(),
-  "items": zod.array(zod.object({
-  "wedding": zod.union([zod.string(),zod.null()]).optional(),
-  "contract": zod.union([zod.string(),zod.null()]).optional(),
-  "name": zod.string().min(1).max(logisticsContractsCreateFullBodyItemsItemNameMax),
-  "description": zod.string().default(logisticsContractsCreateFullBodyItemsItemDescriptionDefault),
-  "quantity": zod.int().gt(logisticsContractsCreateFullBodyItemsItemQuantityExclusiveMin).default(logisticsContractsCreateFullBodyItemsItemQuantityDefault),
-  "acquisition_status": zod.string().default(logisticsContractsCreateFullBodyItemsItemAcquisitionStatusDefault)
-}).describe('Schema de entrada para criação de item de logística.')).optional(),
-  "items_data": zod.union([zod.string(),zod.null()]).optional(),
-  "create_expense": zod.boolean().default(logisticsContractsCreateFullBodyCreateExpenseDefault),
-  "expense_category": zod.union([zod.string(),zod.null()]).optional(),
-  "expense_num_installments": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_first_due_date": zod.union([zod.iso.date(),zod.null()]).optional()
-}).describe('Schema de entrada para criação de contrato com itens e despesa opcional.')
-
-export const logisticsContractsCreateFullResponseNameDefault = ``;
-export const logisticsContractsCreateFullResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateFullResponseDescriptionDefault = ``;
-export const logisticsContractsCreateFullResponseSupplierNameDefault = ``;
-export const logisticsContractsCreateFullResponseSupplierPhoneDefault = ``;
-export const logisticsContractsCreateFullResponseSupplierEmailDefault = ``;
-export const logisticsContractsCreateFullResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsCreateFullResponseProgressPercentDefault = 0;
-export const logisticsContractsCreateFullResponseAddendumsCountDefault = 0;
-export const logisticsContractsCreateFullResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsCreateFullResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateFullResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsCreateFullResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCreateFullResponseHasFileDefault = false;
-export const logisticsContractsCreateFullResponseIsAddendumDefault = false;
-
-export const LogisticsContractsCreateFullResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsCreateFullResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsCreateFullResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsCreateFullResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsCreateFullResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsCreateFullResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsCreateFullResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsCreateFullResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsCreateFullResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsCreateFullResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsCreateFullResponseAddendumsTotalAmountRegExp).default(logisticsContractsCreateFullResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsCreateFullResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsCreateFullResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsCreateFullResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsCreateFullResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Associa um arquivo já carregado no R2/S3 (chave) ao contrato.
- * @summary Upload Contract File
- */
-export const LogisticsContractsUploadParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const LogisticsContractsUploadBody = zod.object({
-  "pdf_file_key": zod.string()
-}).describe('Schema de entrada para associar a chave do arquivo enviado.')
-
-export const logisticsContractsUploadResponseNameDefault = ``;
-export const logisticsContractsUploadResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUploadResponseDescriptionDefault = ``;
-export const logisticsContractsUploadResponseSupplierNameDefault = ``;
-export const logisticsContractsUploadResponseSupplierPhoneDefault = ``;
-export const logisticsContractsUploadResponseSupplierEmailDefault = ``;
-export const logisticsContractsUploadResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsUploadResponseProgressPercentDefault = 0;
-export const logisticsContractsUploadResponseAddendumsCountDefault = 0;
-export const logisticsContractsUploadResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsUploadResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUploadResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsUploadResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsUploadResponseHasFileDefault = false;
-export const logisticsContractsUploadResponseIsAddendumDefault = false;
-
-export const LogisticsContractsUploadResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsUploadResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsUploadResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsUploadResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsUploadResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsUploadResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsUploadResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsUploadResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsUploadResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsUploadResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsUploadResponseAddendumsTotalAmountRegExp).default(logisticsContractsUploadResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsUploadResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsUploadResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsUploadResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsUploadResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Remove o arquivo vinculado ao contrato.
- * @summary Delete Contract File
- */
-export const LogisticsContractsDeleteUploadParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const LogisticsContractsDeleteUploadResponse = zod.void()
-
-/**
- * Transita o status do contrato (DRAFT → PENDING → SIGNED → CANCELED).
- * @summary Transition Contract Status
- */
-export const LogisticsContractsTransitionStatusParams = zod.object({
-  "uuid": zod.string()
-})
-
-
-
-
-export const LogisticsContractsTransitionStatusBody = zod.object({
-  "status": zod.string().min(1)
-}).describe('Schema de entrada para transição de status de contrato.')
-
-export const logisticsContractsTransitionStatusResponseNameDefault = ``;
-export const logisticsContractsTransitionStatusResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsTransitionStatusResponseDescriptionDefault = ``;
-export const logisticsContractsTransitionStatusResponseSupplierNameDefault = ``;
-export const logisticsContractsTransitionStatusResponseSupplierPhoneDefault = ``;
-export const logisticsContractsTransitionStatusResponseSupplierEmailDefault = ``;
-export const logisticsContractsTransitionStatusResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsTransitionStatusResponseProgressPercentDefault = 0;
-export const logisticsContractsTransitionStatusResponseAddendumsCountDefault = 0;
-export const logisticsContractsTransitionStatusResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsTransitionStatusResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsTransitionStatusResponseHasFileDefault = false;
-export const logisticsContractsTransitionStatusResponseIsAddendumDefault = false;
-
-export const LogisticsContractsTransitionStatusResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsTransitionStatusResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsTransitionStatusResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsTransitionStatusResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsTransitionStatusResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsTransitionStatusResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsTransitionStatusResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsTransitionStatusResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsTransitionStatusResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsTransitionStatusResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsTransitionStatusResponseAddendumsTotalAmountRegExp).default(logisticsContractsTransitionStatusResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsTransitionStatusResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsTransitionStatusResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsTransitionStatusResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Transita o contrato de rascunho para pendente de assinaturas externas.
- * @summary Send Contract To Pending
- */
-export const LogisticsContractsSendToPendingParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsSendToPendingResponseNameDefault = ``;
-export const logisticsContractsSendToPendingResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSendToPendingResponseDescriptionDefault = ``;
-export const logisticsContractsSendToPendingResponseSupplierNameDefault = ``;
-export const logisticsContractsSendToPendingResponseSupplierPhoneDefault = ``;
-export const logisticsContractsSendToPendingResponseSupplierEmailDefault = ``;
-export const logisticsContractsSendToPendingResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsSendToPendingResponseProgressPercentDefault = 0;
-export const logisticsContractsSendToPendingResponseAddendumsCountDefault = 0;
-export const logisticsContractsSendToPendingResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsSendToPendingResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSendToPendingResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsSendToPendingResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSendToPendingResponseHasFileDefault = false;
-export const logisticsContractsSendToPendingResponseIsAddendumDefault = false;
-
-export const LogisticsContractsSendToPendingResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsSendToPendingResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsSendToPendingResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsSendToPendingResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsSendToPendingResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsSendToPendingResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsSendToPendingResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsSendToPendingResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsSendToPendingResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsSendToPendingResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsSendToPendingResponseAddendumsTotalAmountRegExp).default(logisticsContractsSendToPendingResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsSendToPendingResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsSendToPendingResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsSendToPendingResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsSendToPendingResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Formaliza a assinatura do contrato com data e/ou anexo comprobatório.
- * @summary Sign Contract
- */
-export const LogisticsContractsSignParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const LogisticsContractsSignBody = zod.union([zod.object({
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "pdf_file_key": zod.union([zod.string(),zod.null()]).optional()
-}).describe('Schema de entrada para formalização de assinatura de contrato.'),zod.null()])
-
-export const logisticsContractsSignResponseNameDefault = ``;
-export const logisticsContractsSignResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSignResponseDescriptionDefault = ``;
-export const logisticsContractsSignResponseSupplierNameDefault = ``;
-export const logisticsContractsSignResponseSupplierPhoneDefault = ``;
-export const logisticsContractsSignResponseSupplierEmailDefault = ``;
-export const logisticsContractsSignResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsSignResponseProgressPercentDefault = 0;
-export const logisticsContractsSignResponseAddendumsCountDefault = 0;
-export const logisticsContractsSignResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsSignResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSignResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsSignResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsSignResponseHasFileDefault = false;
-export const logisticsContractsSignResponseIsAddendumDefault = false;
-
-export const LogisticsContractsSignResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsSignResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsSignResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsSignResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsSignResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsSignResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsSignResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsSignResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsSignResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsSignResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsSignResponseAddendumsTotalAmountRegExp).default(logisticsContractsSignResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsSignResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsSignResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsSignResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsSignResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Cancela/distrata o contrato de fornecedor.
- * @summary Cancel Contract
- */
-export const LogisticsContractsCancelParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsCancelResponseNameDefault = ``;
-export const logisticsContractsCancelResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCancelResponseDescriptionDefault = ``;
-export const logisticsContractsCancelResponseSupplierNameDefault = ``;
-export const logisticsContractsCancelResponseSupplierPhoneDefault = ``;
-export const logisticsContractsCancelResponseSupplierEmailDefault = ``;
-export const logisticsContractsCancelResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsCancelResponseProgressPercentDefault = 0;
-export const logisticsContractsCancelResponseAddendumsCountDefault = 0;
-export const logisticsContractsCancelResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsCancelResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCancelResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsCancelResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsCancelResponseHasFileDefault = false;
-export const logisticsContractsCancelResponseIsAddendumDefault = false;
-
-export const LogisticsContractsCancelResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsCancelResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsCancelResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsCancelResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsCancelResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsCancelResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsCancelResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsCancelResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsCancelResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsCancelResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsCancelResponseAddendumsTotalAmountRegExp).default(logisticsContractsCancelResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsCancelResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsCancelResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsCancelResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsCancelResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
- * Reverte o contrato para estado de rascunho.
- * @summary Revert Contract To Draft
- */
-export const LogisticsContractsRevertToDraftParams = zod.object({
-  "uuid": zod.string()
-})
-
-export const logisticsContractsRevertToDraftResponseNameDefault = ``;
-export const logisticsContractsRevertToDraftResponseTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsRevertToDraftResponseDescriptionDefault = ``;
-export const logisticsContractsRevertToDraftResponseSupplierNameDefault = ``;
-export const logisticsContractsRevertToDraftResponseSupplierPhoneDefault = ``;
-export const logisticsContractsRevertToDraftResponseSupplierEmailDefault = ``;
-export const logisticsContractsRevertToDraftResponseHasLinkedExpenseDefault = false;
-export const logisticsContractsRevertToDraftResponseProgressPercentDefault = 0;
-export const logisticsContractsRevertToDraftResponseAddendumsCountDefault = 0;
-export const logisticsContractsRevertToDraftResponseAddendumsTotalAmountDefault = `0.00`;
-export const logisticsContractsRevertToDraftResponseAddendumsTotalAmountRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsRevertToDraftResponseTotalAmountWithAddendumsDefault = `0.00`;
-export const logisticsContractsRevertToDraftResponseTotalAmountWithAddendumsRegExp = new RegExp('^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$');
-export const logisticsContractsRevertToDraftResponseHasFileDefault = false;
-export const logisticsContractsRevertToDraftResponseIsAddendumDefault = false;
-
-export const LogisticsContractsRevertToDraftResponse = zod.object({
-  "uuid": zod.string(),
-  "wedding": zod.string(),
-  "supplier": zod.string(),
-  "name": zod.string().default(logisticsContractsRevertToDraftResponseNameDefault),
-  "total_amount": zod.string().regex(logisticsContractsRevertToDraftResponseTotalAmountRegExp),
-  "status": zod.string(),
-  "description": zod.string().default(logisticsContractsRevertToDraftResponseDescriptionDefault),
-  "expiration_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "signed_date": zod.union([zod.iso.date(),zod.null()]).optional(),
-  "created_at": zod.iso.datetime({"offset":true}),
-  "updated_at": zod.iso.datetime({"offset":true}),
-  "supplier_name": zod.string().default(logisticsContractsRevertToDraftResponseSupplierNameDefault),
-  "supplier_phone": zod.string().default(logisticsContractsRevertToDraftResponseSupplierPhoneDefault),
-  "supplier_email": zod.string().default(logisticsContractsRevertToDraftResponseSupplierEmailDefault),
-  "has_linked_expense": zod.boolean().default(logisticsContractsRevertToDraftResponseHasLinkedExpenseDefault),
-  "progress_percent": zod.int().default(logisticsContractsRevertToDraftResponseProgressPercentDefault),
-  "alert_days_before": zod.union([zod.int(),zod.null()]).optional(),
-  "expense_uuid": zod.union([zod.string(),zod.null()]).optional(),
-  "parent": zod.union([zod.string(),zod.null()]).optional(),
-  "addendums_count": zod.int().default(logisticsContractsRevertToDraftResponseAddendumsCountDefault),
-  "addendums_total_amount": zod.string().regex(logisticsContractsRevertToDraftResponseAddendumsTotalAmountRegExp).default(logisticsContractsRevertToDraftResponseAddendumsTotalAmountDefault),
-  "total_amount_with_addendums": zod.string().regex(logisticsContractsRevertToDraftResponseTotalAmountWithAddendumsRegExp).default(logisticsContractsRevertToDraftResponseTotalAmountWithAddendumsDefault),
-  "has_file": zod.boolean().default(logisticsContractsRevertToDraftResponseHasFileDefault),
-  "file_name": zod.union([zod.string(),zod.null()]).optional(),
-  "is_addendum": zod.boolean().default(logisticsContractsRevertToDraftResponseIsAddendumDefault),
-  "allowed_transitions": zod.array(zod.string()).optional()
-}).describe('Schema de saída para exibição de contrato.')
-
-/**
  * Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
- * Permite filtrar por casamento, status de aquisição, busca textual e contrato.
+ * Permite filtrar por casamento, status de aquisição, busca textual, contrato, escopo e entrega.
  * @summary List Items
  */
 export const logisticsItemsListQueryLimitDefault = 100;
@@ -1048,9 +24,16 @@ export const LogisticsItemsListQueryParams = zod.object({
   "status": zod.union([zod.string(),zod.null()]).optional(),
   "search": zod.union([zod.string(),zod.null()]).optional(),
   "contract_id": zod.union([zod.string(),zod.null()]).optional(),
+  "scope_status": zod.union([zod.string(),zod.null()]).optional(),
+  "delivery_status": zod.union([zod.string(),zod.null()]).optional(),
   "limit": zod.int().min(1).default(logisticsItemsListQueryLimitDefault),
   "offset": zod.int().min(logisticsItemsListQueryOffsetMin).default(logisticsItemsListQueryOffsetDefault)
 })
+
+export const logisticsItemsListResponseItemsItemScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsListResponseItemsItemRejectionReasonDefault = ``;
+export const logisticsItemsListResponseItemsItemProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsListResponseItemsItemDeliveryStatusDefault = `PENDING`;
 
 export const LogisticsItemsListResponse = zod.object({
   "items": zod.array(zod.object({
@@ -1060,6 +43,10 @@ export const LogisticsItemsListResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsListResponseItemsItemScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsListResponseItemsItemRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsListResponseItemsItemProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsListResponseItemsItemDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1078,6 +65,10 @@ export const logisticsItemsCreateBodyDescriptionDefault = ``;
 export const logisticsItemsCreateBodyQuantityDefault = 1;
 export const logisticsItemsCreateBodyQuantityExclusiveMin = 0;
 
+export const logisticsItemsCreateBodyScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsCreateBodyRejectionReasonDefault = ``;
+export const logisticsItemsCreateBodyProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsCreateBodyDeliveryStatusDefault = `PENDING`;
 export const logisticsItemsCreateBodyAcquisitionStatusDefault = `PENDING`;
 
 export const LogisticsItemsCreateBody = zod.object({
@@ -1086,8 +77,17 @@ export const LogisticsItemsCreateBody = zod.object({
   "name": zod.string().min(1).max(logisticsItemsCreateBodyNameMax),
   "description": zod.string().default(logisticsItemsCreateBodyDescriptionDefault),
   "quantity": zod.int().gt(logisticsItemsCreateBodyQuantityExclusiveMin).default(logisticsItemsCreateBodyQuantityDefault),
+  "scope_status": zod.string().default(logisticsItemsCreateBodyScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsCreateBodyRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsCreateBodyProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsCreateBodyDeliveryStatusDefault),
   "acquisition_status": zod.string().default(logisticsItemsCreateBodyAcquisitionStatusDefault)
 }).describe('Schema de entrada para criação de item de logística.')
+
+export const logisticsItemsCreateResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsCreateResponseRejectionReasonDefault = ``;
+export const logisticsItemsCreateResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsCreateResponseDeliveryStatusDefault = `PENDING`;
 
 export const LogisticsItemsCreateResponse = zod.object({
   "uuid": zod.string(),
@@ -1096,6 +96,10 @@ export const LogisticsItemsCreateResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsCreateResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsCreateResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsCreateResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsCreateResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1109,6 +113,11 @@ export const LogisticsItemsReadParams = zod.object({
   "uuid": zod.string()
 })
 
+export const logisticsItemsReadResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsReadResponseRejectionReasonDefault = ``;
+export const logisticsItemsReadResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsReadResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsReadResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1116,6 +125,10 @@ export const LogisticsItemsReadResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsReadResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsReadResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsReadResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsReadResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1141,8 +154,17 @@ export const LogisticsItemsUpdateBody = zod.object({
   "name": zod.union([zod.string().min(1).max(logisticsItemsUpdateBodyNameOneMax),zod.null()]).optional(),
   "description": zod.string().default(logisticsItemsUpdateBodyDescriptionDefault),
   "quantity": zod.union([zod.int().gt(logisticsItemsUpdateBodyQuantityOneExclusiveMin),zod.null()]).optional(),
+  "scope_status": zod.union([zod.string(),zod.null()]).optional(),
+  "rejection_reason": zod.union([zod.string(),zod.null()]).optional(),
+  "procurement_status": zod.union([zod.string(),zod.null()]).optional(),
+  "delivery_status": zod.union([zod.string(),zod.null()]).optional(),
   "acquisition_status": zod.union([zod.string(),zod.null()]).optional()
 }).describe('Schema de entrada para atualização parcial de item de logística.')
+
+export const logisticsItemsUpdateResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsUpdateResponseRejectionReasonDefault = ``;
+export const logisticsItemsUpdateResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsUpdateResponseDeliveryStatusDefault = `PENDING`;
 
 export const LogisticsItemsUpdateResponse = zod.object({
   "uuid": zod.string(),
@@ -1151,6 +173,10 @@ export const LogisticsItemsUpdateResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsUpdateResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsUpdateResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsUpdateResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsUpdateResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1182,6 +208,11 @@ export const LogisticsItemsTransitionStatusBody = zod.object({
   "acquisition_status": zod.string().min(1)
 }).describe('Schema de entrada para transição de status de aquisição do item.')
 
+export const logisticsItemsTransitionStatusResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsTransitionStatusResponseRejectionReasonDefault = ``;
+export const logisticsItemsTransitionStatusResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsTransitionStatusResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsTransitionStatusResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1189,6 +220,10 @@ export const LogisticsItemsTransitionStatusResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsTransitionStatusResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsTransitionStatusResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsTransitionStatusResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsTransitionStatusResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1202,6 +237,11 @@ export const LogisticsItemsStartParams = zod.object({
   "uuid": zod.string()
 })
 
+export const logisticsItemsStartResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsStartResponseRejectionReasonDefault = ``;
+export const logisticsItemsStartResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsStartResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsStartResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1209,6 +249,10 @@ export const LogisticsItemsStartResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsStartResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsStartResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsStartResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsStartResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1222,6 +266,11 @@ export const LogisticsItemsCompleteParams = zod.object({
   "uuid": zod.string()
 })
 
+export const logisticsItemsCompleteResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsCompleteResponseRejectionReasonDefault = ``;
+export const logisticsItemsCompleteResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsCompleteResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsCompleteResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1229,6 +278,10 @@ export const LogisticsItemsCompleteResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsCompleteResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsCompleteResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsCompleteResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsCompleteResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1242,6 +295,11 @@ export const LogisticsItemsReopenParams = zod.object({
   "uuid": zod.string()
 })
 
+export const logisticsItemsReopenResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsReopenResponseRejectionReasonDefault = ``;
+export const logisticsItemsReopenResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsReopenResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsReopenResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1249,6 +307,10 @@ export const LogisticsItemsReopenResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsReopenResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsReopenResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsReopenResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsReopenResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})
@@ -1262,6 +324,11 @@ export const LogisticsItemsRevertToPendingParams = zod.object({
   "uuid": zod.string()
 })
 
+export const logisticsItemsRevertToPendingResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsRevertToPendingResponseRejectionReasonDefault = ``;
+export const logisticsItemsRevertToPendingResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsRevertToPendingResponseDeliveryStatusDefault = `PENDING`;
+
 export const LogisticsItemsRevertToPendingResponse = zod.object({
   "uuid": zod.string(),
   "wedding": zod.string(),
@@ -1269,6 +336,134 @@ export const LogisticsItemsRevertToPendingResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsRevertToPendingResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsRevertToPendingResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsRevertToPendingResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsRevertToPendingResponseDeliveryStatusDefault),
+  "acquisition_status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para exibição de item de logística.')
+
+/**
+ * Descarta um item do escopo registrando compulsoriamente a justificativa (RF-15).
+ * @summary Discard Item
+ */
+export const LogisticsItemsDiscardParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const logisticsItemsDiscardBodyRejectionReasonMax = 1000;
+
+
+
+export const LogisticsItemsDiscardBody = zod.object({
+  "rejection_reason": zod.string().min(1).max(logisticsItemsDiscardBodyRejectionReasonMax)
+}).describe('Schema de entrada para descarte justificado de item de suprimento (RF-15).')
+
+export const logisticsItemsDiscardResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsDiscardResponseRejectionReasonDefault = ``;
+export const logisticsItemsDiscardResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsDiscardResponseDeliveryStatusDefault = `PENDING`;
+
+export const LogisticsItemsDiscardResponse = zod.object({
+  "uuid": zod.string(),
+  "wedding": zod.string(),
+  "contract": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsDiscardResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsDiscardResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsDiscardResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsDiscardResponseDeliveryStatusDefault),
+  "acquisition_status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para exibição de item de logística.')
+
+/**
+ * Reintegra um item previamente descartado de volta ao escopo aprovado do evento.
+ * @summary Include Item
+ */
+export const LogisticsItemsIncludeParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const logisticsItemsIncludeResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsIncludeResponseRejectionReasonDefault = ``;
+export const logisticsItemsIncludeResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsIncludeResponseDeliveryStatusDefault = `PENDING`;
+
+export const LogisticsItemsIncludeResponse = zod.object({
+  "uuid": zod.string(),
+  "wedding": zod.string(),
+  "contract": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsIncludeResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsIncludeResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsIncludeResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsIncludeResponseDeliveryStatusDefault),
+  "acquisition_status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para exibição de item de logística.')
+
+/**
+ * Registra a conferência física e entrega do material no local do evento (RF-15).
+ * @summary Deliver Item
+ */
+export const LogisticsItemsDeliverParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const logisticsItemsDeliverResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsDeliverResponseRejectionReasonDefault = ``;
+export const logisticsItemsDeliverResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsDeliverResponseDeliveryStatusDefault = `PENDING`;
+
+export const LogisticsItemsDeliverResponse = zod.object({
+  "uuid": zod.string(),
+  "wedding": zod.string(),
+  "contract": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsDeliverResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsDeliverResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsDeliverResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsDeliverResponseDeliveryStatusDefault),
+  "acquisition_status": zod.string(),
+  "created_at": zod.iso.datetime({"offset":true}),
+  "updated_at": zod.iso.datetime({"offset":true})
+}).describe('Schema de saída para exibição de item de logística.')
+
+/**
+ * Registra a devolução física do material após o término do evento.
+ * @summary Return Item
+ */
+export const LogisticsItemsReturnParams = zod.object({
+  "uuid": zod.string()
+})
+
+export const logisticsItemsReturnResponseScopeStatusDefault = `INCLUDED`;
+export const logisticsItemsReturnResponseRejectionReasonDefault = ``;
+export const logisticsItemsReturnResponseProcurementStatusDefault = `CONTRATADO`;
+export const logisticsItemsReturnResponseDeliveryStatusDefault = `PENDING`;
+
+export const LogisticsItemsReturnResponse = zod.object({
+  "uuid": zod.string(),
+  "wedding": zod.string(),
+  "contract": zod.union([zod.string(),zod.null()]).optional(),
+  "name": zod.string(),
+  "description": zod.string(),
+  "quantity": zod.int(),
+  "scope_status": zod.string().default(logisticsItemsReturnResponseScopeStatusDefault),
+  "rejection_reason": zod.string().default(logisticsItemsReturnResponseRejectionReasonDefault),
+  "procurement_status": zod.string().default(logisticsItemsReturnResponseProcurementStatusDefault),
+  "delivery_status": zod.string().default(logisticsItemsReturnResponseDeliveryStatusDefault),
   "acquisition_status": zod.string(),
   "created_at": zod.iso.datetime({"offset":true}),
   "updated_at": zod.iso.datetime({"offset":true})

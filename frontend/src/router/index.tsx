@@ -17,8 +17,10 @@ import { VerifyEmailPage } from "@/features/auth/pages/VerifyEmailPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import SchedulerPage from "@/features/scheduler/pages/SchedulerPage";
 import SuppliersPage from "@/features/logistics/pages/SuppliersPage";
+import ContractsGlobalPage from "@/features/contracts/pages/ContractsGlobalPage";
 import WeddingsListPage from "@/features/weddings/pages/WeddingsListPage";
 import WeddingDetailPage from "@/features/weddings/pages/WeddingDetailPage";
+import ClientsListPage from "@/features/clients/pages/ClientsListPage";
 
 // Lazy imports for rarely accessed pages
 const ComingSoonPage = lazy(() => import("@/components/coming-soon"));
@@ -107,6 +109,14 @@ export const router = sentryCreateBrowserRouter([
       {
         path: "/weddings/:uuid",
         element: <WeddingDetailPage />,
+      },
+      {
+        path: "/clients",
+        element: <ClientsListPage />,
+      },
+      {
+        path: "/contracts",
+        element: <ContractsGlobalPage />,
       },
       {
         path: "/scheduler",

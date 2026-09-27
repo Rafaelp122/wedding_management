@@ -1,0 +1,266 @@
+# ==============================================================================
+# TACH CONFIGURATION: BOUNDED CONTEXT ARCHITECTURAL GUARDS (ADR-031)
+# ==============================================================================
+
+exact = true
+source_roots = ["."]
+exclude = [
+    "**/tests/**",
+    "apps/*/tests/**",
+    "**/tests",
+    "**/docs/**",
+    "**/docs",
+    "**/*__pycache__/**",
+    "**/*egg-info/**",
+    "**/venv/**",
+    "**/.venv/**",
+    "**/migrations/**",
+    "**/migrations",
+    "apps/core/management/**",
+]
+
+# ------------------------------------------------------------------------------
+# MODULE DEFINITIONS & DEPENDENCY RULES
+# ------------------------------------------------------------------------------
+
+[[modules]]
+path = "apps.core"
+depends_on = []
+
+[[modules]]
+path = "apps.tenants"
+depends_on = [
+    { path = "apps.core" },
+]
+
+[[modules]]
+path = "apps.users"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+]
+
+[[modules]]
+path = "apps.weddings"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.clients" },
+    { path = "apps.scheduler" },
+    { path = "apps.finances" },
+    { path = "apps.contracts" },
+    { path = "apps.reporting" },
+]
+
+[[modules]]
+path = "apps.finances"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+    { path = "apps.scheduler" },
+    { path = "apps.contracts" },
+    { path = "apps.notifications" },
+]
+
+[[modules]]
+path = "apps.scheduler"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+    { path = "apps.notifications" },
+]
+
+[[modules]]
+path = "apps.contracts"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+    { path = "apps.finances" },
+    { path = "apps.logistics" },
+    { path = "apps.clients" },
+    { path = "apps.notifications" },
+    { path = "apps.suppliers" },
+]
+
+[[modules]]
+path = "apps.suppliers"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+]
+
+[[modules]]
+path = "apps.logistics"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+]
+
+[[modules]]
+path = "apps.notifications"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+]
+
+[[modules]]
+path = "apps.clients"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+]
+
+[[modules]]
+path = "apps.reporting"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.tenants" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+    { path = "apps.finances" },
+    { path = "apps.scheduler" },
+    { path = "apps.contracts" },
+]
+
+[[modules]]
+path = "config"
+depends_on = [
+    { path = "apps.core" },
+    { path = "apps.users" },
+    { path = "apps.weddings" },
+    { path = "apps.finances" },
+    { path = "apps.scheduler" },
+    { path = "apps.contracts" },
+    { path = "apps.logistics" },
+    { path = "apps.notifications" },
+    { path = "apps.clients" },
+    { path = "apps.reporting" },
+    { path = "apps.suppliers" },
+]
+
+# ------------------------------------------------------------------------------
+# PUBLIC INTERFACE DEFINITIONS (ADR-031)
+# ------------------------------------------------------------------------------
+
+# --- General Public Interfaces ---
+[[interfaces]]
+from = ["apps.weddings"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+    "models.wedding.*",
+    "models.Wedding",
+]
+
+[[interfaces]]
+from = ["apps.finances"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+]
+
+[[interfaces]]
+from = ["apps.scheduler"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+]
+
+[[interfaces]]
+from = ["apps.contracts"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+    "services.*",
+    "selectors.*",
+]
+
+[[interfaces]]
+from = ["apps.suppliers"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+    "models.*",
+    "selectors.*",
+    "services.*",
+    "managers.*",
+    "api.*",
+]
+
+[[interfaces]]
+from = ["apps.logistics"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+]
+
+[[interfaces]]
+from = ["apps.notifications"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+]
+
+[[interfaces]]
+from = ["apps.clients"]
+expose = [
+    "interfaces.*",
+    "schemas.*",
+]
+
+# --- Gateway Exposure to config (API routers) ---
+[[interfaces]]
+from = [
+    "apps.weddings",
+    "apps.finances",
+    "apps.scheduler",
+    "apps.contracts",
+    "apps.logistics",
+    "apps.notifications",
+    "apps.clients",
+    "apps.reporting",
+    "apps.suppliers",
+]
+expose = ["api.*"]
+visibility = ["config"]
+
+# --- Reporting Domain Analytic Access (ADR-031) ---
+[[interfaces]]
+from = ["apps.weddings"]
+expose = ["selectors.*"]
+visibility = ["apps.reporting"]
+
+[[interfaces]]
+from = ["apps.finances"]
+expose = ["models.*"]
+visibility = ["apps.reporting"]
+
+[[interfaces]]
+from = ["apps.scheduler"]
+expose = ["models.*"]
+visibility = ["apps.reporting"]
+
+[[interfaces]]
+from = ["apps.contracts"]
+expose = ["models.*"]
+visibility = ["apps.reporting"]
+
+[[interfaces]]
+from = ["apps.reporting"]
+expose = [
+    "selectors.*",
+    "schemas.*",
+    "interfaces.*",
+]

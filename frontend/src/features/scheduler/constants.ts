@@ -27,3 +27,11 @@ export const EVENT_COLORS: Record<string, string> = {
   degustacao: "#F97316",
   outro: "#6B7280",
 };
+
+export const TASK_PRIORITY_OPTIONS = [
+  { value: "LOW", label: "Baixa" },
+  { value: "MEDIUM", label: "Média" },
+  { value: "HIGH", label: "Alta" },
+  { value: "URGENT", label: "Urgente" },
+] as const;
+

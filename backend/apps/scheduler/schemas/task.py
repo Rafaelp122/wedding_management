@@ -1,5 +1,4 @@
-"""Schemas Pydantic/Ninja para a entidade de Tarefa (Task)."""
-
+import datetime
 from datetime import date
 
 from ninja import Field, Schema
@@ -15,6 +14,7 @@ class TaskIn(Schema):
     title: str = Field(min_length=1, max_length=255)
     description: str = ""
     due_date: date | None = None
+    priority: str = "MEDIUM"
     is_completed: bool = False
 
 
@@ -26,6 +26,7 @@ class TaskPatchIn(Schema):
     title: str | None = Field(default=None, min_length=1, max_length=255)
     description: str = ""
     due_date: date | None = None
+    priority: str | None = None
     is_completed: bool | None = None
 
 
@@ -38,6 +39,24 @@ class TaskOut(Schema):
     title: str
     description: str | None = None
     due_date: date | None = None
+    priority: str = "MEDIUM"
     is_completed: bool
+    completed_at: datetime.datetime | None = None
     is_overdue: bool = False
     days_overdue: int = 0
+
+
+# Aliases canônicos alinhados com a RFC-001 (RF-18)
+ChecklistItemIn = TaskIn
+ChecklistItemPatchIn = TaskPatchIn
+ChecklistItemOut = TaskOut
+
+
+class TimelineCompressionOut(Schema):
+    """Schema de saída para análise de compressão da linha do tempo do casamento."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    is_timeline_compressed: bool
+    compressed_timeline_message: str | None = None
+    days_until_wedding: int | None = None

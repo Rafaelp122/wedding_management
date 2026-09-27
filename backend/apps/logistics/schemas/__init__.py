@@ -1,46 +1,26 @@
 """Módulo de schemas para o domínio de logística."""
 
-from apps.logistics.schemas.contract import (
-    ContractDetailAggregateOut,
-    ContractFullCreateIn,
-    ContractIn,
-    ContractOut,
-    ContractPatchIn,
-    ContractSignIn,
-    ContractStatusTransitionIn,
-    ContractUploadIn,
-    ContractUploadUrlIn,
-    ContractUploadUrlOut,
-)
 from apps.logistics.schemas.item import (
+    ItemDiscardIn,
     ItemIn,
     ItemOut,
     ItemPatchIn,
     ItemStatusTransitionIn,
-)
-from apps.logistics.schemas.supplier import (
-    SupplierIn,
-    SupplierOut,
-    SupplierPatchIn,
+    SupplyItemDiscardIn,
+    SupplyItemIn,
+    SupplyItemOut,
+    SupplyItemPatchIn,
 )
 
 
 __all__ = [
-    "ContractDetailAggregateOut",
-    "ContractFullCreateIn",
-    "ContractIn",
-    "ContractOut",
-    "ContractPatchIn",
-    "ContractSignIn",
-    "ContractStatusTransitionIn",
-    "ContractUploadIn",
-    "ContractUploadUrlIn",
-    "ContractUploadUrlOut",
+    "ItemDiscardIn",
     "ItemIn",
     "ItemOut",
     "ItemPatchIn",
     "ItemStatusTransitionIn",
-    "SupplierIn",
-    "SupplierOut",
-    "SupplierPatchIn",
+    "SupplyItemDiscardIn",
+    "SupplyItemIn",
+    "SupplyItemOut",
+    "SupplyItemPatchIn",
 ]

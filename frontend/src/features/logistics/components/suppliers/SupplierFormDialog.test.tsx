@@ -263,7 +263,7 @@ describe("SupplierFormDialog", () => {
   it("shows error toast on API failure", async () => {
     const { http, HttpResponse } = await import("msw");
     server.use(
-      http.post("*/api/v1/logistics/suppliers/", () =>
+      http.post("*/api/v1/suppliers/", () =>
         HttpResponse.json({ detail: "CNPJ duplicado" }, { status: 409 }),
       ),
     );

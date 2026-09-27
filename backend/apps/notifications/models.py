@@ -16,6 +16,7 @@ class NotificationType(models.TextChoices):
     EXPIRING_CONTRACT = "EXPIRING_CONTRACT", _("Contrato Prestes a Vencer")
     TASK_DEADLINE = "TASK_DEADLINE", _("Prazo de Tarefa")
     CHECKLIST_ITEM_OVERDUE = "CHECKLIST_ITEM_OVERDUE", _("Item de Checklist Vencido")
+    ADDENDUM_SIGNED = "ADDENDUM_SIGNED", _("Termo Aditivo Assinado")
     GENERAL = "GENERAL", _("Geral")
 
 

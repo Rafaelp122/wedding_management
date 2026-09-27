@@ -142,7 +142,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API success for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return new HttpResponse(null, { status: 204 });
       })
     );
@@ -172,7 +172,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API failure for DELETE with precise route pattern
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return HttpResponse.json({ detail: "Erro interno" }, { status: 500 });
       })
     );
@@ -202,7 +202,7 @@ describe("WeddingVendorsTable", () => {
 
     // Mock API failure for DELETE returning 500 and no body
     server.use(
-      http.delete("*/api/v1/logistics/contracts/:uuid", () => {
+      http.delete("*/api/v1/contracts/:uuid/", () => {
         return new HttpResponse(null, { status: 500 });
       })
     );
@@ -287,7 +287,7 @@ describe("WeddingVendorsTable", () => {
     const contract = createMockContract({ status: "SIGNED" });
 
     server.use(
-      http.post("*/api/v1/logistics/contracts/:uuid/cancel/", () => {
+      http.post("*/api/v1/contracts/:uuid/transition/", () => {
         return HttpResponse.json({ ...contract, status: "CANCELED" });
       }),
     );

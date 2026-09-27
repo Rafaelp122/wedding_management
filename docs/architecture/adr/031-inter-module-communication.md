@@ -65,17 +65,19 @@ flowchart TD
 - Cada Bounded Context que disponibiliza operações para outros módulos expõe um arquivo `interfaces.py` na raiz do respectivo app (`apps.<contexto>.interfaces`).
 - **Regra de Ouro:** É **estritamente proibido** importar `models.py`, `services.py` ou `managers.py` de outro Bounded Context. Toda interação transacional entre módulos DEVE passar exclusivamente pelas funções de alto nível em `interfaces.py`.
 - **Reutilização de Contratos:** Para evitar a proliferação de DTOs redundantes, as interfaces reutilizam os esquemas Pydantic existentes (`schemas.py`) ou tipos nativos/UUIDs.
+- **Gestão Unificada de Contratos de Assessoria:** O contrato de honorários da assessoria é unificado na entidade `Contract` com discriminador `contract_type="PLANNER"` dentro de `apps.contracts`. Todo acesso a partir de `apps.weddings` ocorre compulsoriamente via `apps.contracts.interfaces` (`get_planner_contract_for_wedding`, `save_planner_contract_for_wedding`, `ensure_planner_contract_signed`). É terminantemente proibido importar `Contract` em `apps.weddings`, assegurado por `tach check`.
+- **Fonte da Verdade de Clientes (SSOT):** O módulo `apps.clients` é a autoridade central (SSOT) para dados cadastrais de pessoas físicas (`Client`). A ligação associativa com o evento ocorre via `WeddingClient` em `apps.weddings`, que armazena os papéis operacionais (`RoleChoices`) e o indicador de signatário principal (`is_primary_signatory`). A criação ou consulta de clientes na proposta ocorre via `apps.clients.interfaces.get_or_create_client_for_proposal`.
 
-### 2.2 Pilar 2: Tarefas Assíncronas Pós-Commit (`django.tasks`)
+### 2.2 Pilar 2: Tarefas Assíncronas Pós-Commit (`django.tasks` via `interfaces.py`)
 
-- Operações que disparam efeitos colaterais secundários, notificações ou limpeza de recursos não essenciais à confirmação transacional imediata são orquestradas por **tarefas coordenadoras assíncronas**.
-- As tarefas são enfileiradas estritamente após a confirmação da transação no banco através do hook do Django:
+- **Descarte do Event Bus Genérico (EDA):** Descartamos formalmente qualquer barramento genérico de eventos EDA (`Event Bus`, signals em memória ou arquivos `events.py` genéricos). Efeitos colaterais secundários, notificações ou limpeza de recursos não essenciais à confirmação transacional imediata são orquestrados por **tarefas assíncronas coordenadas (`django.tasks`)**.
+- As tarefas são enfileiradas estritamente após a confirmação da transação no banco através do hook do Django, encapsuladas em funções nas fachadas públicas:
   ```python
   transaction.on_commit(
       lambda: on_wedding_canceled_task.enqueue(company.id, str(instance.uuid))
   )
   ```
-- Isso elimina o risco de efeitos colaterais órfãos caso a transação de banco sofra rollback, além de evitar locks distribuídos.
+- Isso elimina o risco de efeitos colaterais órfãos caso a transação de banco sofra rollback, além de evitar locks distribuídos e indireção excessiva.
 
 ### 2.3 Pilar 3: CQRS e Agregação Analítica Neutra (`apps/reporting`)
 
@@ -84,21 +86,22 @@ flowchart TD
   - As leituras compostas que agregam múltiplos domínios (como listagem de casamentos com contagem de tarefas atrasadas e parcelas pendentes) residem no app neutro `apps/reporting/selectors/summaries/` (`WeddingSummarySelector`, `ContractSummarySelector`).
   - O endpoint da API em `apps/weddings/api.py` delega a rota `GET /api/v1/weddings/` ao `WeddingSummarySelector.list_weddings_with_metrics`.
 
-### 2.4 Pilar 4: Barreira de Proteção com Import Linter
+### 2.4 Pilar 4: Barreira de Proteção Arquitetural com Tach
 
-Configuramos o `import-linter` em `backend/pyproject.toml` com oito contratos estritos de isolamento de Bounded Contexts e pureza arquitetural:
+Substituímos o legado `import-linter` pelo **Tach** (linter arquitetural de alta performance baseado em Rust), eliminando centenas de linhas de boilerplate burocrático e supressões manuais (`ignore_imports`).
 
-1. **Contratos 1 a 5 (`forbidden` — Domínios de Negócio):** Isolamento mútuo entre `apps.finances`, `apps.logistics`, `apps.scheduler`, `apps.weddings` e `apps.notifications`. Qualquer importação direta de modelos, serviços ou rotas alheias quebra imediatamente o linter. As únicas exceções autorizadas são as fachadas públicas (`interfaces.py`) e DTOs tipados.
-2. **Contrato 6 (`forbidden` — Isolamento de Tenants):** `apps.tenants` atua no nível fundacional da arquitetura e é proibido de importar qualquer módulo de negócio (`finances`, `logistics`, `scheduler`, `weddings`, `notifications`, `reporting`).
-3. **Contrato 7 (`forbidden` — Isolamento de Users):** `apps.users` atua estritamente na autenticação e gestão de contas, sendo proibido de importar modelos ou serviços de negócio.
-4. **Contrato 8 (`forbidden` — Pureza CQRS de Reporting):** O módulo analítico `apps.reporting` é estritamente de leitura (CQRS Query Side) e não pode importar `services` de mutação de nenhum domínio, preservando a imutabilidade e separação de comandos e consultas.
+A governança é declarada de forma declarativa e canônica em `backend/tach.toml`:
+1. **Fronteiras e Dependências (`[[modules]]`):** Cada Bounded Context é definido como módulo (`apps.core`, `apps.tenants`, `apps.users`, `apps.clients`, `apps.weddings`, `apps.finances`, `apps.contracts`, `apps.suppliers`, `apps.logistics`, `apps.scheduler`, `apps.notifications`, `apps.reporting`). A opção `exact = true` garante que dependências não declaradas ou declaradas em excesso quebrem imediatamente a validação.
+2. **Fachadas Públicas e Shared Kernel (`[[interfaces]]`):** O módulo exportador declara os caminhos expostos (`interfaces.*`, `schemas.*`). A entidade `Wedding` (`apps.weddings.models.Wedding`) atua como Shared Kernel explícito para integridade relacional multitenant.
+3. **Controle Estrito de Visibilidade (`visibility`):** Acesso analítico a modelos internos é restrito exclusivamente ao módulo neutro `apps.reporting` (`visibility = ["apps.reporting"]`), e o registro de rotas HTTP é exposto exclusivamente ao gateway `config` (`visibility = ["config"]`).
+4. **Encapsulamento de Background Tasks:** Nenhuma tarefa assíncrona (`tasks.py`) é importada diretamente entre módulos; todo disparo ou agendamento é encapsulado em funções de fachada de alto nível (`enqueue_*`) em `interfaces.py`, garantindo execução pós-commit via `transaction.on_commit`.
 
 ### 2.5 Pilar 5: Quality Gate Integrado ao Pipeline
 
-- Comando no Poe: `poe lint-imports` (executando `lint-imports --no-cache`).
-- Comando no Justfile: `just lint-imports`.
+- Comando no Poe: `poe lint-imports` e `poe check-arch` (executando `tach check`).
+- Comando no Justfile: `just lint-imports` e `just arch`.
 - Macro unificado de qualidade: `poe check` (`lint`, `mypy`, `lint-imports`, `test`, `openapi`).
-- Step no GitHub Actions: `Import Linter Architectural Guard` no job `lint-and-typecheck`.
+- Step no GitHub Actions: `uv run poe lint-imports` no job de validação de PR.
 
 ---
 
@@ -107,8 +110,9 @@ Configuramos o `import-linter` em `backend/pyproject.toml` com oito contratos es
 | Alternativa | Motivo da Rejeição |
 | :--- | :--- |
 | **Opção A (Métricas em weddings/selectors.py)** | Manteria o domínio de casamentos acoplado a modelos de finanças e scheduler para leituras analíticas, violando o princípio de domínio puro. |
-| **Domain Events via Event Bus em Memória / Signals** | Signals síncronos dificultam o rastreamento do fluxo, ofuscam erros de transação e violam os guard-rails de código explícito do projeto. |
+| **Barramento Genérico de Eventos (Event Bus EDA / Signals)** | Adiciona sobrecarga cognitiva, indireção excessiva e dificulta rastreabilidade de erros em transações. Foi substituído por tarefas explícitas do Django (`django.tasks`) orquestradas pós-commit (`transaction.on_commit`) via fachadas `interfaces.py`. |
 | **Microserviços / Bancos Separados por Domínio** | Overhead operacional massivo, complexidade de rede desnecessária e custo de infraestrutura desproporcional para o estágio do produto. O monólito modular com contratos estritos oferece o isolamento necessário sem a complexidade de microsserviços. |
+| **Import Linter Legado** | Lento em repositórios médios/grandes, regras duplicadas e verbosas sem tipagem rica e dependência excessiva de listas manuais de `ignore_imports` suscetíveis a drift. |
 
 ---
 
@@ -117,12 +121,13 @@ Configuramos o `import-linter` em `backend/pyproject.toml` com oito contratos es
 ### Positivas
 - **Isolamento Robusto:** Alterações nos modelos ou serviços internos de um módulo não causam efeitos cascata em outros módulos.
 - **Domínios Puros:** Os managers de casamentos e logística não realizam mais subqueries em tabelas financeiras ou de agenda.
-- **Segurança Transacional:** Efeitos colaterais complexos rodam pós-commit de forma assíncrona, com garantias de retry e sem risco de inconsistência no banco principal.
-- **Governança Automatizada:** O CI/CD impede que novos acoplamentos sejam introduzidos acidentalmente.
+- **Segurança Transacional:** Efeitos colaterais complexos rodam pós-commit de forma assíncrona através de fachadas públicas (`enqueue_*`), sem risco de locks ou inconsistência por rollback.
+- **Governança de Alta Velocidade:** `tach check` valida toda a arquitetura em milissegundos no CI/CD e no ambiente local via motor em Rust.
+- **Eliminação de Código Morto:** Interfaces públicas e schemas representam a única via de entrada, eliminando métodos órfãos ou duplicações legadas (como `ContractService` unificado em `apps.contracts`).
 
 ### Negativas e Mitigações
 - **Custo Marginal de Fachadas:** Sempre que um módulo precisar interagir com outro, uma função explícita deve ser exposta em `interfaces.py`. *Mitigação:* As interfaces são simples, focadas em casos de uso reais e reutilizam schemas existentes sem duplicação.
-- **Manutenção de Contratos no Linter:** Novas integrações entre módulos exigem atualização controlada de `ignore_imports`. *Mitigação:* O processo é explícito e auditável via revisão de PR.
+- **Manutenção de tach.toml:** Novos fluxos entre módulos exigem atualização das regras em `tach.toml`. *Mitigação:* O formato TOML com `exact = true` é simples, visual e totalmente autovalidado.
 
 ---
 

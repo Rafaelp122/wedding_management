@@ -1,5 +1,5 @@
 from .event import Event
-from .task import Task
+from .task import ChecklistItem, Task
 
 
-__all__ = ["Event", "Task"]
+__all__ = ["ChecklistItem", "Event", "Task"]

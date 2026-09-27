@@ -1,8 +1,8 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import {
-  useLogisticsSuppliersDelete,
-} from "@/api/generated/v1/endpoints/logistics/logistics";
+  useSuppliersDelete,
+} from "@/api/generated/v1/endpoints/suppliers/suppliers";
 import type { SupplierOut } from "@/api/generated/v1/models/supplierOut";
 import { createMutationCallbacks } from "@/hooks/use-mutation-toast";
 
@@ -17,7 +17,7 @@ export function useSupplierMutations({
   setSupplierToDelete,
   refetchSuppliers,
 }: UseSupplierMutationsParams) {
-  const deleteSupplierMutation = useLogisticsSuppliersDelete();
+  const deleteSupplierMutation = useSuppliersDelete();
 
   const handleDeleteSupplier = () => {
     if (!supplierToDelete) return;

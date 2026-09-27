@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from apps.logistics.models import Contract
+from apps.contracts.models import Contract
 
 
 if TYPE_CHECKING:

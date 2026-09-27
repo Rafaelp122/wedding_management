@@ -4,6 +4,7 @@ import { useWeddingsPage } from "../hooks/useWeddingsPage";
 import { WeddingsTable } from "../components/WeddingsTable";
 import { WeddingFilters } from "../components/WeddingFilters";
 import { CreateWeddingDialog } from "../components/CreateWeddingDialog";
+import { CreateProposalDialog } from "../components/CreateProposalDialog";
 import { EditWeddingDialog } from "../components/EditWeddingDialog";
 import { DeleteWeddingDialog } from "../components/DeleteWeddingDialog";
 import { EmptyWeddingsState } from "../components/EmptyWeddingsState";
@@ -20,7 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
 
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Plus } from "lucide-react";
+import { AlertCircle, Plus, FileText } from "lucide-react";
 
 export default function WeddingsListPage() {
   const {
@@ -41,6 +42,7 @@ export default function WeddingsListPage() {
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
   const [editingWedding, setEditingWedding] = useState<WeddingOut | null>(null);
   const [deletingWedding, setDeletingWedding] = useState<WeddingOut | null>(
     null,
@@ -66,10 +68,20 @@ export default function WeddingsListPage() {
             Gerencie e acompanhe todos os eventos ativos.
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 size-4" />
-          Novo Casamento
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setProposalDialogOpen(true)}
+            className="gap-2"
+          >
+            <FileText className="size-4" />
+            Nova Proposta
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 size-4" />
+            Novo Casamento
+          </Button>
+        </div>
       </div>
 
       <WeddingFilters
@@ -131,6 +143,21 @@ export default function WeddingsListPage() {
             queryKey: getDashboardSummaryQueryKey(),
           });
           setCreateDialogOpen(false);
+        }}
+      />
+
+      <CreateProposalDialog
+        open={proposalDialogOpen}
+        onOpenChange={setProposalDialogOpen}
+        onSuccess={() => {
+          refetch();
+          queryClient.invalidateQueries({
+            queryKey: getDashboardSummaryQueryKey(),
+          });
+          queryClient.invalidateQueries({
+            queryKey: getWeddingsListQueryKey(),
+          });
+          setProposalDialogOpen(false);
         }}
       />
 

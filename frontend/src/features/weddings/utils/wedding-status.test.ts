@@ -10,6 +10,18 @@ import {
 import { WeddingStatusEnum } from "@/api/generated/v1/models/weddingStatusEnum";
 
 describe("getWeddingStatusInfo", () => {
+  it('returns "Proposta" for PROPOSAL status', () => {
+    const info = getWeddingStatusInfo(WeddingStatusEnum.PROPOSAL);
+    expect(info.label).toBe("Proposta");
+    expect(info.variant).toBe("outline");
+  });
+
+  it('returns "Planejamento" for PLANNING status', () => {
+    const info = getWeddingStatusInfo(WeddingStatusEnum.PLANNING);
+    expect(info.label).toBe("Planejamento");
+    expect(info.variant).toBe("default");
+  });
+
   it('returns "Em Andamento" for IN_PROGRESS status', () => {
     const info = getWeddingStatusInfo(WeddingStatusEnum.IN_PROGRESS);
     expect(info.label).toBe("Em Andamento");
@@ -40,6 +52,14 @@ describe("getWeddingStatusInfo", () => {
 });
 
 describe("getWeddingStatusLabel", () => {
+  it("returns Proposta label for PROPOSAL status", () => {
+    expect(getWeddingStatusLabel(WeddingStatusEnum.PROPOSAL)).toBe("Proposta");
+  });
+
+  it("returns Planejamento label for PLANNING status", () => {
+    expect(getWeddingStatusLabel(WeddingStatusEnum.PLANNING)).toBe("Planejamento");
+  });
+
   it("returns the label for a valid status", () => {
     expect(getWeddingStatusLabel(WeddingStatusEnum.COMPLETED)).toBe("Concluído");
   });
@@ -50,6 +70,18 @@ describe("getWeddingStatusLabel", () => {
 });
 
 describe("getWeddingStatusBadgeStyle", () => {
+  it("returns aura classes for PROPOSAL", () => {
+    const style = getWeddingStatusBadgeStyle(WeddingStatusEnum.PROPOSAL);
+    expect(style.className).toContain("bg-aura-50");
+    expect(style.dotClassName).toBe("bg-aura-500");
+  });
+
+  it("returns indigo classes for PLANNING", () => {
+    const style = getWeddingStatusBadgeStyle(WeddingStatusEnum.PLANNING);
+    expect(style.className).toContain("bg-indigo-50");
+    expect(style.dotClassName).toBe("bg-indigo-500");
+  });
+
   it("returns aura classes for IN_PROGRESS", () => {
     const style = getWeddingStatusBadgeStyle(WeddingStatusEnum.IN_PROGRESS);
     expect(style.className).toContain("bg-aura-50");
@@ -75,6 +107,18 @@ describe("getWeddingStatusBadgeStyle", () => {
 });
 
 describe("getWeddingAvatarStyle", () => {
+  it("returns aura colors for PROPOSAL", () => {
+    const style = getWeddingAvatarStyle(WeddingStatusEnum.PROPOSAL);
+    expect(style.bg).toContain("bg-aura-100");
+    expect(style.text).toContain("text-aura-700");
+  });
+
+  it("returns indigo colors for PLANNING", () => {
+    const style = getWeddingAvatarStyle(WeddingStatusEnum.PLANNING);
+    expect(style.bg).toContain("bg-indigo-100");
+    expect(style.text).toContain("text-indigo-700");
+  });
+
   it("returns aura colors for IN_PROGRESS", () => {
     const style = getWeddingAvatarStyle(WeddingStatusEnum.IN_PROGRESS);
     expect(style.bg).toContain("bg-aura-100");
