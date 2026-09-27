@@ -75,7 +75,7 @@ jobs:
           uv run ruff format --check .
           uv run mypy . --show-error-codes --no-color-output
 
-      - name: Import Linter Architectural Guard
+      - name: Tach Architectural Guard
         if: needs.detect-changes.outputs.backend == 'true'
         run: |
           cd backend
