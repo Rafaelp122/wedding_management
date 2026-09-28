@@ -3,13 +3,7 @@ import { Bell, Calendar, Clock } from "lucide-react";
 
 import type { EventOut } from "@/api/generated/v1/models/eventOut";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
 import {
   Table,
   TableBody,
@@ -31,18 +25,18 @@ export const SchedulerEventsTable = memo(function SchedulerEventsTable({
   events,
 }: SchedulerEventsTableProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <PageCardContainer>
+      <div className="p-6 border-b border-border">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <Calendar className="h-5 w-5" />
           Próximos compromissos
-        </CardTitle>
-        <CardDescription>
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
           Eventos ordenados por data para facilitar o acompanhamento operacional.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="rounded-md border">
+        </p>
+      </div>
+      <div className="p-6">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -94,7 +88,7 @@ export const SchedulerEventsTable = memo(function SchedulerEventsTable({
             </TableBody>
           </Table>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </PageCardContainer>
   );
-})
+});

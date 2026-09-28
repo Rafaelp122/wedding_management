@@ -7,6 +7,8 @@ import { SchedulerSummaryCards } from "../components/SchedulerSummaryCards";
 import { CreateEventDialog } from "../components/events/CreateEventDialog";
 import { EditEventDialog } from "../components/events/EditEventDialog";
 
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,49 +57,45 @@ export default function SchedulerPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Scheduler</h2>
-          <p className="text-muted-foreground">
-            Visão global dos compromissos de todos os casamentos.
-          </p>
-        </div>
-
-        {/* View toggle */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleCreateFromButton}
-            className="gap-1.5"
-          >
-            <Plus className="h-4 w-4" />
-            Novo Evento
-          </Button>
-
-          <div className="flex items-center gap-1 rounded-lg border p-1">
+    <PageContainer>
+      <PageHeader
+        title="Scheduler"
+        description="Visão global dos compromissos de todos os casamentos."
+        actions={
+          <div className="flex items-center gap-2">
             <Button
-              variant={viewMode === "table" ? "default" : "ghost"}
+              variant="default"
               size="sm"
-              onClick={() => setViewMode("table")}
+              onClick={handleCreateFromButton}
               className="gap-1.5"
             >
-              <TableIcon className="h-4 w-4" />
-              Tabela
+              <Plus className="h-4 w-4" />
+              Novo Evento
             </Button>
-            <Button
-              variant={viewMode === "calendar" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("calendar")}
-              className="gap-1.5"
-            >
-              <CalendarIcon className="h-4 w-4" />
-              Calendário
-            </Button>
+
+            <div className="flex items-center gap-1 rounded-lg border p-1 bg-background">
+              <Button
+                variant={viewMode === "table" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className="gap-1.5"
+              >
+                <TableIcon className="h-4 w-4" />
+                Tabela
+              </Button>
+              <Button
+                variant={viewMode === "calendar" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("calendar")}
+                className="gap-1.5"
+              >
+                <CalendarIcon className="h-4 w-4" />
+                Calendário
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {isLoading ? (
         <>
@@ -163,6 +161,6 @@ export default function SchedulerPage() {
           onGoToPage={pagination.goToPage}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

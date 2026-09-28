@@ -16,9 +16,11 @@ import {
   ListPageLoadingState,
 } from "@/components/page-states";
 
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
+import { PageFilterBar } from "@/components/layouts/PageFilterBar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Users, Plus, Search } from "lucide-react";
+import { Users, Plus } from "lucide-react";
 
 /**
  * Smart Component para a página de listagem geral de clientes (ADR-024).
@@ -82,39 +84,30 @@ export default function ClientsListPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <PageHeader
+        title={
           <div className="flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Clientes & Contatos
-            </h1>
+            <span>Clientes & Contatos</span>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Gestão unificada de noivos, contratantes financeiros e pessoas físicas do workspace.
-          </p>
-        </div>
-
-        <Button onClick={handleOpenCreate} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" />
-          Novo Cliente
-        </Button>
-      </div>
+        }
+        description="Gestão unificada de noivos, contratantes financeiros e pessoas físicas do workspace."
+        actions={
+          <Button onClick={handleOpenCreate} className="gap-2 shrink-0">
+            <Plus className="h-4 w-4" />
+            Novo Cliente
+          </Button>
+        }
+      />
 
       {/* Barra de Filtros e Busca */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, CPF ou e-mail..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-      </div>
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome, CPF ou e-mail..."
+      />
 
       {/* Tabela de Clientes */}
       <ClientsTable
@@ -141,6 +134,6 @@ export default function ClientsListPage() {
         onConfirm={handleConfirmDelete}
         isPending={deleteMutation.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }
