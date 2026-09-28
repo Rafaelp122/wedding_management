@@ -19,6 +19,9 @@ import { getSchedulerEventsListQueryKey } from "@/api/generated/v1/endpoints/sch
 import { getWeddingsListQueryKey } from "@/api/generated/v1/endpoints/weddings/weddings";
 import { useQueryClient } from "@tanstack/react-query";
 import type { WeddingOut } from "@/api/generated/v1/models/weddingOut";
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
 
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Plus, FileText } from "lucide-react";
@@ -58,31 +61,27 @@ export default function WeddingsListPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
-            Casamentos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie e acompanhe todos os eventos ativos.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setProposalDialogOpen(true)}
-            className="gap-2"
-          >
-            <FileText className="size-4" />
-            Nova Proposta
-          </Button>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 size-4" />
-            Novo Casamento
-          </Button>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Casamentos"
+        description="Gerencie e acompanhe todos os eventos ativos."
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setProposalDialogOpen(true)}
+              className="gap-2"
+            >
+              <FileText className="size-4" />
+              Nova Proposta
+            </Button>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 size-4" />
+              Novo Casamento
+            </Button>
+          </div>
+        }
+      />
 
       <WeddingFilters
         search={search}
@@ -91,7 +90,7 @@ export default function WeddingsListPage() {
         onStatusFilterChange={setStatusFilter}
       />
 
-      <div className="bg-card rounded-xl border shadow-soft overflow-hidden">
+      <PageCardContainer>
         {isLoading ? (
           <ListPageLoadingState />
         ) : filteredWeddings.length === 0 && totalCount === 0 ? (
@@ -132,7 +131,7 @@ export default function WeddingsListPage() {
             />
           </>
         )}
-      </div>
+      </PageCardContainer>
 
       <CreateWeddingDialog
         open={createDialogOpen}
@@ -195,6 +194,6 @@ export default function WeddingsListPage() {
           }}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

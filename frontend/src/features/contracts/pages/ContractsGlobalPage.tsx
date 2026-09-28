@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, AlertCircle, FileText, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, FileText, CheckCircle2, Clock } from "lucide-react";
 
 import { useContractsList } from "@/api/generated/v1/endpoints/contracts/contracts";
 import { useSuppliersList } from "@/api/generated/v1/endpoints/suppliers/suppliers";
@@ -10,8 +10,11 @@ import {
   ListPageErrorState,
   ListPageLoadingState,
 } from "@/components/page-states";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
+import { PageFilterBar } from "@/components/layouts/PageFilterBar";
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -86,15 +89,11 @@ export default function ContractsGlobalPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Contratos</h2>
-          <p className="text-muted-foreground">
-            Gestão centralizada de todos os contratos e termos aditivos da assessoria.
-          </p>
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Contratos"
+        description="Gestão centralizada de todos os contratos e termos aditivos da assessoria."
+      />
 
       {/* Métricas rápidas da visão global */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -134,22 +133,16 @@ export default function ContractsGlobalPage() {
       </div>
 
       {/* Barra de Filtros */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por contrato, fornecedor ou casamento..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por contrato, fornecedor ou casamento..."
+      >
         <Select
           value={statusFilter}
           onValueChange={(val) => setStatusFilter(val)}
         >
-          <SelectTrigger className="w-full md:w-44" aria-label="Filtrar por status">
+          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrar por status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -166,7 +159,7 @@ export default function ContractsGlobalPage() {
           value={supplierFilter}
           onValueChange={(val) => setSupplierFilter(val)}
         >
-          <SelectTrigger className="w-full md:w-52" aria-label="Filtrar por fornecedor">
+          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrar por fornecedor">
             <SelectValue placeholder="Fornecedor" />
           </SelectTrigger>
           <SelectContent>
@@ -178,18 +171,18 @@ export default function ContractsGlobalPage() {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </PageFilterBar>
 
       {/* Conteúdo Principal */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">
+      <PageCardContainer>
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="text-base font-semibold text-foreground">
             {isLoadingContracts
               ? "Carregando contratos..."
               : `${filteredContracts.length} de ${contracts.length} contratos listados`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="p-6">
           {isLoadingContracts ? (
             <ListPageLoadingState />
           ) : filteredContracts.length === 0 ? (
@@ -207,8 +200,8 @@ export default function ContractsGlobalPage() {
               onViewDetails={handleOpenDetail}
             />
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </PageCardContainer>
 
       {/* Diálogo de Detalhes do Contrato Selecionado */}
       {selectedContract && (
@@ -224,6 +217,6 @@ export default function ContractsGlobalPage() {
           }}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }
