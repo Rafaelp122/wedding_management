@@ -200,6 +200,7 @@ nav:
           - 029 - Task Runner Moderno (Just): architecture/adr/029-modern-task-runner-just.md
           - 030 - Rich Domain Model & Casos de Uso: architecture/adr/030-rich-domain-model-service-layer.md
           - 031 - Comunicação Entre Módulos: architecture/adr/031-inter-module-communication.md
+          - 032 - Lazy Imports + Granian WSGI: architecture/adr/032-lazy-imports-granian-wsgi.md
 
   - Guias & Playbooks:
       - Onboarding & Primeiros Passos:
