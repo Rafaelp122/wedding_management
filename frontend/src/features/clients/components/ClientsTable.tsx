@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { formatDateBR } from "@/lib/formatters";
 import { Pencil, Trash2, Users, Mail, Phone } from "lucide-react";
 
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
+
 interface ClientsTableProps {
   clients: ClientOut[];
   onEditClient: (client: ClientOut) => void;
@@ -43,7 +45,7 @@ export const ClientsTable = memo(function ClientsTable({
   }
 
   return (
-    <div className="rounded-md border bg-card overflow-hidden">
+    <PageCardContainer>
       <Table>
         <TableHeader>
           <TableRow>
@@ -120,6 +122,6 @@ export const ClientsTable = memo(function ClientsTable({
           ))}
         </TableBody>
       </Table>
-    </div>
+    </PageCardContainer>
   );
 });

@@ -180,6 +180,57 @@ All interactive containers, inputs, and cards use rounded corners:
 
 ---
 
+## Page Shells (Standard Layout Templates)
+
+To maintain visual consistency and reduce cognitive friction across the application, standard feature pages must use the layout primitives located in `@/components/layouts/`:
+
+- **`PageContainer`:** Standard page wrapper defining the max-width boundary and vertical rhythm (`max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300`). Note: outer perimetral padding is already provided by `AppLayout` (`p-6 md:p-8`), so `PageContainer` avoids nested padding duplication.
+- **`PageHeader`:** Standardized page header with semantically tokenized H1 (`text-2xl md:text-3xl font-bold tracking-tight text-foreground font-heading`), descriptive subtitle (`text-muted-foreground text-sm`), and an optional right-aligned actions slot (for primary CTAs, export buttons, or view switchers). Supports `ReactNode` or string for the title.
+- **`PageFilterBar`:** Unified filter and search bar (`flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between`) featuring an integrated search input with icon, automatic accessibility `aria-label`, and a flexible child slot for secondary controls (selects, date pickers, segment switches).
+- **`PageCardContainer`:** Card wrapper for data tables and dense listings (`bg-card rounded-xl border border-border shadow-soft overflow-hidden`), ensuring standard borders, rounded corners, and tonal layering across all list views.
+
+### Canonical Page Template Example
+
+```tsx
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
+import { PageFilterBar } from "@/components/layouts/PageFilterBar";
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+
+export function ExampleListPage() {
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Entidades"
+        description="Gerencie os registros do módulo"
+        actions={
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Registro
+          </Button>
+        }
+      />
+
+      <PageFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar registros..."
+      >
+        <Select ... />
+      </PageFilterBar>
+
+      <PageCardContainer>
+        <DataTable ... />
+      </PageCardContainer>
+    </PageContainer>
+  );
+}
+```
+
+---
+
 ## Components
 
 Guidance for core UI component atoms built with shadcn/ui + Tailwind CSS v4:

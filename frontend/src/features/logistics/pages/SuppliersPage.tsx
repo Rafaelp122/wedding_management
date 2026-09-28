@@ -12,9 +12,11 @@ import { DataPagination } from "@/components/data-pagination";
 import { useSuppliersPage } from "../hooks/useSuppliersPage";
 import type { SupplierStatusFilter } from "../types";
 
+import { PageContainer } from "@/components/layouts/PageContainer";
+import { PageHeader } from "@/components/layouts/PageHeader";
+import { PageFilterBar } from "@/components/layouts/PageFilterBar";
+import { PageCardContainer } from "@/components/layouts/PageCardContainer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -22,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Plus, Search } from "lucide-react";
+import { AlertCircle, Plus } from "lucide-react";
 
 const SupplierDetailDialog = lazy(
   () =>
@@ -68,36 +70,28 @@ export default function SuppliersPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Fornecedores</h2>
-          <p className="text-muted-foreground">
-            Gerencie o cadastro global de fornecedores da sua operação.
-          </p>
-        </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Fornecedor
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Fornecedores"
+        description="Gerencie o cadastro global de fornecedores da sua operação."
+        actions={
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Fornecedor
+          </Button>
+        }
+      />
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, e-mail, telefone ou CNPJ..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="pl-9"
-          />
-        </div>
-
+      <PageFilterBar
+        search={search}
+        onSearchChange={(value) => setSearch(value)}
+        searchPlaceholder="Buscar por nome, e-mail, telefone ou CNPJ..."
+      >
         <Select
           value={statusFilter}
           onValueChange={(value: SupplierStatusFilter) => setStatusFilter(value)}
         >
-          <SelectTrigger className="w-full md:w-50">
+          <SelectTrigger className="w-full sm:w-50" aria-label="Filtrar por status">
             <SelectValue placeholder="Filtrar por status" />
           </SelectTrigger>
           <SelectContent>
@@ -106,15 +100,15 @@ export default function SuppliersPage() {
             <SelectItem value="inactive">Inativos</SelectItem>
           </SelectContent>
         </Select>
-      </div>
+      </PageFilterBar>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
+      <PageCardContainer>
+        <div className="px-6 py-4 border-b border-border">
+          <h3 className="text-base font-semibold text-foreground">
             {isLoading ? "Carregando..." : `${filteredSuppliers.length} de ${totalCount} fornecedores`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          </h3>
+        </div>
+        <div className="p-6">
           {isLoading ? (
             <ListPageLoadingState />
           ) : filteredSuppliers.length === 0 ? (
@@ -150,8 +144,8 @@ export default function SuppliersPage() {
               />
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </PageCardContainer>
 
       <SupplierFormDialog
         open={formOpen}
@@ -182,6 +176,6 @@ export default function SuppliersPage() {
           }}
         />
       </Suspense>
-    </div>
+    </PageContainer>
   );
 }
