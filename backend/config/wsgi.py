@@ -7,6 +7,7 @@ For more information on this file, see
 https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
+import gc
 import os
 
 from django.core.wsgi import get_wsgi_application
@@ -14,4 +15,12 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
-application = get_wsgi_application()
+# Otimização de Boot & GC: Desabilita temporariamente o Garbage Collector durante
+# a inicialização do Django para evitar varreduras cíclicas em milhares de objetos
+# alocados no startup, e congela os objetos permanentes via gc.freeze() (Python 3.7+).
+gc.disable()
+try:
+    application = get_wsgi_application()
+finally:
+    gc.enable()
+    gc.freeze()
