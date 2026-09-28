@@ -23,13 +23,13 @@ Alternativas consideradas:
 
 ## 2. Decisão
 
-Trilha A: mover `reportlab`, `openpyxl`, `boto3` e `google-auth` para imports locais sob demanda nos services que realmente usam. Trilha B: trocar runtime de produção para Granian em modo WSGI com 15 blocking threads (casando 1:1 com a concorrência de 15 do Cloud Run), ativar `PYTHONOPTIMIZE=1` no build e congelar objetos permanentes de boot via `gc.freeze()` em `config/wsgi.py`, mantendo `config/wsgi.py` sem adotar ASGI (codebase sem `async def`).
+Trilha A: mover `reportlab`, `openpyxl`, `boto3` e `google-auth` para imports locais sob demanda nos services que realmente usam. Trilha B: trocar runtime de produção para Granian em modo WSGI com 15 blocking threads (casando 1:1 com a concorrência de 15 do Cloud Run), ativar `PYTHONOPTIMIZE=1` e `PYTHONNODEBUGRANGES=1` no build, congelar objetos permanentes de boot via `gc.freeze()` e pré-aquecer a conexão e DNS/TLS com o banco via `connection.ensure_connection()` em `config/wsgi.py`, mantendo `config/wsgi.py` sem adotar ASGI (codebase sem `async def`).
 
 ---
 
 ## 3. Justificativa
 
-Lazy ataca `1.2-1.4s` do boot; Granian ataca `0.2-0.4s` + p99 sob concorrência (parser Rust, threads eficientes em 512Mi com 15 threads atendendo a concorrência sem head-of-line blocking). `gc.freeze()` congela mais de 150 mil objetos de metadados do Django no boot, eliminando varreduras desnecessárias de GC em todas as requisições subsequentes. Python 3.15 ajuda no futuro mas exige upgrade de runtime + validação Django e não dispensa a auditoria feita aqui — o trabalho manual vira `lazy import` no topo quando migrarmos. ASGI descartado agora: sem views async, ganho marginal e risco de `CONN_MAX_AGE` + threadpool.
+Lazy ataca `1.2-1.4s` do boot; Granian ataca `0.2-0.4s` + p99 sob concorrência (parser Rust, threads eficientes em 512Mi com 15 threads atendendo a concorrência sem head-of-line blocking). `gc.freeze()` congela mais de 150 mil objetos de metadados do Django no boot, eliminando varreduras desnecessárias de GC em todas as requisições subsequentes. `PYTHONNODEBUGRANGES=1` enxuga metadados de bytecode em ~10-15%. O warmup de banco em `wsgi.py` absorve o handshake TCP/TLS e autenticação com o Neon (`-pooler`) durante o startup do contêiner, eliminando 150-250ms de latência na primeira requisição do usuário. Python 3.15 ajuda no futuro mas exige upgrade de runtime + validação Django e não dispensa a auditoria feita aqui — o trabalho manual vira `lazy import` no topo quando migrarmos. ASGI descartado agora: sem views async, ganho marginal e risco de `CONN_MAX_AGE` + threadpool.
 
 ---
 

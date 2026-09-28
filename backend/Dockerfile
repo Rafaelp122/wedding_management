@@ -57,7 +57,8 @@ FROM base AS production
 ARG BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.production \
-    PYTHONOPTIMIZE=1
+    PYTHONOPTIMIZE=1 \
+    PYTHONNODEBUGRANGES=1
 
 RUN useradd -m -u 1000 appuser
 

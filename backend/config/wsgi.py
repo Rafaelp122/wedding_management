@@ -24,3 +24,17 @@ try:
 finally:
     gc.enable()
     gc.freeze()
+
+# Pré-aquecimento de conexão e DNS/TLS: Garante que o driver psycopg,
+# contextos SSL e sockets estejam aquecidos durante o boot, eliminando a
+# latência de handshake na primeira requisição do usuário.
+try:
+    from django.db import connection
+
+    connection.ensure_connection()
+except Exception:
+    import logging
+
+    logging.getLogger("config.wsgi").debug(
+        "Banco de dados não conectado durante o boot (ignorado em etapas de build ou offline)."
+    )
