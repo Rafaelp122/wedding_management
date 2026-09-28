@@ -2,8 +2,15 @@
 
 import subprocess
 import sys
+from pathlib import Path
+
+import pytest
 
 
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
+@pytest.mark.unit
 def test_reporting_services_nao_importa_reportlab_nem_openpyxl_no_boot() -> None:
     codigo = (
         "import os, sys, django;"
@@ -16,6 +23,7 @@ def test_reporting_services_nao_importa_reportlab_nem_openpyxl_no_boot() -> None
     )
     proc = subprocess.run(  # noqa: S603
         [sys.executable, "-c", codigo],
+        cwd=str(BACKEND_DIR),
         capture_output=True,
         text=True,
     )

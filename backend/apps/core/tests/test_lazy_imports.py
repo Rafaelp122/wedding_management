@@ -2,8 +2,15 @@
 
 import subprocess
 import sys
+from pathlib import Path
+
+import pytest
 
 
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
+@pytest.mark.unit
 def test_storage_nao_importa_boto3_no_boot() -> None:
     codigo = (
         "import os, sys, django;"
@@ -15,6 +22,7 @@ def test_storage_nao_importa_boto3_no_boot() -> None:
     )
     proc = subprocess.run(  # noqa: S603
         [sys.executable, "-c", codigo],
+        cwd=str(BACKEND_DIR),
         capture_output=True,
         text=True,
     )
@@ -22,6 +30,7 @@ def test_storage_nao_importa_boto3_no_boot() -> None:
     assert proc.stdout.strip() == "", f"boto3 no boot: {proc.stdout.strip()}"
 
 
+@pytest.mark.unit
 def test_oidc_nao_importa_google_auth_no_boot() -> None:
     codigo = (
         "import os, sys, django;"
@@ -34,6 +43,7 @@ def test_oidc_nao_importa_google_auth_no_boot() -> None:
     )
     proc = subprocess.run(  # noqa: S603
         [sys.executable, "-c", codigo],
+        cwd=str(BACKEND_DIR),
         capture_output=True,
         text=True,
     )
