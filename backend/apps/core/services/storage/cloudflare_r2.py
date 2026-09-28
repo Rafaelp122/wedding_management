@@ -1,4 +1,3 @@
-import boto3  # type: ignore[import-untyped]
 from django.conf import settings
 
 from apps.core.exceptions import BusinessRuleViolation
@@ -99,6 +98,8 @@ class CloudflareR2StorageService:
                 code="storage_configuration_incomplete",
             )
 
+        import boto3  # type: ignore[import-untyped]
+
         s3_client = boto3.client(
             "s3",
             endpoint_url=self.endpoint_url,
@@ -143,6 +144,8 @@ class CloudflareR2StorageService:
                 code="storage_configuration_incomplete",
             )
 
+        import boto3
+
         s3_client = boto3.client(
             "s3",
             endpoint_url=self.endpoint_url,
@@ -186,6 +189,8 @@ class CloudflareR2StorageService:
                 detail="Configuração de storage R2/S3 incompleta no servidor.",
                 code="storage_configuration_incomplete",
             )
+
+        import boto3
 
         s3_client = boto3.client(
             "s3",
