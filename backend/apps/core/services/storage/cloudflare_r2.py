@@ -1,4 +1,5 @@
-import boto3  # type: ignore[import-untyped]
+from typing import Any
+
 from django.conf import settings
 
 from apps.core.exceptions import BusinessRuleViolation
@@ -72,6 +73,37 @@ class CloudflareR2StorageService:
             or getattr(settings, "R2_SECRET_ACCESS_KEY", None)
         )
 
+    def _get_client(self, bucket: str) -> Any:
+        """
+        Obtém o cliente S3 configurado, validando as credenciais sob demanda.
+
+        Args:
+            bucket: O nome do bucket de destino no storage.
+
+        Returns:
+            Cliente boto3 para S3.
+
+        Raises:
+            BusinessRuleViolation: Se a configuração do storage estiver incompleta.
+        """
+        if not all(
+            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
+        ):
+            raise BusinessRuleViolation(
+                detail="Configuração de storage R2/S3 incompleta no servidor.",
+                code="storage_configuration_incomplete",
+            )
+
+        import boto3  # type: ignore[import-untyped]
+
+        return boto3.client(
+            "s3",
+            endpoint_url=self.endpoint_url,
+            aws_access_key_id=self.access_key_id,
+            aws_secret_access_key=self.secret_access_key,
+            region_name=self.region_name,
+        )
+
     def generate_presigned_put_url(
         self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
     ) -> str:
@@ -91,22 +123,7 @@ class CloudflareR2StorageService:
             BusinessRuleViolation: Se as credenciais ou o bucket não
                 estiverem devidamente configurados no servidor.
         """
-        if not all(
-            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
-        ):
-            raise BusinessRuleViolation(
-                detail="Configuração de storage R2/S3 incompleta no servidor.",
-                code="storage_configuration_incomplete",
-            )
-
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.access_key_id,
-            aws_secret_access_key=self.secret_access_key,
-            region_name=self.region_name,
-        )
-
+        s3_client = self._get_client(bucket)
         presigned_url: str = s3_client.generate_presigned_url(
             "put_object",
             Params={
@@ -135,22 +152,7 @@ class CloudflareR2StorageService:
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.
         """
-        if not all(
-            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
-        ):
-            raise BusinessRuleViolation(
-                detail="Configuração de storage R2/S3 incompleta no servidor.",
-                code="storage_configuration_incomplete",
-            )
-
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.access_key_id,
-            aws_secret_access_key=self.secret_access_key,
-            region_name=self.region_name,
-        )
-
+        s3_client = self._get_client(bucket)
         presigned_url: str = s3_client.generate_presigned_url(
             "get_object",
             Params={
@@ -179,22 +181,7 @@ class CloudflareR2StorageService:
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.
         """
-        if not all(
-            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
-        ):
-            raise BusinessRuleViolation(
-                detail="Configuração de storage R2/S3 incompleta no servidor.",
-                code="storage_configuration_incomplete",
-            )
-
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.access_key_id,
-            aws_secret_access_key=self.secret_access_key,
-            region_name=self.region_name,
-        )
-
+        s3_client = self._get_client(bucket)
         s3_client.put_object(
             Bucket=bucket,
             Key=object_key,

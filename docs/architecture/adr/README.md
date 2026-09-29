@@ -58,6 +58,7 @@ Esta pasta reúne todos os **Architecture Decision Records (ADRs)** do Wedding M
 - **[ADR-026: Estratégia de Branches & Staging](026-gitops-branching-and-deployment-strategy.md)** 🟢 — Modelo de branches (`main`/`develop`), homologação privada e ciclo por Sprints.
 - **[ADR-027: Topologia dos States Terraform](027-terraform-state-topology.md)** 🟢 — States isolados de `shared`, `staging` e `production`, com adoção sem recriação.
 - **[ADR-029: Modern Task Runner (Just)](029-modern-task-runner-just.md)** 🟢 — Adoção do Just e PoeThePoet para orquestração unificada multiplataforma.
+- **[ADR-032: Lazy Imports + Granian WSGI](032-lazy-imports-granian-wsgi.md)** 🟢 — Imports pesados sob demanda e runtime Rust em modo WSGI para reduzir cold start no Cloud Run.
 
 ---
 

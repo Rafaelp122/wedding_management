@@ -2,8 +2,6 @@ import logging
 from typing import cast
 
 from django.conf import settings
-from google.auth.transport import requests
-from google.oauth2 import id_token as google_id_token
 from ninja.errors import HttpError
 
 from .base import GoogleIDTokenClaims, OAuthUserInfo
@@ -37,6 +35,9 @@ class GoogleOAuthProvider:
         if not client_id:
             logger.warning("Configuração GOOGLE_CLIENT_ID ausente no servidor.")
             raise HttpError(401, "Configuração do Google OAuth ausente no servidor.")
+
+        from google.auth.transport import requests
+        from google.oauth2 import id_token as google_id_token
 
         try:
             id_info = cast(

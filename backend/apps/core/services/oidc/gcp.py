@@ -2,8 +2,6 @@ import logging
 from typing import cast
 
 from django.conf import settings
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
 
 from .base import OIDCClaims
 
@@ -39,6 +37,9 @@ class GCPOIDCVerifier:
         Raises:
             PermissionError: Se a service account não for autorizada.
         """
+        from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token
+
         claim = cast(
             OIDCClaims,
             id_token.verify_oauth2_token(  # type: ignore[no-untyped-call]
