@@ -56,7 +56,9 @@ FROM base AS production
 
 ARG BUILD_SECRET_KEY=dummy-secret-key-for-collectstatic-32-chars # pragma: allowlist secret
 
-ENV DJANGO_SETTINGS_MODULE=config.settings.production
+ENV DJANGO_SETTINGS_MODULE=config.settings.production \
+    PYTHONOPTIMIZE=1 \
+    PYTHONNODEBUGRANGES=1
 
 RUN useradd -m -u 1000 appuser
 
@@ -73,4 +75,4 @@ USER appuser
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8080} --worker-class gthread --workers ${GUNICORN_WORKERS:-1} --threads 4 --timeout 60 --preload"]
+CMD ["sh", "-c", "exec granian config.wsgi:application --interface wsgi --host 0.0.0.0 --port ${PORT:-8080} --workers ${GRANIAN_WORKERS:-1} --blocking-threads ${GRANIAN_BLOCKING_THREADS:-15} --backlog 1024 --http auto --no-access-log --log-level warn"]

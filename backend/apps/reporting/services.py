@@ -5,8 +5,6 @@ Camada de serviços para o módulo de reporting (relatórios e exportações).
 from typing import Literal
 from uuid import UUID
 
-from apps.reporting.excel_utils import render_wedding_excel
-from apps.reporting.pdf_utils import render_wedding_pdf
 from apps.reporting.selectors import wedding_report_data_selector
 from apps.tenants.models import Company
 
@@ -41,6 +39,8 @@ class ReportGenerationService:
         Returns:
             Bytes do arquivo PDF gerado.
         """
+        from apps.reporting.pdf_utils import render_wedding_pdf
+
         data = wedding_report_data_selector(
             company=company,
             wedding_uuid=wedding_uuid,
@@ -70,6 +70,8 @@ class ReportGenerationService:
         Returns:
             Bytes do arquivo Excel (.xlsx) gerado.
         """
+        from apps.reporting.excel_utils import render_wedding_excel
+
         data = wedding_report_data_selector(
             company=company,
             wedding_uuid=wedding_uuid,

@@ -10,6 +10,7 @@ import { CriticalWeddings } from "@/features/dashboard/components/CriticalWeddin
 import { DashboardOperations } from "@/features/dashboard/components/DashboardOperations";
 import { UpcomingAppointments } from "@/features/dashboard/components/UpcomingAppointments";
 import { UpcomingInstallments } from "@/features/dashboard/components/UpcomingInstallments";
+import { PageContainer } from "@/components/layouts";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -78,14 +79,14 @@ export function DashboardPageView({
 }: DashboardPageViewProps) {
   return (
     <div className="flex-1 overflow-auto min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+      <PageContainer>
         {/* Welcome + Filters */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               {greeting}{firstName && `, ${firstName}`}
             </h1>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               {isWeddingSelected && selectedWedding
                 ? `Visualizando: ${selectedWedding.bride_name} & ${selectedWedding.groom_name}`
                 : "Aqui está o panorama financeiro e de eventos para hoje."}
@@ -103,7 +104,7 @@ export function DashboardPageView({
               >
                 <SelectTrigger
                   id="wedding-filter"
-                  className="w-52 bg-white dark:bg-[#18181B] border-zinc-200 dark:border-zinc-800 shadow-sm text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  className="w-52 bg-card border-border shadow-sm text-sm font-medium text-foreground"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Heart className="w-3.5 h-3.5 text-aura-500 shrink-0" />
@@ -122,7 +123,7 @@ export function DashboardPageView({
             )}
 
             {/* Date badge */}
-            <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 bg-white dark:bg-[#18181B] px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm font-medium shrink-0">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground bg-card px-4 py-2 rounded-lg border border-border shadow-sm font-medium shrink-0">
               <Calendar className="w-4 h-4 text-primary" />
               {formattedDate}
             </div>
@@ -131,14 +132,14 @@ export function DashboardPageView({
 
         {/* Wedding Header — only in individual view */}
         {isWeddingSelected && selectedWeddingFull && (
-          <div className="bg-gradient-to-r from-aura-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-aura-100 dark:border-zinc-800 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-soft animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="bg-gradient-to-r from-aura-50 to-card dark:from-card dark:to-background border border-aura-100 dark:border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-soft animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-aura-100 dark:bg-aura-900/40 flex items-center justify-center text-aura-600 dark:text-aura-400 border border-aura-200 dark:border-aura-800/50 shrink-0">
                 <Heart className="w-6 h-6 fill-current opacity-80" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-bold text-zinc-900 dark:text-white">
+                  <h2 className="text-lg font-bold text-foreground">
                     {selectedWeddingFull.bride_name} & {selectedWeddingFull.groom_name}
                   </h2>
                   {weddingStatusInfo && (
@@ -150,7 +151,7 @@ export function DashboardPageView({
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-4 mt-1 text-sm text-zinc-500 dark:text-zinc-400 flex-wrap">
+                <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" />
                     {weddingDate}
@@ -175,7 +176,7 @@ export function DashboardPageView({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-zinc-500 gap-1 cursor-pointer"
+                className="text-muted-foreground gap-1 cursor-pointer"
                 onClick={() => onNavigateToWedding(selectedWeddingFull.uuid, "finances")}
               >
                 Finanças <ArrowRight className="w-3.5 h-3.5" />
@@ -253,7 +254,7 @@ export function DashboardPageView({
             <DashboardOperations />
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }
