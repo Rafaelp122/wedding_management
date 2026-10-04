@@ -22,10 +22,7 @@ from apps.tenants.models import TenantModel
 
 
 class ContractAddendum(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
-    """
-    Entidade filha de termos aditivos contratuais (RFC-001 / ADR-030).
-    Vinculada exclusivamente a um contrato principal de forma acíclica.
-    """
+    """Entidade de Termo Aditivo Contratual vinculada 1:N ao contrato principal (RFC-001 / ADR-030)."""
 
     objects = ContractAddendumQuerySet.as_manager()  # type: ignore[assignment,misc]
 

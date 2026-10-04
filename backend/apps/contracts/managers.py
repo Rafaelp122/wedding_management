@@ -30,9 +30,6 @@ class ContractAddendumQuerySet(TenantQuerySet["ContractAddendum"]):
     ) -> ContractAddendumQuerySet:
         """Filtra aditivos vinculados a um contrato específico.
 
-        Args:
-            contract: Instância, UUID ou identificador do contrato principal.
-
         Returns:
             QuerySet filtrado pelo contrato.
         """
@@ -156,9 +153,6 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
     ) -> ContractQuerySet:
         """Filtra contratos associados a um casamento específico.
 
-        Args:
-            wedding: Instância de Wedding, UUID ou string identificadora.
-
         Returns:
             ContractQuerySet filtrado pelo casamento.
         """
@@ -169,13 +163,13 @@ class ContractQuerySet(TenantQuerySet["Contract"]):
         return self.filter(wedding__uuid=wedding)
 
     def search(self, query: str | None = None) -> ContractQuerySet:
-        """Filtra contratos por termo de busca textual.
+        """Filtra contratos por termo de busca textual em nome, fornecedor, cliente ou descrição.
 
         Args:
             query: Termo de busca textual.
 
         Returns:
-            ContractQuerySet filtrado.
+            ContractQuerySet filtrado pelo termo informado.
         """
         if not query:
             return self

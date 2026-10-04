@@ -25,15 +25,15 @@ def task_list_selector(
     is_completed: bool | None = None,
 ) -> TaskQuerySet:
     """
-    Lista tarefas do checklist vinculadas ao tenant, com filtros opcionais.
+    Lista tarefas do checklist vinculadas ao tenant com filtros opcionais.
+
+    Otimiza a leitura com select_related('wedding').
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador opcional do casamento para filtragem.
-        is_completed: Flag booleana opcional para filtrar por status de conclusão.
+        is_completed: Filtro booleano por status de conclusão (True para concluídas, False para pendentes).
 
     Returns:
-        TaskQuerySet com as tarefas filtradas e relacionamento com wedding carregado.
+        QuerySet de tarefas filtradas e com relacionamento de casamento carregado.
     """
     qs = Task.objects.for_tenant(company).select_related("wedding")
     if wedding_id:
@@ -45,14 +45,12 @@ def task_list_selector(
 
 def task_get_selector(*, company: Company, uuid: UUID | str) -> Task:
     """
-    Recupera uma tarefa específica pelo UUID, garantindo o isolamento multitenant.
+    Recupera uma tarefa específica pelo UUID garantindo o isolamento multitenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: O identificador único da tarefa.
+    Otimiza a leitura com select_related('wedding', 'company').
 
     Returns:
-        A instância da Task encontrada.
+        Instância de Task encontrada.
 
     Raises:
         ObjectNotFoundError: Se a tarefa não existir ou pertencer a outro tenant.
@@ -70,12 +68,13 @@ def task_urgent_list_selector(*, company: Company, today: date) -> TaskQuerySet:
     """
     Lista tarefas urgentes (pendentes e vencidas/a vencer até hoje) do tenant.
 
+    Otimiza a leitura com select_related('wedding').
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        today: Data de referência para verificar urgência/vencimento.
+        today: Data base de referência para avaliar urgência e vencimento.
 
     Returns:
-        TaskQuerySet com as tarefas urgentes.
+        QuerySet de tarefas urgentes.
     """
     return Task.objects.for_tenant(company).select_related("wedding").urgent(today)
 
@@ -91,12 +90,11 @@ def get_wedding_timeline_compression_selector(
     Calcula a proximidade da celebração (se inferior a 90 dias) e gera alertas orientadores
     para a assessoria priorizar etapas críticas.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_uuid: UUID do casamento a analisar.
-
     Returns:
-        Dicionário com is_timeline_compressed, compressed_timeline_message e days_until_wedding.
+        Dicionário com indicadores de compressão da linha do tempo, mensagem de alerta e contagem de dias restantes.
+
+    Raises:
+        ObjectNotFoundError: Se o casamento não for encontrado no tenant.
     """
     from django.utils import timezone
 

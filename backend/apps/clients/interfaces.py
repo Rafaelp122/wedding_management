@@ -16,15 +16,10 @@ if TYPE_CHECKING:
 
 
 def get_client_for_tenant(company: Company, client_id: UUID | str) -> Client:
-    """
-    Recupera um cliente validando o isolamento do tenant para outros contextos.
-
-    Args:
-        company: Instância da empresa (Tenant) para isolamento.
-        client_id: Identificador único (UUID) do cliente.
+    """Recupera um cliente validando o isolamento do tenant para outros contextos.
 
     Returns:
-        Instância do modelo Client encontrada e pertencente à empresa.
+        Instância do cliente pertencente à empresa.
 
     Raises:
         ObjectNotFoundError: Se o cliente não existir ou pertencer a outra empresa.
@@ -41,18 +36,19 @@ def get_or_create_client_for_proposal(
     email: str = "",
     phone: str = "",
 ) -> Client:
-    """
-    Obtém um cliente existente por CPF, e-mail ou nome para o tenant, ou cria um novo cliente.
+    """Obtém cliente existente por CPF, e-mail ou nome para o tenant, ou cria um novo.
+
+    Efeitos Colaterais:
+        Cria novo registro ou atualiza campos vazios do cliente na base de dados.
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        name: Nome completo do cliente/contratante.
-        cpf: CPF do cliente (opcional).
-        email: E-mail de contato (opcional).
-        phone: Telefone de contato (opcional).
+        name: Nome completo do cliente ou contratante.
+        cpf: CPF do cliente para busca ou vinculação.
+        email: E-mail de contato para busca ou vinculação.
+        phone: Telefone de contato para busca ou vinculação.
 
     Returns:
-        Instância de Client persistida.
+        Instância do cliente localizada ou criada.
     """
     from apps.clients.models import Client
 

@@ -31,15 +31,10 @@ class InstallmentService:
     Garante o isolamento multitenant e a integridade da Tolerância Zero (ADR-010)
     nas despesas pai.
 
-    Regras de Negócio e SSOT:
-    - BR-F01 (Tolerância Zero Centesimal):
-      docs/architecture/business-rules/finances/financial-integrity-rules.md
-    - BR-F05 (Vencimento e Máquina de Estados de Parcelas):
-      docs/architecture/business-rules/finances/installment-overdue-logic.md
-    - BR-S01-SYNC (Integração de Pagamentos com Agenda):
-      docs/architecture/business-rules/finances/payment-schedule-integration.md
-    - Hub do Domínio Financeiro:
-      docs/architecture/domains/finances-domain.md
+    Regras de Negócio:
+        BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+        BR-F05 (docs/architecture/business-rules/finances/installment-overdue-logic.md)
+        BR-S01-SYNC (docs/architecture/business-rules/finances/payment-schedule-integration.md)
     """
 
     @staticmethod
@@ -52,18 +47,23 @@ class InstallmentService:
     ) -> list[Installment]:
         """Gera parcelas de despesa com ajuste na última (Tolerância Zero).
 
-        Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01)
+        Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01-SYNC)
         para visualização dos compromissos de pagamento no calendário.
 
+        Regras de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+            BR-S01-SYNC (docs/architecture/business-rules/finances/payment-schedule-integration.md)
+
+        Efeitos Colaterais:
+            - Persiste as instâncias de Installment atomicamente.
+            - Dispara a criação de eventos PAYMENT no calendário da agenda (BR-S01-SYNC).
+
         Args:
-            company: O tenant atual para isolamento de dados.
-            expense: A despesa pai que receberá o parcelamento.
-            num_installments: Número total de parcelas (> 0).
-            first_due_date: Data de vencimento da primeira parcela.
+            num_installments: Número total de parcelas (deve ser >= 1).
+            first_due_date: Data base para vencimento da primeira parcela.
 
         Returns:
-            list[Installment]: Lista com as instâncias de parcelas salvas no
-                banco.
+            Lista com as instâncias de parcelas salvas e balanceadas.
 
         Raises:
             BusinessRuleViolation: Se a despesa já possuir parcelas, se o
@@ -120,18 +120,20 @@ class InstallmentService:
         Remove as parcelas anteriores (e seus respectivos eventos de pagamento)
         e gera novas parcelas com novos valores e datas.
 
+        Efeitos Colaterais:
+            - Remove os eventos de pagamento anteriores na agenda (BR-S01-SYNC).
+            - Remove fisicamente as parcelas anteriores e recria o cronograma via auto_generate_installments.
+
         Args:
-            company: O tenant atual para isolamento de dados.
-            expense: A despesa associada que terá as parcelas redistribuídas.
-            num_installments: Novo número total de parcelas.
-            first_due_date: Data de vencimento da primeira parcela.
+            num_installments: Novo número total de parcelas (deve ser >= 1).
+            first_due_date: Data base para vencimento da primeira parcela.
 
         Returns:
-            list[Installment]: Lista com as novas parcelas geradas.
+            Lista com as novas parcelas geradas e balanceadas.
 
         Raises:
             BusinessRuleViolation: Se existirem parcelas já pagas (status PAID)
-                na despesa.
+                na despesa (BR-F04).
         """
         if expense.has_paid_installments:
             raise BusinessRuleViolation(
@@ -159,16 +161,15 @@ class InstallmentService:
         Valida se a adição da nova parcela respeita a integridade matemática
         da despesa (Tolerância Zero / ADR-010).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para a criação da parcela.
+        Efeitos Colaterais:
+            - Persiste a parcela avulsa e revalida a consistência matemática da despesa pai.
 
         Returns:
-            Installment: A parcela criada.
+            A instância de parcela criada.
 
         Raises:
             ObjectNotFoundError: Se a despesa correspondente não for encontrada.
-            BusinessRuleViolation: Se a criação violar o total da despesa pai.
+            BusinessRuleViolation: Se a criação violar o total da despesa pai (BR-F01 / ADR-010).
         """
         logger.info(f"Iniciando criação de Parcela para company_id={company.id}")
 
@@ -223,17 +224,15 @@ class InstallmentService:
         Revalida se as alterações mantêm a consistência matemática da despesa
         pai.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da parcela a ser atualizada.
-            payload: Dados parciais de atualização da parcela.
+        Efeitos Colaterais:
+            - Atualiza a parcela e revalida a consistência matemática da despesa pai.
 
         Returns:
-            Installment: A instância da parcela atualizada.
+            A instância de parcela atualizada.
 
         Raises:
-            BusinessRuleViolation: Se a alteração violar a regra Tolerância
-                Zero.
+            BusinessRuleViolation: Se a parcela estiver paga e houver tentativa de alterar campos protegidos (BR-F04),
+                ou se a alteração quebrar a Tolerância Zero da despesa pai (BR-F01 / ADR-010).
         """
         validate_tenant_ownership(
             company,
@@ -298,12 +297,11 @@ class InstallmentService:
         Garante a atualização de status para PAID e define a data de pagamento
         como o dia corrente, revalidando a despesa pai.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da parcela a ser paga.
+        Efeitos Colaterais:
+            - Altera o status da parcela para PAID, registra a data de pagamento corrente e revalida a despesa pai.
 
         Returns:
-            Installment: A parcela atualizada.
+            A instância de parcela marcada como paga.
 
         Raises:
             BusinessRuleViolation: Se a parcela já estiver paga ou se a
@@ -342,12 +340,11 @@ class InstallmentService:
         Remove a data de pagamento e redefine o status apropriado dependendo
         da data de vencimento (PENDING ou OVERDUE).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da parcela a ser revertida.
+        Efeitos Colaterais:
+            - Restaura o status da parcela para PENDING ou OVERDUE, limpa a data de pagamento e revalida a despesa pai.
 
         Returns:
-            Installment: A parcela com status atualizado.
+            A instância de parcela com o pagamento revertido.
 
         Raises:
             BusinessRuleViolation: Se a parcela não estiver paga ou violar as
@@ -388,17 +385,15 @@ class InstallmentService:
         Garante que a nova data de vencimento respeite a sequência cronológica
         das parcelas anterior e posterior, além de revalidar a despesa pai.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da parcela a ser ajustada.
-            payload: Dados de ajuste da parcela.
+        Efeitos Colaterais:
+            - Modifica valor ou data da parcela e revalida a consistência matemática da despesa pai.
 
         Returns:
-            Installment: A instância da parcela ajustada.
+            A instância de parcela ajustada.
 
         Raises:
             BusinessRuleViolation: Se a parcela estiver paga, se a data estiver
-                fora da cronologia sequencial ou se violar a soma da despesa pai.
+                fora da cronologia sequencial (BR-F05) ou se violar a soma da despesa pai (BR-F01 / ADR-010).
         """
         validate_tenant_ownership(
             company,
@@ -451,13 +446,13 @@ class InstallmentService:
         Remove o evento de pagamento associado no scheduler e revalida a
         despesa pai.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da parcela a ser excluída.
+        Efeitos Colaterais:
+            - Remove o evento de pagamento associado no scheduler (BR-S01-SYNC).
+            - Remove fisicamente a parcela e revalida a integridade da despesa pai.
 
         Raises:
             DomainIntegrityError: Se a exclusão violar a integridade
-                matemática da despesa pai.
+                matemática da despesa pai (BR-F01 / ADR-010).
         """
         validate_tenant_ownership(
             company,
@@ -502,16 +497,19 @@ class InstallmentService:
         company: Company | None = None,
         today: date | None = None,
     ) -> int:
-        """Marca como OVERDUE todas as parcelas PENDING com due_date anterior a hoje
+        """Marca como atrasadas parcelas pendentes com vencimento expirado.
 
-        e dispara a criação de Notificações In-App para os usuários da empresa.
+        Dispara a criação de Notificações In-App para os usuários da empresa.
+
+        Efeitos Colaterais:
+            - Transiciona o status das parcelas vencidas para OVERDUE.
+            - Dispara notificações in-app de atraso para os usuários da assessoria.
 
         Args:
-            company: Tenant opcional para restrição de escopo.
-            today: Data de referência para checagem de vencimento (opcional).
+            today: Data de referência para checagem de vencimento (se omitida, utiliza a data corrente).
 
         Returns:
-            int: Quantidade de parcelas atualizadas para OVERDUE.
+            Quantidade de parcelas atualizadas para o status atrasado.
         """
         if today is None:
             today = date.today()

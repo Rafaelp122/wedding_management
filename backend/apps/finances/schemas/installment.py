@@ -9,8 +9,6 @@ from pydantic import UUID4, ConfigDict
 
 
 class InstallmentIn(Schema):
-    """Schema de entrada para criação de parcela."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     expense: UUID4
@@ -22,8 +20,6 @@ class InstallmentIn(Schema):
 
 
 class InstallmentPatchIn(Schema):
-    """Schema de entrada para atualização parcial de parcela."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     installment_number: int | None = Field(default=None, gt=0)
@@ -34,8 +30,6 @@ class InstallmentPatchIn(Schema):
 
 
 class InstallmentAdjustIn(Schema):
-    """Schema de entrada para ajuste financeiro de parcela."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     amount: Decimal | None = Field(default=None, ge=0)
@@ -43,8 +37,6 @@ class InstallmentAdjustIn(Schema):
 
 
 class InstallmentOut(Schema):
-    """Schema de saída para exibição de parcela."""
-
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     expense: UUID4 = Field(alias="expense.uuid")

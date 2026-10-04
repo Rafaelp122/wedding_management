@@ -85,9 +85,7 @@ router = Router(tags=["auth"])
     operation_id="auth_register_user",
 )
 def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, User]:
-    """
-    Cria um novo usuário e um workspace dedicado (Tenant Pragmático).
-    """
+    """Cria um novo usuário proprietário e seu respectivo workspace."""
     user = RegistrationService.register_new_owner(
         email=payload.email,
         password=payload.password,
@@ -106,13 +104,7 @@ def register_user(request: HttpRequest, payload: RegisterIn) -> tuple[int, User]
     operation_id="auth_obtain_token",
 )
 def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
-    """
-    Autentica o usuário e retorna o token de acesso.
-
-    Valida o email e senha no banco de dados.
-    Se a conta estiver inativa ou as credenciais forem inválidas, retorna erro 401.
-    No sucesso, retorna os tokens JWT e os dados básicos do usuário logado.
-    """
+    """Autentica o usuário por e-mail e senha, emitindo os tokens de acesso."""
     return TokenService.obtain(
         email=payload.email,
         password=payload.password,
@@ -133,12 +125,7 @@ def obtain_token(request: HttpRequest, payload: TokenPayloadIn) -> TokenOut:
 def refresh_token(
     request: HttpRequest, payload: TokenRefreshInputSchema
 ) -> TokenRefreshOutputSchema:
-    """
-    Gera um novo token de acesso usando um refresh token.
-
-    Valida se o refresh token enviado ainda está no prazo de validade.
-    Permite manter a sessão ativa sem o usuário precisar digitar a senha novamente.
-    """
+    """Gera um novo token de acesso a partir de um refresh token válido."""
     return TokenService.refresh(payload.refresh)
 
 
@@ -156,12 +143,7 @@ def refresh_token(
 def verify_token(
     request: HttpRequest, payload: TokenVerifyInputSchema
 ) -> VerifyTokenOut:
-    """
-    Verifica se um token ainda é válido e não expirou.
-
-    Confere a assinatura do token JWT sem acessar o banco de dados.
-    Ideal para o frontend checar o status do login antes de carregar uma página.
-    """
+    """Verifica a integridade e a validade temporal de um token de acesso."""
     return TokenService.verify(payload.token)
 
 
@@ -178,12 +160,7 @@ def verify_token(
     operation_id="auth_google_login",
 )
 def google_login(request: HttpRequest, payload: GoogleAuthIn) -> TokenOut:
-    """
-    Autentica ou cadastra um usuário usando um ID Token do Google OAuth.
-
-    Valida o token com os servidores do Google. Se o usuário já existir,
-    retorna os tokens JWT. Caso contrário, registra o usuário e cria um workspace.
-    """
+    """Autentica ou cadastra um usuário utilizando credenciais do Google OAuth2."""
     return GoogleAuthService.authenticate_with_google(payload.id_token)
 
 
@@ -197,9 +174,7 @@ def google_login(request: HttpRequest, payload: GoogleAuthIn) -> TokenOut:
 def request_password_reset(
     request: HttpRequest, payload: PasswordResetRequestIn
 ) -> tuple[int, PasswordResetResponseOut]:
-    """
-    Solicita a redefinição de senha para um e-mail.
-    """
+    """Inicia o fluxo de solicitação de redefinição de senha para o e-mail informado."""
     PasswordResetService.request_password_reset(email=payload.email)
     return 200, PasswordResetResponseOut(
         message="Se o e-mail existir, você receberá as instruções em breve."
@@ -216,9 +191,7 @@ def request_password_reset(
 def confirm_password_reset(
     request: HttpRequest, payload: PasswordResetConfirmIn
 ) -> tuple[int, PasswordResetResponseOut]:
-    """
-    Confirma a redefinição de senha usando UID, token e a nova senha.
-    """
+    """Confirma a redefinição de senha utilizando o token de recuperação."""
     PasswordResetService.confirm_password_reset(
         uid=payload.uid,
         token=payload.token,
@@ -237,9 +210,7 @@ def confirm_password_reset(
 def verify_email(
     request: HttpRequest, payload: VerifyEmailIn
 ) -> tuple[int, VerifyEmailResponseOut]:
-    """
-    Verifica o token de e-mail e ativa o usuário.
-    """
+    """Valida o token recebido por e-mail e ativa o cadastro do usuário."""
     EmailVerificationService.verify_email(uid=payload.uid, token=payload.token)
     return 200, VerifyEmailResponseOut(message="E-mail verificado com sucesso.")
 
@@ -254,9 +225,7 @@ def verify_email(
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationIn
 ) -> tuple[int, VerifyEmailResponseOut]:
-    """
-    Reenvia o e-mail de verificação para o usuário (se não estiver verificado).
-    """
+    """Reenvia o e-mail de ativação caso a conta ainda não esteja verificada."""
     EmailVerificationService.resend_verification_email(email=payload.email)
     return 200, VerifyEmailResponseOut(
         message="Se a conta existir e não estiver verificada, o e-mail será reenviado."
@@ -271,8 +240,6 @@ def resend_verification(
     operation_id="auth_logout",
 )
 def logout(request: HttpRequest, payload: LogoutIn) -> tuple[int, LogoutOut]:
-    """
-    Invalida o refresh token no servidor, revogando a sessão ativa.
-    """
+    """Invalida o refresh token no servidor, revogando a sessão ativa."""
     TokenService.logout(payload.refresh)
     return 200, LogoutOut(message="Logout realizado com sucesso.")

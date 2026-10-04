@@ -24,8 +24,7 @@ from apps.tenants.models import TenantModel
 
 
 class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
-    """
-    Entidade unificada de Contratos (ADR-030 / ADR-031).
+    """Entidade unificada de Contratos (ADR-030 / ADR-031).
 
     Representa tanto instrumentos jurídicos de honorários da assessoria (PLANNER)
     quanto contratos com prestadores logísticos externos (SUPPLIER).
@@ -346,11 +345,11 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         self.pdf_file = None
 
     def send_to_pending(self) -> None:
-        """Transita o contrato para aguardando assinaturas externas."""
+        """Transita o contrato de DRAFT para PENDING aguardando assinaturas externas."""
         self.transition_to(self.StatusChoices.PENDING)
 
     def revert_to_draft(self) -> None:
-        """Reverte o contrato para rascunho de trabalho."""
+        """Reverte o contrato para DRAFT a partir dos estados PENDING ou CANCELED."""
         self.transition_to(self.StatusChoices.DRAFT)
 
     # ── Propriedades de Domínio e Compatibilidade ───────────────────────

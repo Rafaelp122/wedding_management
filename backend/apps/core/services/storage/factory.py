@@ -8,16 +8,15 @@ from .cloudflare_r2 import CloudflareR2StorageService
 
 def get_storage_service() -> StorageService:
     """
-    Retorna a implementação ativa do StorageService.
+    Retorna a implementação ativa do serviço de armazenamento.
 
-    A escolha do provedor é feita com base no settings do Django.
+    A resolução do provedor é realizada a partir das configurações do settings.
 
     Returns:
-        Uma instância concreta de StorageService correspondente.
+        Instância concreta de StorageService correspondente ao provedor ativo.
 
     Raises:
-        BusinessRuleViolation: Se o provedor configurado no settings
-            não for suportado.
+        BusinessRuleViolation: Se o provedor configurado no settings não for suportado.
     """
     provider = getattr(settings, "STORAGE_PROVIDER", "R2").upper()
 

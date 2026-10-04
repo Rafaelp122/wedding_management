@@ -29,9 +29,7 @@ expenses_router = Router(tags=["Finances"])
 def list_expenses(
     request: AuthRequest, wedding_id: UUID4 | None = None
 ) -> QuerySet[Expense]:
-    """
-    Lista todas as compras e despachos que saíram dos painéis orçamentários.
-    """
+    """Lista as despesas do tenant com filtros opcionais por casamento ou categoria."""
     user = request.user
     return expense_list_selector(company=user.company, wedding_id=wedding_id)
 
@@ -44,9 +42,7 @@ def list_expenses(
 def list_contracts_lookup(
     request: AuthRequest, wedding_id: UUID4
 ) -> list[ContractLookupOut]:
-    """
-    Lista contratos vinculados a um casamento para associação em despesas.
-    """
+    """Lista contratos de um casamento disponíveis para vinculação a despesas."""
     user = request.user
     contracts = list_contracts_for_wedding(
         company=user.company, wedding_uuid=wedding_id
@@ -68,9 +64,7 @@ def list_contracts_lookup(
     operation_id="finances_expenses_read",
 )
 def get_expense(request: AuthRequest, uuid: UUID4) -> Expense:
-    """
-    Retorna recibo unitário simplificado nominal registrado no controle base.
-    """
+    """Recupera detalhes e métricas de parcelamento de uma despesa."""
     user = request.user
     return expense_get_selector(company=user.company, uuid=uuid)
 
@@ -81,10 +75,7 @@ def get_expense(request: AuthRequest, uuid: UUID4) -> Expense:
     operation_id="finances_expenses_create",
 )
 def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expense]:
-    """
-    Aprova lançamento final nos tetos das divisões e categorias.
-    Consome o limite orçamentário previsto inicial geral da categoria.
-    """
+    """Cria uma nova despesa e gera automaticamente seu cronograma de parcelas."""
     user = request.user
     created = ExpenseService.create(user.company, payload)
     return 201, expense_get_selector(company=user.company, uuid=created.uuid)
@@ -98,9 +89,7 @@ def create_expense(request: AuthRequest, payload: ExpenseIn) -> tuple[int, Expen
 def update_expense(
     request: AuthRequest, uuid: UUID4, payload: ExpensePatchIn
 ) -> Expense:
-    """
-    Ajuste na conta para valores fracionários sem afetar o fluxo contábil.
-    """
+    """Atualiza dados cadastrais ou valor total da despesa com redistribuição."""
     user = request.user
     instance = expense_get_selector(company=user.company, uuid=uuid)
     ExpenseService.update(user.company, instance, payload)
@@ -113,9 +102,7 @@ def update_expense(
     operation_id="finances_expenses_delete",
 )
 def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Deleta uma compra revertendo seu efeito, estornando em painel os gastos.
-    """
+    """Exclui uma despesa e remove suas parcelas e eventos associados."""
     user = request.user
     instance = expense_get_selector(company=user.company, uuid=uuid)
     ExpenseService.delete(user.company, instance)
@@ -128,10 +115,7 @@ def delete_expense(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     operation_id="finances_expenses_from_document",
 )
 def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
-    """
-    Retorna sugestão de payload para criar despesa a partir de um contrato.
-    Pré-preenche valores, descrição e fornecedor do documento de referência.
-    """
+    """Prepara sugestão de payload de despesa a partir de um contrato formalizado."""
     user = request.user
     data = ExpenseService.from_document(company=user.company, contract_uuid=uuid)
     return ExpenseFromDocumentOut(**data)
@@ -145,10 +129,7 @@ def from_document(request: AuthRequest, uuid: UUID4) -> ExpenseFromDocumentOut:
 def renegotiate_expense(
     request: AuthRequest, uuid: UUID4, payload: ExpenseRenegotiateIn
 ) -> Expense:
-    """
-    Renegocia e redistribui as parcelas de uma despesa.
-    Bloqueia a operação se houver parcelas já marcadas como pagas (BR-F04).
-    """
+    """Renegocia e redistribui as parcelas pendentes de uma despesa."""
     user = request.user
     instance = expense_get_selector(company=user.company, uuid=uuid)
     ExpenseService.renegotiate_installments(

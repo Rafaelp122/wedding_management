@@ -33,12 +33,7 @@ def list_events(
     request: AuthRequest,
     wedding_id: UUID4 | None = None,
 ) -> QuerySet[Event]:
-    """
-    Lista todos os eventos do cronograma do Planner logado.
-
-    Retorna tanto tarefas isoladas quanto eventos atrelados aos diferentes casamentos.
-    Garante que o usuário veja apenas os eventos de sua propriedade.
-    """
+    """Lista eventos do cronograma com filtros opcionais por casamento."""
     user = request.user
     return event_list_selector(
         company=user.company,
@@ -52,9 +47,7 @@ def list_events(
     operation_id="scheduler_summary_get",
 )
 def get_scheduler_summary(request: AuthRequest) -> dict[str, Any]:
-    """
-    Retorna o resumo estatístico consolidado dos eventos do cronograma.
-    """
+    """Retorna o resumo estatístico consolidado dos eventos do cronograma."""
     return scheduler_summary_selector(company=request.user.company)
 
 
@@ -68,9 +61,7 @@ scheduler_router = Router(tags=["Scheduler"])
     include_in_schema=False,
 )
 def get_scheduler_root_summary(request: AuthRequest) -> dict[str, Any]:
-    """
-    Retorna o resumo consolidado de eventos (alias na raiz do scheduler).
-    """
+    """Retorna o resumo consolidado de eventos (alias na raiz do scheduler)."""
     return scheduler_summary_selector(company=request.user.company)
 
 
@@ -83,9 +74,7 @@ def get_timeline_compression(
     request: AuthRequest,
     wedding_id: UUID4,
 ) -> dict[str, Any]:
-    """
-    Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001).
-    """
+    """Retorna o diagnóstico de compressão temporal da linha do tempo para o casamento (RFC-001)."""
     return get_wedding_timeline_compression_selector(
         company=request.user.company,
         wedding_uuid=wedding_id,
@@ -98,11 +87,7 @@ def get_timeline_compression(
     operation_id="scheduler_events_read",
 )
 def get_event(request: AuthRequest, uuid: UUID4) -> Event:
-    """
-    Retorna os detalhes completos de um evento específico no cronograma.
-
-    Realiza a busca pelo UUID garantindo que o evento pertence ao Planner logado.
-    """
+    """Retorna os detalhes completos de um evento específico no cronograma."""
     user = request.user
     return event_get_selector(company=user.company, uuid=uuid)
 
@@ -113,13 +98,7 @@ def get_event(request: AuthRequest, uuid: UUID4) -> Event:
     operation_id="scheduler_events_create",
 )
 def create_event(request: AuthRequest, payload: EventIn) -> tuple[int, Event]:
-    """
-    Adiciona um novo evento ou tarefa ao cronograma.
-
-    O Service realiza validações como:
-    - Garantir que a data de término não seja anterior à data de início.
-    - Validar os minutos para o disparo de lembretes (reminder).
-    """
+    """Adiciona um novo evento ao cronograma da assessoria."""
     user = request.user
     created = EventService.create(user.company, payload)
     return 201, event_get_selector(company=user.company, uuid=created.uuid)
@@ -131,11 +110,7 @@ def create_event(request: AuthRequest, payload: EventIn) -> tuple[int, Event]:
     operation_id="scheduler_events_update",
 )
 def update_event(request: AuthRequest, uuid: UUID4, payload: EventPatchIn) -> Event:
-    """
-    Atualiza informações específicas de um evento do cronograma.
-
-    Permite adiar prazos, trocar descrições ou gerenciar lembretes para um evento.
-    """
+    """Atualiza informações de um evento existente no cronograma."""
     user = request.user
     instance = event_get_selector(company=user.company, uuid=uuid)
     updated = EventService.update(user.company, instance, payload)
@@ -148,12 +123,7 @@ def update_event(request: AuthRequest, uuid: UUID4, payload: EventPatchIn) -> Ev
     operation_id="scheduler_events_delete",
 )
 def delete_event(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Remove um compromisso ou evento do cronograma.
-
-    Deleta a tarefa permanentemente.
-    Desativa também os alertas e lembretes associados a ela.
-    """
+    """Remove um evento existente do cronograma."""
     user = request.user
     instance = event_get_selector(company=user.company, uuid=uuid)
     EventService.delete(user.company, instance)

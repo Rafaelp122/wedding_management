@@ -22,18 +22,9 @@ from apps.tenants.models import TenantModel
 
 class Budget(TenantModel, WeddingOwnedMixin):
     """
-    Orçamento mestre (RF03).
-    Define o teto financeiro global do casamento.
+    Orçamento mestre do casamento (RF03).
 
-    Nota de Arquitetura:
-    Mantemos o OneToOneField explicitamente definido aqui, sobrescrevendo a
-    ForeignKey padrão que o WeddingOwnedMixin forneceria.
-    Isso é feito por dois motivos:
-    1. Garantir a unicidade (ADR-003): Cada casamento deve ter exatamente UM orçamento
-       mestre.
-    2. Compatibilidade com o BaseViewSet: Ao herdar de WeddingOwnedMixin, o ViewSet
-       continua identificando o modelo como "pertencente a um casamento" e aplica
-       automaticamente os filtros de Multitenancy (Segurança por Design).
+    Define o teto financeiro global e garante unicidade OneToOne por casamento.
     """
 
     objects = BudgetManager()  # type: ignore[misc]
@@ -72,10 +63,7 @@ class Budget(TenantModel, WeddingOwnedMixin):
         return f"Orçamento: {self.wedding} - R$ {self.total_estimated}"
 
     def freeze_baseline(self) -> None:
-        """
-        Congela a linha de base original do orçamento caso ainda não tenha sido congelada.
-        Preserva o valor da primeira formalização de planejamento.
-        """
+        """Congela a linha de base original do orçamento caso ainda não tenha sido definida."""
         if self.baseline_amount is None:
             self.baseline_amount = self.total_estimated
 

@@ -26,9 +26,7 @@ def list_clients(
     request: AuthRequest,
     q: str = "",
 ) -> QuerySet[Client]:
-    """
-    Lista todos os clientes cadastrados pela assessoria com paginação e busca textual.
-    """
+    """Lista todos os clientes cadastrados pela assessoria com busca textual."""
     user = request.user
     return client_list_selector(company=user.company, q=q)
 
@@ -42,9 +40,7 @@ def create_client(
     request: AuthRequest,
     payload: ClientIn,
 ) -> tuple[int, Client]:
-    """
-    Cadastra um novo cliente/contato no tenant autenticado.
-    """
+    """Cadastra um novo cliente no tenant autenticado."""
     user = request.user
     client = ClientService.create(company=user.company, payload=payload)
     return 201, client
@@ -56,9 +52,7 @@ def create_client(
     operation_id="get_client",
 )
 def get_client(request: AuthRequest, uuid: UUID4) -> Client:
-    """
-    Recupera os detalhes de um cliente específico pelo UUID.
-    """
+    """Recupera os detalhes de um cliente específico pelo UUID."""
     user = request.user
     return client_get_selector(company=user.company, uuid=uuid)
 
@@ -73,9 +67,7 @@ def update_client(
     uuid: UUID4,
     payload: ClientPatchIn,
 ) -> Client:
-    """
-    Atualiza parcialmente os dados de um cliente existente.
-    """
+    """Atualiza parcialmente os dados de um cliente existente."""
     user = request.user
     instance = client_get_selector(company=user.company, uuid=uuid)
     return ClientService.update(
@@ -89,9 +81,7 @@ def update_client(
     operation_id="delete_client",
 )
 def delete_client(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Remove um cliente garantindo que não esteja vinculado a casamentos.
-    """
+    """Remove um cliente garantindo validação de integridade referencial."""
     user = request.user
     instance = client_get_selector(company=user.company, uuid=uuid)
     ClientService.delete(company=user.company, instance=instance)

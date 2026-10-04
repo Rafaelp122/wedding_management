@@ -33,9 +33,13 @@ class SupplierService:
 
         Aplica as validações do modelo ao salvar.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do fornecedor.
+        Regra de Negócio:
+            BR-SUP-CNPJ-01 (docs/architecture/business-rules/logistics/cnpj-validation-rules.md)
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância do Supplier no banco de dados.
 
         Returns:
             A instância do Supplier criada e salva.
@@ -61,10 +65,8 @@ class SupplierService:
 
         Valida a propriedade do tenant antes de aplicar e salvar as alterações.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Supplier a ser atualizada.
-            payload: Dados parciais para atualização do fornecedor.
+        Efeitos Colaterais:
+            - Atualiza os dados cadastrais e status de ativação do fornecedor.
 
         Returns:
             A instância atualizada do Supplier.
@@ -113,9 +115,8 @@ class SupplierService:
 
         Valida a propriedade do tenant antes da exclusão.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Supplier a ser removida.
+        Efeitos Colaterais:
+            - Remove o registro de fornecedor do banco de dados.
 
         Raises:
             ObjectNotFoundError: Se o fornecedor não pertencer ao tenant.

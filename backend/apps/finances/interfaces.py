@@ -31,13 +31,10 @@ def create_expense_from_contract(
     """
     Cria uma despesa vinculada a um contrato logístico.
 
-    Args:
-        company: Tenant para isolamento de dados.
-        payload: Dados da despesa informados.
-        contract_uuid: Identificador único do contrato a ser vinculado.
+    Delega a instanciação e validações de paridade de valor ao ExpenseService (BR-F02).
 
     Returns:
-        A instância de Expense criada e persistida.
+        A instância de despesa criada e persistida.
     """
     expense_payload = payload.model_copy(update={"contract": contract_uuid})
     return ExpenseService.create(company=company, payload=expense_payload)
@@ -54,16 +51,14 @@ def create_expense_from_planner_contract(
     Cria uma despesa e suas parcelas a partir do contrato de assessoria cerimonial.
 
     Garante a existência do orçamento mestre e da categoria 'Assessoria',
-    alocando a verba e lançando a despesa com tolerância zero (BR-F01/BR-F04).
+    alocando a verba e lançando a despesa com tolerância zero (BR-F01 e BR-F04).
 
-    Args:
-        company: Tenant para isolamento de dados.
-        wedding: Instância do casamento associado.
-        planner_contract: Instância do Contract com honorários e parcelamento.
-        category_id: Categoria orçamentária opcional; se omitida, busca ou cria 'Assessoria'.
+    Efeitos Colaterais:
+        - Cria ou atualiza o orçamento mestre e a categoria 'Assessoria'.
+        - Persiste a despesa e suas parcelas no banco de dados via ExpenseService.
 
     Returns:
-        A instância de Expense criada e persistida com suas parcelas.
+        A instância de despesa criada e persistida com suas parcelas.
     """
     fee = getattr(
         planner_contract,
@@ -152,15 +147,17 @@ def add_expense_adjustment_from_addendum(
     Ajusta o montante da despesa vinculada a um contrato após a formalização de um aditivo.
 
     Atualiza actual_amount somando o valor do aditivo e preserva a regra de Tolerância Zero
-    (BR-F01/ADR-010) gerando uma nova parcela para o aditivo caso já existam parcelas.
+    (BR-F01 / ADR-010) gerando uma nova parcela para o aditivo caso já existam parcelas.
+
+    Efeitos Colaterais:
+        - Persiste nova parcela com valor do aditivo sob lock pessimista no banco de dados.
+        - Enfileira no commit a criação de evento PAYMENT na agenda (BR-S01-SYNC).
 
     Args:
-        company: O tenant atual para isolamento multitenant.
-        contract_uuid: Identificador único (UUID ou string) do contrato principal.
-        addendum_amount: Valor do aditivo a ser acrescido na despesa.
+        addendum_amount: Valor monetário do aditivo a ser acrescido na despesa.
 
     Returns:
-        A instância de Expense atualizada, ou None caso o contrato não possua despesa vinculada.
+        A instância de despesa atualizada, ou None caso o contrato não possua despesa vinculada.
     """
     from datetime import timedelta
 
@@ -224,9 +221,8 @@ def freeze_budget_baseline_for_wedding(
     """
     Congela a linha de base original do orçamento mestre para o casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding: Instância do casamento associado.
+    Efeitos Colaterais:
+        - Atualiza o campo baseline_amount do orçamento mestre caso ainda não congelado.
     """
     budget = Budget.objects.filter(company=company, wedding=wedding).first()
     if budget:

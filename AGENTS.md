@@ -44,7 +44,7 @@
 ### Documentation & Comments
 
 - **MkDocs-First & Hubs de Domínio Ricos**: Seguir o modelo **MkDocs-First** com **Hubs de Domínio** em `docs/architecture/domains/` e notas atômicas de regras em `docs/architecture/business-rules/` ([documentation-standards](docs/reference/architecture-standards/documentation-standards.md)). O `mkdocs.yml` é a Única Fonte da Verdade para navegação (proibidos MOCs burocráticos intermediários). Executar `just check-docs` (ou `uv run --project backend python scripts/validate_docs_links.py`).
-- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Google Style for public service methods.
+- **PT-BR & Code Comments**: Write comments/docstrings in Portuguese (PT-BR) following [commenting-standards](docs/reference/architecture-standards/commenting-standards.md). Use Pragmatic Google Style for public service/interface methods (forbidden duplicated types in docstrings, prioritize `Raises:` and business invariants; omit obvious entity args).
 - **No AI Mentions**: PROHIBITED to reference AI tools, assistants, or generators (e.g. "Bolt", "Jules", "Copilot") in comments or documentation.
 
 ## Subagents Dispatch Matrix

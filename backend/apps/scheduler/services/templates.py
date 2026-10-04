@@ -168,15 +168,17 @@ def get_template_events(template_name: str) -> list[dict[str, Any]]:
     """
     Retorna a lista de eventos pré-definidos do template solicitado.
 
+    Regra de Negócio:
+        BR-W07 (docs/architecture/business-rules/weddings/wedding-schedule-templates.md)
+
     Args:
-        template_name: O nome identificador do template de cronograma.
+        template_name: Identificador canônico do template de cronograma.
 
     Returns:
-        Lista contendo dicionários representativos dos eventos do template,
-        com as chaves `title`, `event_type` e `offset_days`.
+        Lista de especificações de eventos contendo título, tipo e dias de deslocamento.
 
     Raises:
-        BusinessRuleViolation: Se o template solicitado não for encontrado.
+        BusinessRuleViolation: Se o template solicitado não estiver cadastrado no sistema.
     """
     template = TEMPLATES.get(template_name)
     if template is None:

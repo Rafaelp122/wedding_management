@@ -23,13 +23,9 @@ class BudgetService:
     Garante que cada casamento tenha exatamente um teto financeiro (OneToOne)
     e isola a lógica de negócio por tenant.
 
-    Regras de Negócio e SSOT:
-    - BR-F04-A..D (Distribuição e Teto Orçamentário):
-      docs/architecture/business-rules/finances/budget-category-distribution.md
-    - BR-F06 (Benchmark da Assessoria):
-      docs/architecture/business-rules/finances/tenant-budget-benchmark.md
-    - Hub do Domínio Financeiro:
-      docs/architecture/domains/finances-domain.md
+    Regras de Negócio:
+        BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
+        BR-F06 (docs/architecture/business-rules/finances/tenant-budget-benchmark.md)
     """
 
     @staticmethod
@@ -40,15 +36,15 @@ class BudgetService:
         Garante que casamentos não tenham orçamentos duplicados (restrição
         OneToOne).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do orçamento.
+        Efeitos Colaterais:
+            - Persiste atomicamente o orçamento mestre vinculado ao casamento.
 
         Returns:
-            Budget: A instância do orçamento criada.
+            A instância de orçamento criada.
 
         Raises:
             DomainIntegrityError: Se o casamento já possuir um orçamento.
+            ObjectNotFoundError: Se o casamento informado não for encontrado ou não pertencer ao tenant.
         """
         logger.info(
             f"Iniciando criação de Orçamento Mestre para company_id={company.id}"
@@ -100,13 +96,11 @@ class BudgetService:
         Garante o isolamento do tenant e valida as regras de negócios como
         o validador de valor mínimo.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do orçamento a ser atualizada.
-            payload: Dados parciais para atualização do orçamento.
+        Efeitos Colaterais:
+            - Atualiza e persiste atomicamente as alterações no orçamento mestre.
 
         Returns:
-            Budget: A instância do orçamento atualizada.
+            A instância de orçamento atualizada.
         """
         validate_tenant_ownership(
             company,
@@ -143,12 +137,11 @@ class BudgetService:
         Verifica a propriedade do tenant e se o orçamento está protegido por
         categorias ou despesas filhas antes de prosseguir com a exclusão.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do orçamento a ser excluída.
+        Efeitos Colaterais:
+            - Remove fisicamente a instância do orçamento mestre do banco de dados.
 
         Raises:
-            DomainIntegrityError: Se o orçamento possuir categorias ou despesas.
+            DomainIntegrityError: Se o orçamento possuir categorias ou despesas vinculadas.
         """
         validate_tenant_ownership(
             company,
@@ -186,12 +179,11 @@ class BudgetService:
         Se for criado, também gera automaticamente as categorias padrão
         do orçamento sob lock (select_for_update) para evitar condições de corrida.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_uuid: O UUID do casamento associado.
+        Efeitos Colaterais:
+            - Cria o orçamento mestre e gera categorias canônicas padrão caso ainda não exista.
 
         Returns:
-            Budget: A instância do orçamento (existente ou recém-criado).
+            A instância de orçamento recuperada ou recém-criada.
         """
         wedding = get_object_or_404_for_tenant(
             Wedding,

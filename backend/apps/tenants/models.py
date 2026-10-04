@@ -7,7 +7,8 @@ from apps.tenants.managers import TenantManager
 class Company(BaseModel):
     """
     Representa o Tenant (Empresa) do sistema.
-    A empresa de cerimonial, assessoria ou o próprio casal em modo self-service.
+
+    Isola os dados operacionais de assessorias, cerimonias ou casais.
     """
 
     name = models.CharField("Nome da Empresa", max_length=255)
@@ -21,7 +22,7 @@ class Company(BaseModel):
         db_table = "companies"
 
     def clean(self) -> None:
-        """Sanitiza o slug para garantir consistência e evitar problemas de URL."""
+        """Sanitiza o slug para garantir consistência em URLs e rotas."""
         super().clean()
         if self.slug:
             self.slug = self.slug.strip().lower()
@@ -32,8 +33,9 @@ class Company(BaseModel):
 
 class TenantModel(BaseModel):
     """
-    Classe base abstrata para todos os modelos que pertencem a um Tenant.
-    Garante isolamento automático de dados.
+    Modelo base abstrato para entidades vinculadas a um Tenant.
+
+    Garante isolamento automático de dados via Company e aplicação do TenantManager.
     """
 
     company = models.ForeignKey(

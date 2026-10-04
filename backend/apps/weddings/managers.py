@@ -28,7 +28,7 @@ class WeddingQuerySet(TenantQuerySet["Wedding"]):
             query: Termo de busca textual.
 
         Returns:
-            WeddingQuerySet filtrado pelo termo informado.
+            QuerySet filtrado pelo termo informado.
         """
         if not query:
             return self
@@ -43,10 +43,10 @@ class WeddingQuerySet(TenantQuerySet["Wedding"]):
         Filtra casamentos pelo status informado.
 
         Args:
-            status: Status do casamento (ex: IN_PROGRESS, COMPLETED, CANCELED).
+            status: Status do casamento pretendido (ex: IN_PROGRESS, COMPLETED, CANCELED).
 
         Returns:
-            WeddingQuerySet filtrado pelo status.
+            QuerySet filtrado pelo status informado.
 
         Raises:
             BusinessRuleViolation: Se o status fornecido for inválido.
@@ -64,23 +64,21 @@ class WeddingQuerySet(TenantQuerySet["Wedding"]):
 
     def upcoming(self, today: date, days: int = 90) -> WeddingQuerySet:
         """
-        Filtra casamentos que ocorrerão nos próximos `days` dias a partir de today.
+        Filtra casamentos que ocorrerão nos próximos dias a partir de today.
 
         Args:
-            today: Data de referência inicial.
-            days: Quantidade de dias futuros para filtragem (padrão: 90).
+            days: Quantidade de dias futuros para filtragem a partir da data de referência (padrão: 90).
 
         Returns:
-            WeddingQuerySet filtrado pelo intervalo de datas.
+            QuerySet filtrado pelo intervalo de datas.
         """
         return self.filter(date__lte=today + timedelta(days=days))
 
     def only_lookup(self) -> WeddingQuerySet:
         """
-        Restringe os campos selecionados para uuid, bride_name e groom_name,
-        ordenando pelo nome da noiva.
+        Restringe os campos selecionados para uuid, bride_name e groom_name.
 
         Returns:
-            WeddingQuerySet otimizado para componentes de seleção/lookup.
+            QuerySet otimizado para componentes de seleção/lookup, ordenado por bride_name.
         """
         return self.only("uuid", "bride_name", "groom_name").order_by("bride_name")

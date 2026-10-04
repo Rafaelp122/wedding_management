@@ -21,8 +21,7 @@ _EXCEL_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 def _sanitize_excel_value(val: Any) -> Any:
-    """
-    Neutraliza injeção de fórmulas (CWE-1236) em células de texto exportadas.
+    """Neutraliza injeção de fórmulas (CWE-1236) em células de texto exportadas.
 
     Prefixa apóstrofo em strings iniciadas por fórmula (=, +, -, @, \\t, \\r).
     """
@@ -289,8 +288,17 @@ def render_wedding_excel(
     contracts: list[Contract],
     tasks: list[Task],
 ) -> bytes:
-    """
-    Renderiza a planilha Excel (.xlsx) completa com 5 abas estilizadas (DESIGN.md).
+    """Renderiza a pasta de trabalho Excel (.xlsx) consolidada do casamento.
+
+    Estrutura o relatório em 5 abas estilizadas (Resumo Executivo, Categorias
+    Orçamentárias, Cronograma de Parcelas, Contratos & Fornecedores, Checklist de Tarefas)
+    com formatação visual aderente ao DESIGN.md e proteção contra injeção de fórmulas (CWE-1236).
+
+    Efeitos Colaterais:
+        - Gera binário Excel (.xlsx) em memória via openpyxl.
+
+    Returns:
+        Conteúdo binário da pasta de trabalho Excel gerada.
     """
     wb = Workbook()
     ws_summary = _build_excel_summary_sheet(wb, wedding, overview, installments, tasks)

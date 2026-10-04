@@ -26,9 +26,8 @@ class TokenService:
     Centraliza a lógica de validação de credenciais, criação de tokens
     e montagem da resposta com dados do usuário autenticado.
 
-    Regras de Negócio e SSOT:
-    - Hub do Domínio de Usuários (BR-U01..08): docs/architecture/domains/users-domain.md
-    - Fluxo de Autenticação JWT: docs/architecture/concepts/auth-jwt-flow.md
+    Regra de Negócio:
+        BR-U02 (docs/architecture/domains/users-domain.md)
     """
 
     @staticmethod
@@ -36,17 +35,17 @@ class TokenService:
         """
         Autentica o usuário por e-mail e senha, gerando os tokens JWT correspondentes.
 
-        Args:
-            email: O endereço de e-mail do usuário para autenticação.
-            password: A senha em texto puro fornecida pelo usuário.
+        Efeitos Colaterais:
+            - Registra falhas de autenticação no cache em caso de erro.
+            - Limpa contadores de falhas após autenticação bem-sucedida.
 
         Returns:
-            TokenOut contendo o token de acesso (access), o token de atualização
-            (refresh) e os dados básicos do usuário autenticado.
+            Tokens de acesso, atualização e dados básicos do usuário autenticado.
 
         Raises:
-            AuthenticationFailedError: Caso credenciais sejam inválidas ou inativas.
-            AccountLockedError: Caso a conta esteja bloqueada por força bruta.
+            AuthenticationFailedError: Se as credenciais forem inválidas, se o e-mail não estiver
+                verificado ou se a conta estiver inativa.
+            AccountLockedError: Se a conta estiver temporariamente bloqueada por excesso de falhas.
         """
         masked = mask_email(email)
         logger.info(f"Tentativa de obtenção de token para email={masked}")
@@ -123,8 +122,11 @@ class TokenService:
         """
         Invalida o refresh token no servidor adicionando-o à blacklist do ninja_jwt.
 
+        Efeitos Colaterais:
+            - Adiciona o refresh token à blacklist se válido.
+
         Args:
-            refresh_token: O refresh token enviado para revogação.
+            refresh_token: Token de atualização JWT a ser revogado.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de revogação/logout de token (fp={token_fp})")
@@ -143,16 +145,17 @@ class TokenService:
         Se a rotação de tokens estiver ativa (padrão do ninja_jwt), o token antigo
         será invalidado e adicionado à blacklist, emitindo-se um novo refresh.
 
+        Efeitos Colaterais:
+            - Invalida o refresh token anterior na blacklist se a rotação estiver ativa.
+
         Args:
-            refresh_token: O refresh token atual recebido na requisição.
+            refresh_token: Token de atualização JWT recebido na requisição.
 
         Returns:
-            TokenRefreshOutputSchema contendo o novo token de acesso e,
-            opcionalmente, o novo refresh token.
+            Par de tokens renovados com novo access token e eventual novo refresh token.
 
         Raises:
-            HttpError: Se o refresh token for inválido, estiver expirado ou
-                constar na blacklist.
+            HttpError: Se o refresh token for inválido, estiver expirado ou constar na blacklist.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de refresh de token (fp={token_fp})")
@@ -167,10 +170,10 @@ class TokenService:
         Verifica a integridade e a validade temporal de um token JWT.
 
         Args:
-            token: O token JWT (geralmente o access token) a ser validado.
+            token: Token JWT a ser validado.
 
         Returns:
-            VerifyTokenOut indicando sucesso caso o token seja válido.
+            Confirmação de validação positiva do token.
 
         Raises:
             HttpError: Se o token for inválido, estiver corrompido ou expirado.

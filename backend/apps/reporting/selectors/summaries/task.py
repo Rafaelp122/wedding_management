@@ -22,20 +22,18 @@ logger = logging.getLogger(__name__)
 
 
 class TaskSummarySelector:
-    """
-    Camada de consulta para consolidação de resumos e estatísticas de tarefas.
+    """Camada de consulta para consolidação de resumos e estatísticas de tarefas.
+
     Agrega informações sobre tarefas atrasadas, totais por casamento
     e listagens de pendências urgentes do tenant.
     """
 
     @staticmethod
     def urgent_tasks_count(*, company: Company, today: date | None = None) -> int:
-        """
-        Retorna a quantidade de tarefas não concluídas e atrasadas do tenant.
+        """Retorna a quantidade de tarefas não concluídas e atrasadas do tenant.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para checagem de atraso (padrão: data atual).
 
         Returns:
             Quantidade total de tarefas atrasadas.
@@ -49,15 +47,10 @@ class TaskSummarySelector:
 
     @staticmethod
     def wedding_task_stats(*, company: Company, wedding: Wedding) -> tuple[int, int]:
-        """
-        Retorna as estatísticas de tarefas concluídas e totais de um casamento.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento a ser consultado.
+        """Retorna as estatísticas de tarefas concluídas e totais de um casamento.
 
         Returns:
-            Uma tupla contendo (tarefas_concluidas, total_tarefas).
+            Tupla contendo o total de tarefas concluídas e o total geral de tarefas.
         """
         tasks = Task.objects.for_tenant(company).filter(wedding=wedding)
         total = int(tasks.count())
@@ -68,21 +61,17 @@ class TaskSummarySelector:
     def urgent_tasks(
         *, company: Company, wedding: Wedding, today: date | None = None, limit: int = 3
     ) -> list[dict[str, Any]]:
-        """
-        Retorna as tarefas urgentes (atrasadas ou sem prazo) de um casamento.
+        """Retorna as tarefas urgentes (atrasadas ou sem prazo) de um casamento.
 
         Ordena as tarefas de forma ascendente pela data de vencimento, com
         valores nulos ao final.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento a ser consultado.
-            today: Data de referência (caso não informada, usa a data atual).
-            limit: Limite máximo de tarefas a serem retornadas (padrão: 3).
+            today: Data base de referência para checagem de prazos (padrão: data atual).
+            limit: Limite máximo de tarefas retornadas (padrão: 3).
 
         Returns:
-            Lista contendo até `limit` dicionários com as chaves `uuid`, `title`
-            e `due_date`.
+            Lista com os dados resumidos das tarefas atrasadas ou sem prazo do casamento.
         """
         today = today or date.today()
         urgent = (
@@ -104,13 +93,10 @@ class TaskSummarySelector:
     def tasks_progress_by_wedding(
         company: Company, year: int | None = None, limit: int = 10
     ) -> list[dict[str, Any]]:
-        """
-        Agrupa tarefas por casamento no tenant via SQL Count("id") e
-        Count("id", filter=Q(is_completed=True)).
+        """Agrupa tarefas por casamento no tenant computando métricas de progresso.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            year: Ano opcional para filtragem dos casamentos (wedding__date__year=year).
+            year: Ano opcional para filtragem dos casamentos.
             limit: Quantidade máxima de casamentos retornados (padrão: 10).
 
         Returns:
@@ -161,16 +147,14 @@ class TaskSummarySelector:
         today: date | None = None,
         limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """
-        Retorna as Top N tarefas atrasadas do tenant.
+        """Retorna as Top N tarefas atrasadas do tenant.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para verificação de atraso (padrão: data atual).
             limit: Quantidade máxima de registros retornados (padrão: 10).
 
         Returns:
-            Lista de dicionários contendo uuid, wedding_name, title e due_date.
+            Lista de dicionários contendo os dados das tarefas atrasadas prioritárias.
         """
         today = today or date.today()
 

@@ -11,13 +11,11 @@ from apps.tenants.models import Company
 
 
 def company_get_selector(*, uuid: UUID | str) -> Company:
-    """Recupera uma empresa (tenant) pelo seu identificador público UUID.
-
-    Args:
-        uuid: Identificador UUID único da empresa.
+    """
+    Recupera uma empresa (tenant) pelo seu identificador público UUID.
 
     Returns:
-        Company: Instância da empresa encontrada.
+        Instância da empresa encontrada.
 
     Raises:
         ObjectNotFoundError: Se nenhuma empresa for encontrada com o UUID fornecido.

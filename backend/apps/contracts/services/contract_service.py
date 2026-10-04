@@ -65,11 +65,7 @@ class ContractService:
 
     @classmethod
     def set_storage_service(cls, storage_service: StorageService) -> None:
-        """Injeta uma instância customizada de StorageService.
-
-        Args:
-            storage_service: Instância customizada ou mock de StorageService.
-        """
+        """Injeta uma instância customizada de StorageService para desacoplamento de testes."""
         cls._storage_service = storage_service
 
     @staticmethod
@@ -80,9 +76,14 @@ class ContractService:
     ) -> Contract:
         """Cria um contrato completo a partir do payload HTTP validado.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados validados da requisição.
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância de Contract no banco de dados.
+            - Associa o arquivo anexo no storage se fornecido.
+            - Cria itens de suprimento vinculados ao contrato.
+            - Cria despesa financeira e parcelas correspondentes se solicitado.
 
         Returns:
             A instância do Contract criada e totalmente populada.
@@ -187,15 +188,17 @@ class ContractService:
     def create(company: Company, payload: ContractIn) -> Contract:
         """Cria um contrato no banco de dados validando isolamento multitenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Objeto de entrada contendo os dados do contrato.
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância de Contract no banco de dados.
 
         Returns:
             A instância criada do Contract.
 
         Raises:
-            BusinessRuleViolation: Se ocorrer erro de validação de modelo.
+            BusinessRuleViolation: Se ocorrer erro de validação de modelo ao salvar.
         """
         logger.info("Iniciando criação de Contrato para company_id=%s", company.id)
 
@@ -258,12 +261,14 @@ class ContractService:
     ) -> Contract:
         """Orquestra a criação completa de um contrato com itens e despesa opcional.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_data: Dados básicos do contrato.
-            items_data: Lista opcional de itens a serem criados.
-            expense_data: Dados opcionais da despesa para parcelamento.
-            pdf_file_key: Chave do arquivo salvo no storage.
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância do contrato no banco de dados.
+            - Vincula o arquivo de comprovante digital no storage quando informado.
+            - Cria os itens de suprimento associados ao contrato.
+            - Registra a despesa financeira com seu respectivo parcelamento.
 
         Returns:
             A instância do Contract criada e totalmente populada.
@@ -301,16 +306,20 @@ class ContractService:
     ) -> Contract:
         """Atualiza parcialmente um contrato validando regras de domínio.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser atualizada.
-            payload: Dados parciais validados para atualização.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+        Decisão Arquitetural:
+            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+
+        Efeitos Colaterais:
+            - Atualiza e persiste os campos modificados do contrato.
 
         Returns:
             A instância atualizada do Contract.
 
         Raises:
-            BusinessRuleViolation: Se ocorrer violação de regras de validação.
+            BusinessRuleViolation: Se tentar alterar status/tipo diretamente, se tentar
+                alterar valor de contrato assinado sem aditivo ou se houver erro de validação.
         """
         validate_tenant_ownership(
             company,
@@ -382,12 +391,14 @@ class ContractService:
     def delete(company: Company, instance: Contract) -> None:
         """Exclui um contrato do banco de dados garantindo a integridade.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser excluída.
+        Regra de Negócio:
+            BR-L02-D (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+
+        Efeitos Colaterais:
+            - Exclui o contrato e remove aditivos associados em cascata.
 
         Raises:
-            BusinessRuleViolation: Se o contrato estiver assinado ou houver vínculo protegido.
+            BusinessRuleViolation: Se o contrato estiver formalmente assinado ou houver vínculo protegido.
         """
         validate_tenant_ownership(
             company,
@@ -420,17 +431,21 @@ class ContractService:
         *,
         pdf_file_key: str | None = None,
     ) -> Contract:
-        """Formaliza a assinatura do contrato.
+        """Formaliza a assinatura do contrato aplicando as invariantes de formalização.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser assinado.
-            signed_date: Data formal da assinatura.
-            pdf_file: Arquivo opcional do documento assinado.
-            pdf_file_key: Chave opcional de arquivo no storage.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Transita o status do contrato para SIGNED.
+            - Registra a data formal de assinatura e persiste o anexo comprobatório.
 
         Returns:
             A instância do Contract com status SIGNED.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato não cumprir as invariantes de assinatura
+                (arquivo obrigatório, valor positivo e data) ou se a transição for inválida.
         """
         validate_tenant_ownership(
             company,
@@ -468,17 +483,18 @@ class ContractService:
     ) -> Contract:
         """Transita o status do contrato pelo autômato de estados.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ter o status alterado.
-            target_status: Status de destino desejado.
-            new_status: Alias opcional para o status de destino.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Persiste a alteração de status do contrato no banco de dados.
 
         Returns:
             A instância atualizada de Contract.
 
         Raises:
-            BusinessRuleViolation: Se a transição for inválida ou o status não for informado.
+            BusinessRuleViolation: Se o status de destino não for informado ou
+                se a transição for rejeitada pela máquina de estados.
         """
         validate_tenant_ownership(
             company,
@@ -510,17 +526,19 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def send_to_pending(company: Company, instance: Contract) -> Contract:
-        """Transita o contrato para pendente de assinaturas externas.
+        """Transita o contrato para aguardando assinaturas externas (PENDING).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser transitada para pendente.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Persiste o status PENDING no contrato.
 
         Returns:
             A instância do Contract atualizada com status PENDING.
 
         Raises:
-            BusinessRuleViolation: Se a transição de status for inválida.
+            BusinessRuleViolation: Se a transição de status for inválida na máquina de estados.
         """
         validate_tenant_ownership(
             company,
@@ -543,15 +561,17 @@ class ContractService:
     def cancel(company: Company, instance: Contract) -> Contract:
         """Cancela o contrato formalizado ou em negociação.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser cancelada.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Persiste o status CANCELED no contrato.
 
         Returns:
             A instância do Contract atualizada com status CANCELED.
 
         Raises:
-            BusinessRuleViolation: Se a transição de status for inválida.
+            BusinessRuleViolation: Se o cancelamento for inválido para o estado atual do contrato.
         """
         validate_tenant_ownership(
             company,
@@ -572,17 +592,19 @@ class ContractService:
     @staticmethod
     @transaction.atomic
     def revert_to_draft(company: Company, instance: Contract) -> Contract:
-        """Reverte o contrato para minuta.
+        """Reverte o contrato para minuta (DRAFT).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato a ser revertida para rascunho.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Persiste o status DRAFT no contrato.
 
         Returns:
             A instância do Contract atualizada com status DRAFT.
 
         Raises:
-            BusinessRuleViolation: Se a transição de status for inválida.
+            BusinessRuleViolation: Se a reversão para DRAFT for inválida para o estado atual.
         """
         validate_tenant_ownership(
             company,
@@ -609,13 +631,11 @@ class ContractService:
     ) -> Contract:
         """Anexa um arquivo ao contrato.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato.
-            file: Arquivo físico ou chave de armazenamento.
+        Efeitos Colaterais:
+            - Persiste o anexo associado ao contrato.
 
         Returns:
-            Instância do Contract atualizada com o anexo.
+            A instância do Contract atualizada com o anexo.
         """
         validate_tenant_ownership(
             company,
@@ -635,12 +655,17 @@ class ContractService:
     ) -> Contract:
         """Desanexa o arquivo do contrato caso não esteja assinado.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato.
+        Regra de Negócio:
+            BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+        Efeitos Colaterais:
+            - Remove o vínculo do arquivo anexo e persiste a alteração no banco.
 
         Returns:
-            Instância do Contract sem o arquivo anexo.
+            A instância do Contract sem o arquivo anexo.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato estiver formalmente assinado.
         """
         validate_tenant_ownership(
             company,
@@ -660,17 +685,16 @@ class ContractService:
         storage_service: StorageService | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
-        """Gera URL pré-assinada para upload de arquivo de contrato no Storage.
+        """Gera URL pré-assinada para upload direto de arquivo de contrato no Storage R2/S3.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador único do casamento ou filename se posicional legado.
-            filename: Nome do arquivo original ou wedding_id se posicional legado.
-            storage_service: Instância opcional injetada de StorageService.
-            kwargs: Parâmetros adicionais para compatibilidade.
+        Efeitos Colaterais:
+            - Comunica com o serviço de Storage para emissão da URL pré-assinada.
 
         Returns:
             Dicionário com a URL pré-assinada e a chave do objeto.
+
+        Raises:
+            BusinessRuleViolation: Se a configuração do serviço de storage estiver incompleta no servidor.
         """
         raw_wedding_id = kwargs.get("wedding_id", wedding_id)
         raw_filename = kwargs.get("filename", filename)
@@ -736,16 +760,16 @@ class ContractService:
         *,
         uuid: UUID | str | None = None,
     ) -> Contract:
-        """Associa a chave do arquivo no storage ao contrato.
+        """Associa a chave do arquivo persistido no storage ao contrato.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do contrato ou UUID se posicional legado.
-            pdf_file_key: Chave do arquivo persistido no storage.
-            uuid: Identificador do contrato caso instance não seja informado.
+        Efeitos Colaterais:
+            - Atualiza e persiste a chave do arquivo e timestamp no contrato.
 
         Returns:
-            Instância do Contract atualizada.
+            A instância do Contract atualizada com a chave do arquivo.
+
+        Raises:
+            BusinessRuleViolation: Se o contrato alvo não for informado.
         """
         target: Contract
         target_uuid = uuid
@@ -778,9 +802,8 @@ class ContractService:
     def delete_file(company: Company, uuid: UUID | str) -> None:
         """Remove a associação de arquivo físico do contrato.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            uuid: Identificador único (UUID ou string) do contrato.
+        Efeitos Colaterais:
+            - Remove o vínculo do arquivo anexo e persiste a alteração no banco.
         """
         logger.info("Removendo arquivo do contrato uuid=%s", uuid)
         contract = contract_get_selector(company, uuid)

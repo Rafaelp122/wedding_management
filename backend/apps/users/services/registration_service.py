@@ -18,9 +18,8 @@ class RegistrationService:
     Assegura que o fluxo de cadastro e a criação do par Usuário-Empresa
     sejam executados de forma atômica no banco de dados.
 
-    Regras de Negócio e SSOT:
-    - Hub do Domínio de Usuários (BR-U01..08): docs/architecture/domains/users-domain.md
-    - Fluxo de Autenticação e Onboarding: docs/architecture/concepts/auth-jwt-flow.md
+    Regra de Negócio:
+        BR-U01 (docs/architecture/domains/users-domain.md)
     """
 
     @staticmethod
@@ -38,18 +37,23 @@ class RegistrationService:
         Cria a conta do usuário e a empresa correspondente em uma transação
         atômica, realizando validações de senha e de unicidade do e-mail.
 
+        Regra de Negócio:
+            BR-U01 (docs/architecture/domains/users-domain.md)
+
+        Efeitos Colaterais:
+            - Cria e persiste atomicamente a empresa e o usuário proprietário.
+            - Agenda o envio do e-mail de verificação pós-commit.
+
         Args:
-            email: E-mail do novo usuário. Deve ser único.
-            password: Senha em formato texto puro a ser validada e criptografada.
-            first_name: Primeiro nome do usuário.
-            last_name: Sobrenome do usuário.
-            company_name: Nome opcional da empresa a ser criada.
+            email: Endereço de e-mail corporativo único para a conta.
+            password: Senha em formato texto puro sujeita aos validadores de segurança.
+            company_name: Nome customizado opcional da empresa a ser criada.
 
         Returns:
-            Instância do usuário (User) recém-criado e associado à empresa.
+            Instância do usuário recém-criado e associado à empresa.
 
         Raises:
-            ValidationError: Se a senha não atender aos requisitos de segurança.
+            ValidationError: Se a senha fornecida não atender aos critérios de segurança.
             DomainIntegrityError: Se o e-mail já estiver cadastrado no sistema.
         """
         logger.info(f"Iniciando registro de novo proprietário: {email}")

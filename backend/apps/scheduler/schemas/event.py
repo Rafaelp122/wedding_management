@@ -12,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class EventIn(Schema):
-    """Schema de entrada para criação de evento/compromisso."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     wedding: UUID4
@@ -46,8 +44,6 @@ class EventIn(Schema):
 
 
 class EventPatchIn(Schema):
-    """Schema de entrada para atualização parcial de evento/compromisso."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     wedding: UUID4 | None = None
@@ -82,8 +78,6 @@ EventUpdateIn = EventPatchIn
 
 
 class EventOut(Schema):
-    """Schema de saída para exibição de evento/compromisso."""
-
     uuid: UUID4
     company_id: UUID4 = Field(alias="company.uuid")
     wedding: UUID4 = Field(alias="wedding.uuid")
@@ -114,8 +108,6 @@ class EventOut(Schema):
 
 
 class SchedulerSummaryOut(Schema):
-    """Schema de saída para resumo estatístico do cronograma."""
-
     total: int
     upcoming_7_days: int
     with_reminder: int

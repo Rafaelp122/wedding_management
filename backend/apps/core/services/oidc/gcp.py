@@ -11,7 +11,10 @@ logger = logging.getLogger(__name__)
 
 class GCPOIDCVerifier:
     """
-    Implementação concreta do OIDCVerifier para o GCP (Cloud Scheduler / Cloud Run).
+    Implementação concreta de OIDCVerifier para o GCP (Cloud Scheduler e Cloud Run).
+
+    Decisão Arquitetural:
+        ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
     """
 
     def __init__(
@@ -28,14 +31,18 @@ class GCPOIDCVerifier:
         """
         Valida o token OIDC criptograficamente contra o emissor Google.
 
+        Decisão Arquitetural:
+            ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
+
         Args:
-            token: O token JWT assinado pela conta de serviço da nuvem.
+            token: Token JWT assinado pela conta de serviço da nuvem.
 
         Returns:
-            Dicionário contendo as claims validadas.
+            Dicionário contendo as claims validadas pelo emissor Google.
 
         Raises:
-            PermissionError: Se a service account não for autorizada.
+            PermissionError: Se a conta de serviço do emissor não for autorizada.
+            ValueError: Se o token for inválido, expirado ou com audience incompatível.
         """
         from google.auth.transport import requests as google_requests
         from google.oauth2 import id_token

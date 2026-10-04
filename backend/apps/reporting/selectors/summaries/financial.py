@@ -41,8 +41,8 @@ class _CategorySummary(TypedDict):
 
 
 class FinancialSummarySelector:
-    """
-    Camada de consulta para consolidação de resumos e relatórios financeiros.
+    """Camada de consulta para consolidação de resumos e relatórios financeiros.
+
     Agrega informações sobre parcelas pendentes, vencidas, uso de orçamento
     e distribuição de gastos por categorias de orçamento do tenant.
     """
@@ -51,15 +51,13 @@ class FinancialSummarySelector:
     def pending_installments_7d(
         *, company: Company, today: date | None = None
     ) -> Decimal:
-        """
-        Retorna o valor total de parcelas pendentes que vencem nos próximos 7 dias.
+        """Retorna o valor total de parcelas pendentes que vencem nos próximos 7 dias.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para o cálculo do intervalo (padrão: data atual).
 
         Returns:
-            Valor decimal total acumulado das parcelas que vencem em 7 dias.
+            Valor total acumulado das parcelas que vencem em até 7 dias.
         """
         today = today or timezone.localdate()
         seven_days = today + timedelta(days=7)
@@ -78,18 +76,16 @@ class FinancialSummarySelector:
     def overdue_installments(
         *, company: Company, today: date | None = None
     ) -> tuple[Decimal, int]:
-        """
-        Retorna o valor total acumulado e a quantidade de parcelas atrasadas.
+        """Retorna o valor total acumulado e a quantidade de parcelas atrasadas.
 
         Considera parcelas com status explícito de atraso (OVERDUE) ou
         pendentes com vencimento anterior à data de referência.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para verificação de atraso (padrão: data atual).
 
         Returns:
-            Uma tupla contendo (valor_total_atrasado, quantidade_de_parcelas).
+            Tupla contendo o valor total atrasado e a contagem de parcelas.
         """
         today = today or timezone.localdate()
         qs = Installment.objects.for_tenant(company).filter(
@@ -101,17 +97,12 @@ class FinancialSummarySelector:
 
     @staticmethod
     def budget_percentage_used(*, company: Company, wedding: Wedding) -> float:
-        """
-        Calcula o percentual do orçamento estimado consumido até o momento.
+        """Calcula o percentual do orçamento estimado consumido até o momento.
 
         O percentual retornado é limitado ao teto máximo de 100%.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento associado.
-
         Returns:
-            Percentual utilizado (float) arredondado para uma casa decimal.
+            Percentual utilizado arredondado para uma casa decimal.
         """
         try:
             budget = (
@@ -132,15 +123,15 @@ class FinancialSummarySelector:
     def upcoming_installments(
         *, company: Company, wedding: Wedding, today: date | None = None
     ) -> list[_UpcomingInstallment]:
-        """
-        Retorna até 5 parcelas a vencer nos próximos 30 dias de um casamento.
+        """Retorna até 5 parcelas a vencer nos próximos 30 dias de um casamento.
 
         Também inclui parcelas que já estejam vencidas (status OVERDUE).
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento associado.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para a janela de 30 dias (padrão: data atual).
+
+        Returns:
+            Lista com até 5 parcelas a vencer nos próximos 30 dias ou atrasadas.
         """
         today = today or timezone.localdate()
         date_limit = today + timedelta(days=30)
@@ -175,12 +166,7 @@ class FinancialSummarySelector:
     def categories_summary(
         *, company: Company, wedding: Wedding
     ) -> list[_CategorySummary]:
-        """
-        Gera um resumo de categorias de orçamento com alocação e gastos.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento associado.
+        """Gera um resumo de categorias de orçamento com alocação e gastos.
 
         Returns:
             Lista de dicionários contendo o nome da categoria, valor alocado,
@@ -212,17 +198,17 @@ class FinancialSummarySelector:
 
     @staticmethod
     def cash_flow_by_month(company: Company, year: int) -> list[dict[str, Any]]:
-        """
-        Calcula em SQL agrupado por mês (1 a 12) a soma de parcelas PAID e PENDING
-        no ano especificado (due_date__year=year).
+        """Calcula a projeção mensal de fluxo de caixa (parcelas pagas vs pendentes).
+
+        Agrupa em SQL por mês (1 a 12) a soma de parcelas PAID e PENDING
+        no ano especificado.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            year: O ano de referência para filtragem das parcelas.
+            year: Ano de referência para filtragem das parcelas.
 
         Returns:
             Lista com exatamente 12 itens, um para cada mês do ano (1 a 12),
-            no formato {"month": i, "paid": f"{paid:.2f}", "pending": f"{pending:.2f}"}.
+            com os totais pagos e pendentes.
         """
         monthly_qs = (
             Installment.objects.for_tenant(company)
@@ -266,17 +252,14 @@ class FinancialSummarySelector:
         today: date | None = None,
         limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """
-        Retorna as Top N parcelas a vencer nos próximos 7 dias do tenant.
+        """Retorna as Top N parcelas a vencer nos próximos 7 dias do tenant.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para a janela de 7 dias (padrão: data atual).
             limit: Quantidade máxima de registros retornados (padrão: 10).
 
         Returns:
-            Lista de dicionários contendo uuid, wedding_name, amount, due_date,
-            installment_number e status.
+            Lista de dicionários contendo os dados detalhados das parcelas a vencer.
         """
         today = today or timezone.localdate()
         seven_days = today + timedelta(days=7)
@@ -315,17 +298,14 @@ class FinancialSummarySelector:
         today: date | None = None,
         limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """
-        Retorna as Top N parcelas atrasadas do tenant.
+        """Retorna as Top N parcelas atrasadas do tenant.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para verificação de atraso (padrão: data atual).
             limit: Quantidade máxima de registros retornados (padrão: 10).
 
         Returns:
-            Lista de dicionários contendo uuid, wedding_name, amount, due_date,
-            installment_number e status.
+            Lista de dicionários contendo os dados detalhados das parcelas atrasadas.
         """
         today = today or timezone.localdate()
 

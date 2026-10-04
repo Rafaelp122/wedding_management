@@ -31,12 +31,7 @@ def get_contract_for_company(
     contract_uuid_or_id: UUID | str | Contract,
     select_related: list[str] | None = None,
 ) -> Contract:
-    """Recupera uma instância de Contract validando a posse pelo tenant.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        contract_uuid_or_id: UUID, ID numérico ou instância de Contract.
-        select_related: Lista de relações adicionais para otimização de JOIN.
+    """Recupera uma instância de Contract validando a posse pelo tenant (ADR-031).
 
     Returns:
         Instância de Contract pertencente à empresa tenant.
@@ -57,11 +52,9 @@ def list_contracts_for_wedding(
     wedding_uuid: UUID | str,
     contract_type: str | None = None,
 ) -> list[Contract]:
-    """Lista todos os contratos vinculados a um casamento para um determinado tenant.
+    """Lista todos os contratos vinculados a um casamento para o tenant informado.
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_uuid: Identificador único do casamento.
         contract_type: Filtro opcional por tipo de contrato (ex: PLANNER, SUPPLIER).
 
     Returns:
@@ -79,10 +72,6 @@ def get_planner_contract_for_wedding(
     wedding: Wedding,
 ) -> Contract | None:
     """Retorna o contrato de honorários da assessoria (PLANNER) do casamento.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding: Instância do casamento associado.
 
     Returns:
         Instância de Contract do tipo PLANNER ou None se ainda não cadastrado.
@@ -106,14 +95,8 @@ def save_planner_contract_for_wedding(
 ) -> tuple[Contract, bool]:
     """Cria ou atualiza o contrato de honorários da assessoria para o casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding: Instância do casamento associado.
-        service_tier: Nível de serviço da assessoria cerimonial.
-        total_amount: Valor total dos honorários.
-        installments_count: Quantidade de parcelas acordada.
-        signed_date: Data de assinatura do contrato.
-        status: Status inicial ou atualizado do contrato.
+    Efeitos Colaterais:
+        - Persiste o contrato de assessoria cerimonial no banco de dados.
 
     Returns:
         Tupla contendo a instância de Contract e um booleano indicando criação (True) ou atualização (False).
@@ -194,10 +177,11 @@ def sign_planner_contract_for_wedding(
 ) -> Contract:
     """Assina formalmente o contrato de assessoria cerimonial do casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding: Instância do casamento associado.
-        signed_date: Data opcional da assinatura (se omitida, usa a data atual do contrato ou hoje).
+    Regra de Negócio:
+        BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
+
+    Efeitos Colaterais:
+        - Transita o status do contrato para SIGNED e persiste a data de assinatura.
 
     Returns:
         Instância de Contract assinada e salva.
@@ -236,7 +220,11 @@ def enqueue_guest_count_evaluation(
     old_count: int,
     new_count: int,
 ) -> None:
-    """Enfileira a avaliação de impacto da alteração de convidados pós-commit (RFC-001 / ADR-017)."""
+    """Enfileira a avaliação de impacto da alteração de convidados pós-commit (RFC-001 / ADR-017).
+
+    Efeitos Colaterais:
+        - Registra a tarefa assíncrona pós-commit evaluate_guest_count_impact_task.
+    """
     from django.db import transaction
 
     from apps.contracts.tasks import evaluate_guest_count_impact_task

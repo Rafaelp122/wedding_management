@@ -8,21 +8,27 @@ logger = logging.getLogger(__name__)
 
 class MockOIDCVerifier:
     """
-    Implementação mock do OIDCVerifier para Dev e Testes (Pytest).
+    Implementação mock de OIDCVerifier para desenvolvimento e testes automatizados.
+
+    Decisão Arquitetural:
+        ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
     """
 
     def verify_token(self, token: str) -> OIDCClaims:
         """
         Retorna claims simuladas para ambiente de testes e desenvolvimento.
 
+        Decisão Arquitetural:
+            ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
+
         Args:
-            token: O token recebido na requisição.
+            token: Token recebido para validação simulada.
 
         Returns:
             Dicionário com as claims simuladas da service account.
 
         Raises:
-            ValueError: Se o token for inválido no ambiente mock.
+            ValueError: Se o token fornecido não corresponder ao token de mock configurado.
         """
         dev_token = "dev-cron-token"  # noqa: S105 # pragma: allowlist secret
         if token == dev_token:

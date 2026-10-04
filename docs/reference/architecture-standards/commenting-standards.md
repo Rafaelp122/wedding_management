@@ -25,8 +25,11 @@ class SupplierService:
     """
 ```
 
-### Docstrings de Método (Google Style)
-Para métodos públicos ou com regras de negócio complexas, use o formato **Google Style**. Ele deve incluir seções explícitas de `Args`, `Returns` e `Raises` (se aplicável).
+### Docstrings de Método (Google Style Pragmático)
+Para métodos públicos na camada de serviço (`services/`) ou interfaces públicas (`interfaces.py`), use o formato **Google Style Pragmático**:
+* **Proibido Tipos em Docstrings:** Não declare tipos na docstring (ex: `Args: foo (int):`). O sistema de tipagem estrita do Python 3.12 (`mypy`) é a Única Fonte da Verdade.
+* **Escopo Semântico de `Args:`:** Documente em `Args:` apenas parâmetros com limites numéricos, invariantes de negócio ou restrições não óbvias. Parâmetros de modelo autoexplicativos (`company`, `user`) não devem ser parafraseados. Se todos os parâmetros forem óbvios, omita a seção `Args:`.
+* **Prioridade em `Raises:` e Efeitos Colaterais:** Toda exceção de negócio ou domínio passível de ser lançada deve estar explicitada em `Raises:`. Efeitos secundários (disparos no scheduler, persistência atômica, enfileiramento de tarefas) devem ser listados em `Efeitos Colaterais:`.
 
 ```python
 def auto_generate_installments(
@@ -39,17 +42,23 @@ def auto_generate_installments(
     Gera automaticamente as parcelas de uma despesa com ajuste na última
     parcela (Tolerância Zero).
 
+    Regra de Negócio:
+        BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+
+    Efeitos Colaterais:
+        - Persiste as instâncias de Installment atomicamente.
+        - Dispara a criação síncrona de eventos 'PAYMENT' no calendário da agenda (BR-S01).
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        expense: A despesa pai que receberá o parcelamento.
-        num_installments: Número total de parcelas (> 0).
-        first_due_date: Data de vencimento da primeira parcela.
+        num_installments: Número total de parcelas (deve ser >= 1).
+        first_due_date: Data base para vencimento da primeira parcela.
 
     Returns:
-        Lista com as instâncias de parcelas geradas e salvas no banco.
+        Lista com as instâncias de parcelas salvas e balanceadas.
 
     Raises:
-        BusinessRuleViolation: Se a despesa já possuir parcelas ou valor inválido.
+        BusinessRuleViolation: Se a despesa já possuir parcelas, se o número
+            de parcelas for <= 0, ou se o valor total for inválido.
     """
 ```
 

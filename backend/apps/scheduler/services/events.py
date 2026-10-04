@@ -46,6 +46,7 @@ class EventService:
         force_overlap: bool,
         instance: Event | None = None,
     ) -> None:
+        """Valida conflito de sobreposição entre eventos no calendário (BR-S03)."""
         if (
             event_type != Event.TypeChoices.PAYMENT
             and not force_overlap
@@ -81,25 +82,23 @@ class EventService:
         _allow_historical_start: bool = False,
     ) -> Event:
         """
-        Cria um novo evento para o tenant especificado.
+        Cria um novo evento no calendário para o tenant especificado.
+
+        Efeitos Colaterais:
+            - Persiste a instância de Event no banco de dados.
+            - Aplica validação de sobreposição suave (soft overlap), permitindo conflitos apenas com force_overlap.
+            - Aplica salvaguarda read-only para eventos de pagamento (BR-S01).
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do evento (EventIn ou dict).
-            _caller_internal: Flag interna indicando se a chamada foi originada
-                por outro serviço do sistema para gerar eventos financeiros.
-            _allow_historical_start: Permissão interna restrita à aplicação de
-                templates com marcos anteriores à data atual.
+            _caller_internal: Habilita criação de eventos financeiros de pagamento pelo módulo de finanças.
+            _allow_historical_start: Permite marcos anteriores à data atual exclusivamente para templates de cronograma.
 
         Returns:
-            O evento criado e salvo no banco de dados.
+            Instância de Event criada e persistida no banco de dados.
 
         Raises:
-            BusinessRuleViolation: Se o início estiver no passado ou for tentada
-                a criação manual de um evento de pagamento
-                (_caller_internal=False).
-            ObjectNotFoundError: Se o casamento associado não for encontrado ou
-                pertencer a outro tenant.
+            ObjectNotFoundError: Se o casamento associado não for encontrado no tenant.
+            BusinessRuleViolation: Se o início estiver no passado, se houver conflito de horário ou se for tentada criação manual de pagamento.
         """
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
@@ -208,20 +207,19 @@ class EventService:
         payload: EventPatchIn | EventUpdateIn | dict[str, Any],
     ) -> Event:
         """
-        Atualiza as informações de um evento existente.
+        Atualiza as informações de um evento existente no calendário.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do evento a ser atualizada.
-            payload: Dados com as alterações a serem aplicadas.
+        Efeitos Colaterais:
+            - Atualiza os campos do evento e persiste no banco de dados.
+            - Aplica validação de sobreposição de horários com suporte a force_overlap.
+            - Impede mutação manual em eventos de pagamento ou conversão para tipo pagamento (BR-S01).
 
         Returns:
-            A instância do evento atualizada.
+            Instância de Event atualizada e persistida.
 
         Raises:
-            ObjectNotFoundError: Se o evento pertencer a outro tenant.
-            BusinessRuleViolation: Se o evento for de pagamento ou se for
-                tentada a alteração do tipo para pagamento.
+            ObjectNotFoundError: Se o evento não pertencer à empresa informada.
+            BusinessRuleViolation: Se o evento for de pagamento, se houver conflito de horários ou se a validação falhar.
         """
         validate_tenant_ownership(
             company,
@@ -299,15 +297,14 @@ class EventService:
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
         """
-        Exclui um evento existente.
+        Exclui um evento existente do calendário.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do evento a ser excluída.
+        Efeitos Colaterais:
+            - Remove a instância do evento do banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se o evento pertencer a outro tenant.
-            BusinessRuleViolation: Se o evento for do tipo pagamento.
+            ObjectNotFoundError: Se o evento não pertencer à empresa informada.
+            BusinessRuleViolation: Se o evento for protegido contra exclusão manual por ser do tipo pagamento (BR-S01).
         """
         validate_tenant_ownership(
             company,

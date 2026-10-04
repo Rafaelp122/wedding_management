@@ -17,31 +17,30 @@ from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager["User"]):
-    """Manager customizado para o modelo User.
+    """
+    Manager customizado para o modelo User.
 
     Gerencia a criação de usuários regulares e superusuários,
-    usando email como campo de autenticação ao invés de username.
-
-    Novos usuários regulares são criados inativos (is_active=False) por padrão,
-    implementando um fluxo de ativação via email ou processo administrativo.
-    Superusuários sempre são criados ativos com permissões totais.
+    utilizando e-mail como campo único de autenticação.
     """
 
     def _create_user(
         self, email: str, password: str | None, **extra_fields: Any
     ) -> "User":
-        """Método interno para criar e salvar um usuário com email e senha.
+        """
+        Método interno para criar e persistir um usuário com e-mail e senha.
+
+        Efeitos Colaterais:
+            - Persiste a nova instância de User no banco de dados.
 
         Args:
-            email (str): Endereço de email do usuário (obrigatório).
-            password (str): Senha do usuário.
-            **extra_fields: Campos adicionais para o modelo User.
+            **extra_fields: Atributos adicionais repassados para a instância de User.
 
         Returns:
-            User: Instância do usuário criado.
+            Instância do usuário criado e persistido.
 
         Raises:
-            ValueError: Se o email não for fornecido.
+            ValueError: Se o e-mail não for informado.
         """
         if not email:
             raise ValueError("O e-mail é obrigatório.")
@@ -65,18 +64,20 @@ class CustomUserManager(BaseUserManager["User"]):
     def create_user(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> "User":
-        """Cria e salva um usuário regular com email e senha.
+        """
+        Cria e salva um usuário regular no sistema.
 
         Por padrão, cria usuários com is_active=False, exigindo ativação
-        via email ou processo administrativo.
+        posterior por confirmação de e-mail.
+
+        Efeitos Colaterais:
+            - Persiste a nova instância de User no banco de dados.
 
         Args:
-            email (str): Endereço de email do usuário.
-            password (str, optional): Senha do usuário.
-            **extra_fields: Campos adicionais do modelo User.
+            **extra_fields: Atributos adicionais repassados para o usuário.
 
         Returns:
-            User: Instância do usuário criado.
+            Instância do usuário regular criado.
         """
         extra_fields.setdefault(
             "is_active", False
@@ -86,7 +87,18 @@ class CustomUserManager(BaseUserManager["User"]):
     def create_superuser(
         self, email: str, password: str | None = None, **extra_fields: Any
     ) -> "User":
-        """Cria e salva um superusuário vinculado ao Workspace Administrativo."""
+        """
+        Cria e salva um superusuário vinculado ao Workspace Administrativo.
+
+        Efeitos Colaterais:
+            - Cria ou recupera o workspace administrativo e persiste o superusuário.
+
+        Args:
+            **extra_fields: Atributos adicionais repassados para o superusuário.
+
+        Returns:
+            Instância do superusuário criado com privilégios totais.
+        """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -110,7 +122,16 @@ class CustomUserManager(BaseUserManager["User"]):
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
         ),
     ) -> str:
-        """Gera uma senha aleatória segura."""
+        """
+        Gera uma sequência de caracteres aleatórios para uso como senha temporária.
+
+        Args:
+            length: Comprimento total da senha gerada (padrão de 16 caracteres).
+            allowed_chars: Conjunto de caracteres aceitos na composição da senha.
+
+        Returns:
+            Senha aleatória gerada.
+        """
         from django.utils.crypto import get_random_string
 
         return get_random_string(length, allowed_chars)
@@ -201,11 +222,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.get_full_name()} ({self.email})"
 
     def get_full_name(self) -> str:
-        """Retorna o nome completo."""
+        """Retorna o nome completo concatenado do usuário."""
         return f"{self.first_name} {self.last_name}".strip()
 
     def clean(self) -> None:
-        """Valida e normaliza as invariantes do usuário."""
+        """Valida e normaliza as invariantes de dados do usuário."""
         super().clean()
         if self.email:
             self.email = self.email.strip().lower()
@@ -215,11 +236,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.is_active = True
 
     def verify_email(self, verified_at: Any | None = None) -> None:
-        """Marca o e-mail do usuário como verificado e registra o timestamp.
+        """
+        Marca o e-mail do usuário como verificado e registra o timestamp.
 
         Args:
-            verified_at: Timestamp opcional da verificação.
-                Se omitido, usa timezone.now().
+            verified_at: Data e hora da verificação. Se omitido, utiliza a hora atual.
         """
         self.is_email_verified = True
         self.email_verified_at = verified_at or timezone.now()

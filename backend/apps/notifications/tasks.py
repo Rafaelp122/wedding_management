@@ -16,16 +16,15 @@ def dispatch_async_notification_task(
 ) -> None:
     """Tarefa assíncrona para despacho de notificações in-app.
 
+    Efeitos Colaterais:
+        - Persiste a notificação in-app no banco de dados chamando NotificationService.
+
     Args:
-        company_id: ID ou UUID da empresa tenant.
-        user_id: ID ou UUID do usuário destinatário.
-        title: Título da notificação.
-        message: Conteúdo detalhado da notificação.
         notification_type: Tipo da notificação (NotificationType).
         link: Link de redirecionamento opcional.
         target_type: Tipo da entidade ERP de destino.
-        target_id: UUID do recurso de destino.
-        wedding_id: UUID do casamento associado.
+        target_id: Identificador do recurso de destino.
+        wedding_id: Identificador do casamento associado.
         wedding_name: Nome formatado do casamento associado.
     """
     from apps.notifications.services import NotificationService

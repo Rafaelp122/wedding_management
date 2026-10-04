@@ -16,15 +16,10 @@ logger = logging.getLogger(__name__)
 @task()
 def on_wedding_canceled_task(company_id: int | str, wedding_uuid: str) -> None:
     """
-    Tarefa assíncrona coordenadora executada após o cancelamento de um casamento.
-    Orquestra os efeitos colaterais nos outros domínios de forma assíncrona
-    e desacoplada:
-    - Limpeza/desativação de eventos de agenda (scheduler)
-    - Despacho de notificações de cancelamento
+    Orquestra os efeitos colaterais assíncronos após o cancelamento de um casamento.
 
-    Args:
-        company_id: ID numérico ou UUID da empresa tenant.
-        wedding_uuid: Identificador UUID do casamento cancelado.
+    Efeitos Colaterais:
+        - Coordena desativação de compromissos no calendário e despacho de notificações de cancelamento.
     """
     from apps.tenants.models import Company
     from apps.weddings.models import Wedding
@@ -58,13 +53,13 @@ def on_wedding_activated_task(
     template: str | None = None,
 ) -> None:
     """
-    Tarefa assíncrona executada após a ativação de um casamento (PROPOSTA -> IN_PROGRESS).
-    Orquestra a geração assíncrona de itens operacionais e notificações reativas.
+    Orquestra os efeitos colaterais assíncronos após a ativação de um casamento.
+
+    Efeitos Colaterais:
+        - Dispara a geração assíncrona do checklist operacional inicial no módulo scheduler (ADR-017 / RFC-001).
 
     Args:
-        company_id: ID numérico ou UUID da empresa tenant.
-        wedding_uuid: Identificador UUID do casamento ativado.
-        template: Nome do template de cronograma, se houver.
+        template: Nome do template canônico de cronograma a ser aplicado.
     """
     from apps.tenants.models import Company
     from apps.weddings.models import Wedding

@@ -35,10 +35,7 @@ def list_installments(
     due_date_lte: date | None = None,
     exclude_paid: bool = False,
 ) -> QuerySet[Installment]:
-    """
-    Lista parcelas com filtros opcionais por casamento, despesa,
-    status e período de vencimento.
-    """
+    """Lista parcelas do tenant com filtros de casamento, despesa, status e vencimento."""
     user = request.user
     return installment_list_selector(
         company=user.company,
@@ -57,9 +54,7 @@ def list_installments(
     operation_id="finances_installments_read",
 )
 def get_installment(request: AuthRequest, uuid: UUID4) -> Installment:
-    """
-    Retorna os detalhes de uma parcela específica.
-    """
+    """Recupera detalhes de uma parcela específica pelo identificador único."""
     user = request.user
     return installment_get_selector(company=user.company, uuid=uuid)
 
@@ -70,10 +65,7 @@ def get_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     operation_id="finances_installments_mark_as_paid",
 )
 def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
-    """
-    Marca uma parcela como paga (data de hoje).
-    Bloqueia se já estiver paga (BR-F06).
-    """
+    """Marca uma parcela pendente ou atrasada como paga na data atual."""
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
     InstallmentService.mark_as_paid(user.company, instance)
@@ -86,9 +78,7 @@ def mark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
     operation_id="finances_installments_unmark_as_paid",
 )
 def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment:
-    """
-    Desmarca uma parcela paga, revertendo para PENDING ou OVERDUE.
-    """
+    """Reverte a marcação de pagamento de uma parcela para pendente ou atrasada."""
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
     InstallmentService.unmark_as_paid(user.company, instance)
@@ -103,10 +93,7 @@ def unmark_as_paid_installment(request: AuthRequest, uuid: UUID4) -> Installment
 def adjust_installment(
     request: AuthRequest, uuid: UUID4, payload: InstallmentAdjustIn
 ) -> Installment:
-    """
-    Ajusta data/valor de uma parcela futura não paga.
-    Valida que due_date não pode ser anterior à parcela anterior.
-    """
+    """Ajusta valor ou data de vencimento de uma parcela não paga."""
     user = request.user
     instance = installment_get_selector(company=user.company, uuid=uuid)
     InstallmentService.adjust(user.company, instance, payload)

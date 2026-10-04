@@ -127,7 +127,12 @@ class Event(TenantModel, WeddingOwnedMixin):
                     )
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
-        """Deleção blindada conforme BR-S01 (eventos de pagamento são protegidos)."""
+        """
+        Executa a exclusão aplicando salvaguarda para eventos de pagamento (BR-S01).
+
+        Raises:
+            BusinessRuleViolation: Se o evento for de pagamento e não for autorizada mutação interna.
+        """
         skip_payment_guard = kwargs.pop("skip_payment_guard", False)
         if (
             self.is_payment_event
@@ -155,21 +160,26 @@ class Event(TenantModel, WeddingOwnedMixin):
     def reschedule(
         self, start_time: datetime, end_time: datetime | None = None
     ) -> None:
-        """Reagenda o evento para novo horário validando suas invariantes.
+        """
+        Reagenda o evento para novo horário validando suas invariantes.
 
         Args:
             start_time: Novo início do evento.
-            end_time: Novo término do evento opcional.
+            end_time: Novo término opcional do evento.
+
+        Raises:
+            ValidationError: Se o término for anterior ao início.
         """
         self.start_time = start_time
         self.end_time = end_time
         self.clean()
 
     def enable_reminder(self, minutes_before: int = 60) -> None:
-        """Habilita o lembrete automático com antecedência em minutos.
+        """
+        Habilita o lembrete automático com antecedência em minutos.
 
         Args:
-            minutes_before: Antecedência em minutos para disparo do lembrete.
+            minutes_before: Antecedência em minutos para disparo do lembrete (padrão: 60).
         """
         self.reminder_enabled = True
         self.reminder_minutes_before = minutes_before

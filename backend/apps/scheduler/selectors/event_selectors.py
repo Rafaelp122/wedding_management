@@ -28,16 +28,16 @@ def event_list_selector(
     end_date: date | None = None,
 ) -> EventQuerySet:
     """
-    Lista eventos do calendário vinculados ao tenant, com filtros opcionais.
+    Lista eventos do calendário vinculados ao tenant com filtros opcionais.
+
+    Otimiza a leitura com select_related('wedding', 'company') e ordenação cronológica.
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador opcional do casamento para filtragem.
-        start_date: Data inicial opcional do intervalo de busca.
-        end_date: Data final opcional do intervalo de busca.
+        start_date: Limite inferior opcional do intervalo de busca.
+        end_date: Limite superior opcional do intervalo de busca.
 
     Returns:
-        EventQuerySet com os eventos filtrados e ordenados cronologicamente.
+        QuerySet de eventos filtrados e ordenados cronologicamente.
     """
     qs = Event.objects.for_tenant(company).select_related("wedding", "company")
     if wedding_id:
@@ -49,14 +49,12 @@ def event_list_selector(
 
 def event_get_selector(*, company: Company, uuid: UUID | str) -> Event:
     """
-    Recupera um evento específico pelo UUID, garantindo o isolamento multitenant.
+    Recupera um evento específico pelo UUID garantindo o isolamento multitenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: O identificador único do evento.
+    Otimiza a leitura com select_related('wedding', 'company').
 
     Returns:
-        A instância do Event encontrado.
+        Instância de Event encontrada.
 
     Raises:
         ObjectNotFoundError: Se o evento não existir ou pertencer a outro tenant.
@@ -74,11 +72,8 @@ def scheduler_summary_selector(*, company: Company) -> dict[str, Any]:
     """
     Retorna contagens e métricas consolidadas dos eventos do tenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-
     Returns:
-        Dicionário com total, upcoming_7_days e with_reminder.
+        Dicionário contendo total, upcoming_7_days e with_reminder.
     """
     today = timezone.localdate()
     end_7_days = today + timedelta(days=7)

@@ -23,10 +23,7 @@ def list_suppliers(
     search: str = "",
     is_active: bool | None = None,
 ) -> QuerySet[Supplier]:
-    """
-    Lista todos os fornecedores cadastrados pelo Planner logado.
-    Aceita filtros de busca textual e status.
-    """
+    """Lista todos os fornecedores cadastrados para a empresa do usuário."""
     user = request.user
     return supplier_list_selector(
         company=user.company, search=search, is_active=is_active
@@ -39,9 +36,7 @@ def list_suppliers(
     operation_id="logistics_suppliers_read",
 )
 def retrieve_supplier(request: AuthRequest, uuid: UUID4) -> Supplier:
-    """
-    Retorna os detalhes de um fornecedor específico.
-    """
+    """Retorna os detalhes de um fornecedor específico."""
     user = request.user
     return supplier_get_selector(company=user.company, uuid=uuid)
 
@@ -52,9 +47,7 @@ def retrieve_supplier(request: AuthRequest, uuid: UUID4) -> Supplier:
     operation_id="logistics_suppliers_create",
 )
 def create_supplier(request: AuthRequest, payload: SupplierIn) -> tuple[int, Supplier]:
-    """
-    Cadastra um novo fornecedor no sistema.
-    """
+    """Cadastra um novo fornecedor no sistema."""
     user = request.user
     supplier = SupplierService.create(company=user.company, payload=payload)
     return 201, supplier
@@ -68,9 +61,7 @@ def create_supplier(request: AuthRequest, payload: SupplierIn) -> tuple[int, Sup
 def update_supplier(
     request: AuthRequest, uuid: UUID4, payload: SupplierPatchIn
 ) -> Supplier:
-    """
-    Atualiza informações específicas de um fornecedor (nome, contato, categorias).
-    """
+    """Atualiza informações parciais de um fornecedor cadastrado."""
     user = request.user
     supplier = supplier_get_selector(company=user.company, uuid=uuid)
     return SupplierService.update(
@@ -84,9 +75,7 @@ def update_supplier(
     operation_id="logistics_suppliers_delete",
 )
 def delete_supplier(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Remove o cadastro de um fornecedor do sistema.
-    """
+    """Remove o cadastro de um fornecedor do sistema."""
     user = request.user
     supplier = supplier_get_selector(company=user.company, uuid=uuid)
     SupplierService.delete(company=user.company, instance=supplier)

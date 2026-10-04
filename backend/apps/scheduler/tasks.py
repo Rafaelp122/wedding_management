@@ -81,13 +81,12 @@ def generate_checklist_from_template_task(
     template: str | None = None,
 ) -> None:
     """
-    Gera automaticamente o checklist operacional inicial para um casamento ativado (RFC-001 / RF-18).
-    Executado de forma assíncrona desacoplada via django.tasks.
+    Gera automaticamente o checklist operacional inicial para um casamento ativado.
+
+    Executado de forma assíncrona desacoplada via django.tasks (ADR-017 / RFC-001).
 
     Args:
-        company_id: ID numérico ou UUID da empresa tenant.
-        wedding_uuid: UUID do casamento.
-        template: Nome do template de cronograma, se houver.
+        template: Nome do template de cronograma, se configurado.
     """
     from apps.scheduler.models import ChecklistItem
     from apps.tenants.models import Company

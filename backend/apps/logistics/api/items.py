@@ -34,10 +34,7 @@ def list_items(
     scope_status: str | None = None,
     delivery_status: str | None = None,
 ) -> QuerySet[Item]:
-    """
-    Lista os itens e materiais logísticos gerados nas tabelas de aprovação.
-    Permite filtrar por casamento, status de aquisição, busca textual, contrato, escopo e entrega.
-    """
+    """Lista itens e materiais logísticos associados ao casamento e tenant."""
     user = request.user
     return item_list_selector(
         company=user.company,
@@ -56,9 +53,7 @@ def list_items(
     operation_id="logistics_items_read",
 )
 def retrieve_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Mostra os detalhes nominais de um item logístico específico.
-    """
+    """Recupera os detalhes de um item logístico específico."""
     user = request.user
     return item_get_selector(company=user.company, uuid=uuid)
 
@@ -69,10 +64,7 @@ def retrieve_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_create",
 )
 def create_item(request: AuthRequest, payload: ItemIn) -> tuple[int, Item]:
-    """
-    Adiciona um recurso físico no painel de acompanhamento.
-    Parte do planejamento logístico de um evento.
-    """
+    """Cadastra um novo item de suprimento logístico no evento."""
     user = request.user
     item = ItemService.create(company=user.company, payload=payload)
     return 201, item
@@ -84,9 +76,7 @@ def create_item(request: AuthRequest, payload: ItemIn) -> tuple[int, Item]:
     operation_id="logistics_items_update",
 )
 def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item:
-    """
-    Atualiza quantidades ou informações de apoio do lote do item em questão.
-    """
+    """Atualiza parcialmente as informações de um item logístico."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.update(company=user.company, instance=item, payload=payload)
@@ -98,10 +88,7 @@ def update_item(request: AuthRequest, uuid: UUID4, payload: ItemPatchIn) -> Item
     operation_id="logistics_items_delete",
 )
 def delete_item(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Exclui permanentemente o indicativo do item.
-    Remove das listas logísticas rastreadas pelo Planner.
-    """
+    """Exclui permanentemente um item logístico do sistema."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     ItemService.delete(company=user.company, instance=item)
@@ -116,9 +103,7 @@ def delete_item(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
 def transition_item_status(
     request: AuthRequest, uuid: UUID4, payload: ItemStatusTransitionIn
 ) -> Item:
-    """
-    Transita o status de aquisição de um item logístico (PENDING → IN_PROGRESS → DONE).
-    """
+    """Transita o status de aquisição de um item logístico."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.transition_status(
@@ -134,9 +119,7 @@ def transition_item_status(
     operation_id="logistics_items_start",
 )
 def start_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Inicia a aquisição do item logístico, transitando para EM ANDAMENTO.
-    """
+    """Inicia a aquisição do item logístico transitando para EM ANDAMENTO."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.start(company=user.company, instance=item)
@@ -148,9 +131,7 @@ def start_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_complete",
 )
 def complete_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Conclui a aquisição do item logístico, transitando para CONCLUÍDO.
-    """
+    """Conclui a aquisição do item logístico transitando para CONCLUÍDO."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.complete(company=user.company, instance=item)
@@ -162,9 +143,7 @@ def complete_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_reopen",
 )
 def reopen_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Reabre um item logístico concluído, transitando de volta para EM ANDAMENTO.
-    """
+    """Reabre um item logístico concluído retornando para EM ANDAMENTO."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.reopen(company=user.company, instance=item)
@@ -176,9 +155,7 @@ def reopen_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_revert_to_pending",
 )
 def revert_item_to_pending(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Reverte o item logístico de volta para PENDENTE.
-    """
+    """Reverte o status do item logístico de volta para PENDENTE."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.revert_to_pending(company=user.company, instance=item)
@@ -190,9 +167,7 @@ def revert_item_to_pending(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_discard",
 )
 def discard_item(request: AuthRequest, uuid: UUID4, payload: ItemDiscardIn) -> Item:
-    """
-    Descarta um item do escopo registrando compulsoriamente a justificativa (RF-15).
-    """
+    """Descarta um item do escopo registrando compulsoriamente a justificativa."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.discard(
@@ -208,9 +183,7 @@ def discard_item(request: AuthRequest, uuid: UUID4, payload: ItemDiscardIn) -> I
     operation_id="logistics_items_include",
 )
 def include_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Reintegra um item previamente descartado de volta ao escopo aprovado do evento.
-    """
+    """Reintegra um item previamente descartado ao escopo aprovado."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.include(company=user.company, instance=item)
@@ -222,9 +195,7 @@ def include_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_deliver",
 )
 def deliver_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Registra a conferência física e entrega do material no local do evento (RF-15).
-    """
+    """Registra a conferência física e entrega do material no local."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.deliver(company=user.company, instance=item)
@@ -236,9 +207,7 @@ def deliver_item(request: AuthRequest, uuid: UUID4) -> Item:
     operation_id="logistics_items_return",
 )
 def return_item(request: AuthRequest, uuid: UUID4) -> Item:
-    """
-    Registra a devolução física do material após o término do evento.
-    """
+    """Registra a devolução física do material após o término do evento."""
     user = request.user
     item = item_get_selector(company=user.company, uuid=uuid)
     return ItemService.mark_returned(company=user.company, instance=item)

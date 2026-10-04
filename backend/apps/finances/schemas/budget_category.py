@@ -12,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class BudgetCategoryIn(Schema):
-    """Schema de entrada para criação de categoria de orçamento."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     budget: UUID4
@@ -23,8 +21,6 @@ class BudgetCategoryIn(Schema):
 
 
 class BudgetCategoryPatchIn(Schema):
-    """Schema de entrada para atualização parcial de categoria de orçamento."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     name: str | None = Field(default=None, min_length=1, max_length=100)
@@ -33,8 +29,6 @@ class BudgetCategoryPatchIn(Schema):
 
 
 class BudgetCategoryOut(Schema):
-    """Schema de saída para exibição de categoria de orçamento."""
-
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     budget: UUID4 = Field(alias="budget.uuid")

@@ -27,20 +27,20 @@ class OAuthUserInfo:
 
 class OAuthProvider(Protocol):
     """
-    Interface para provedores de autenticação social (OAuth2).
+    Protocolo de interface para provedores de autenticação social (OAuth2).
     """
 
     def verify_token(self, token: str) -> OAuthUserInfo:
         """
-        Verifica o token do provedor e retorna as informações do usuário.
+        Valida o token emitido pelo provedor e extrai os dados normalizados do usuário.
 
         Args:
-            token: O token JWT/ID emitido pelo provedor OAuth.
+            token: Token JWT de identidade emitido pelo provedor OAuth.
 
         Returns:
-            OAuthUserInfo com os dados extraídos e validados.
+            Dados normalizados do usuário autenticado no provedor.
 
         Raises:
-            HttpError: Se a verificação falhar ou os dados forem inválidos.
+            HttpError: Se a verificação do token falhar ou os dados forem inválidos.
         """
         ...

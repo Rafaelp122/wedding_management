@@ -25,6 +25,9 @@ class BudgetCategoryService:
     Responsável por orquestrar a criação, atualização e exclusão de categorias,
     garantindo o isolamento multi-tenant e a conservação do teto financeiro
     (BR-F04) sob lock concorrente (select_for_update).
+
+    Regra de Negócio:
+        BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
     """
 
     @staticmethod
@@ -39,16 +42,15 @@ class BudgetCategoryService:
         (TOCTOU) e delega a validação de conservação do teto ao BudgetCategory.clean()
         via BaseModel.save().
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada validados para a categoria.
+        Efeitos Colaterais:
+            - Persiste atomicamente a nova categoria orçamentária sob lock pessimista no orçamento mestre.
 
         Returns:
-            BudgetCategory: A instância persistida da categoria criada.
+            A instância de categoria orçamentária persistida.
 
         Raises:
-            ObjectNotFoundError: Se o orçamento mestre não for encontrado.
-            BusinessRuleViolation: Se a soma das categorias exceder o orçamento.
+            ObjectNotFoundError: Se o orçamento mestre não for encontrado ou não pertencer ao tenant.
+            BusinessRuleViolation: Se a soma das categorias exceder o teto do orçamento mestre (BR-F04).
         """
         logger.info(
             f"Iniciando criação de Categoria de Orçamento para company_id={company.id}"
@@ -98,16 +100,14 @@ class BudgetCategoryService:
         Garante o isolamento do tenant e re-valida o teto do orçamento mestre
         sob lock (select_for_update) através do BaseModel.save().
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da categoria de orçamento a ser atualizada.
-            payload: Dados parciais para atualização da categoria.
+        Efeitos Colaterais:
+            - Atualiza e persiste os dados da categoria sob lock pessimista no orçamento mestre.
 
         Returns:
-            BudgetCategory: A instância da categoria atualizada.
+            A instância da categoria de orçamento atualizada.
 
         Raises:
-            BusinessRuleViolation: Se exceder o teto do orçamento mestre.
+            BusinessRuleViolation: Se a nova alocação exceder o teto do orçamento mestre (BR-F04).
         """
         validate_tenant_ownership(
             company,
@@ -152,12 +152,11 @@ class BudgetCategoryService:
         Verifica se a categoria pertence ao tenant e se não possui despesas
         ativas vinculadas, prevenindo quebras de integridade.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da categoria de orçamento a ser excluída.
+        Efeitos Colaterais:
+            - Remove fisicamente a categoria de orçamento do banco de dados.
 
         Raises:
-            DomainIntegrityError: Se a categoria possuir despesas vinculadas.
+            DomainIntegrityError: Se a categoria possuir despesas vinculadas (BR-F04-D).
         """
         validate_tenant_ownership(
             company,
@@ -191,15 +190,13 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def setup_defaults(company: Company, wedding: Wedding, budget: Budget) -> None:
-        """Cria as categorias iniciais obrigatórias para um novo casamento.
+        """Cria as categorias iniciais canônicas para um novo casamento (BR-F04-C).
 
         Método idempotente. Espera-se que o budget esteja protegido por
         select_for_update() no chamador para evitar condições de corrida.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: A instância do casamento correspondente.
-            budget: A instância do orçamento mestre associado.
+        Efeitos Colaterais:
+            - Persiste em lote (bulk_create) as categorias padrão que ainda não existirem para o orçamento.
         """
         logger.info(f"Gerando categorias padrão para o casamento {wedding.uuid}")
 

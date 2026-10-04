@@ -59,22 +59,28 @@ class NotificationService:
         wedding_id: UUID | str | None = None,
         wedding_name: str | None = None,
     ) -> Notification:
-        """Cria e persiste uma nova notificação no banco de dados.
+        """Cria e persiste uma nova notificação in-app no banco de dados.
+
+        Regras de Negócio:
+            BR-N01..04 (docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância de Notification no banco de dados.
+            - Resolve e associa o nome do casamento via weddings.interfaces se omitido.
 
         Args:
-            company: Instância da empresa ou identificador (ID/UUID).
-            user: Instância do usuário ou identificador (ID/UUID).
-            title: Título resumido da notificação.
-            message: Conteúdo textual detalhado da notificação.
             notification_type: Tipo da notificação (NotificationType).
-            link: URL ou rota de atalho opcional.
-            target_type: Tipo da entidade ERP de destino.
-            target_id: UUID do recurso de destino.
-            wedding_id: UUID do casamento associado.
-            wedding_name: Nome formatado do casamento associado.
+            link: URL ou rota de navegação opcional.
+            target_type: Tipo da entidade ERP de destino (NotificationTargetType).
+            target_id: Identificador do recurso de destino.
+            wedding_id: Identificador do casamento relacionado.
+            wedding_name: Nome pré-computado do casamento para exibição direta.
 
         Returns:
-            Notification: A notificação criada.
+            A notificação criada e persistida.
+
+        Raises:
+            BusinessRuleViolation: Se o usuário não pertencer à empresa informada.
         """
         if not isinstance(company, Company):
             company = (
@@ -133,17 +139,16 @@ class NotificationService:
     ) -> None:
         """Enfileira a criação assíncrona de uma notificação in-app via django.tasks.
 
+        Efeitos Colaterais:
+            - Enfileira a tarefa assíncrona dispatch_async_notification_task pós-chamada.
+
         Args:
-            company: Instância da empresa ou identificador.
-            user: Instância do usuário ou identificador.
-            title: Título da notificação.
-            message: Conteúdo detalhado.
-            notification_type: Tipo da notificação.
-            link: Link opcional.
-            target_type: Tipo da entidade ERP de destino.
-            target_id: UUID do recurso de destino.
-            wedding_id: UUID do casamento associado.
-            wedding_name: Nome do casamento associado.
+            notification_type: Tipo da notificação (NotificationType).
+            link: URL ou rota de navegação opcional.
+            target_type: Tipo da entidade ERP de destino (NotificationTargetType).
+            target_id: Identificador do recurso de destino.
+            wedding_id: Identificador do casamento relacionado.
+            wedding_name: Nome do casamento para exibição direta.
         """
         company_id: int | str = (
             company.id
@@ -178,17 +183,17 @@ class NotificationService:
     ) -> AnnotatedNotification:
         """Marca notificação como lida se ela pertencer ao usuário e empresa.
 
+        Efeitos Colaterais:
+            - Atualiza os campos is_read, read_at e updated_at no banco de dados.
+
         Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário autenticado solicitante.
-            notification_id: UUID público da notificação.
+            notification_id: Identificador único da notificação.
 
         Returns:
-            Notification: Notificação atualizada.
+            Instância da notificação marcada como lida com wedding_name anotado.
 
         Raises:
-            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro
-                usuário/tenant.
+            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro usuário/tenant.
         """
         notification = (
             Notification.objects.for_tenant(company)
@@ -214,14 +219,13 @@ class NotificationService:
     @staticmethod
     @transaction.atomic
     def mark_all_as_read(company: Company, user: User) -> int:
-        """Marca todas as notificações pendentes do usuário como lidas.
+        """Marca todas as notificações pendentes do usuário como lidas no tenant.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão atualizadas.
+        Efeitos Colaterais:
+            - Atualiza em lote os campos is_read, read_at e updated_at das notificações.
 
         Returns:
-            int: Quantidade de notificações que mudaram para lidas.
+            Quantidade de notificações alteradas para o estado lida.
         """
         qs = Notification.objects.for_tenant(company).for_user(user)
         count = qs.mark_as_read()
@@ -239,16 +243,16 @@ class NotificationService:
         user: User,
         notification_id: UUID | str,
     ) -> None:
-        """Exclui uma notificação individual do usuário.
+        """Exclui uma notificação individual do usuário no tenant.
+
+        Efeitos Colaterais:
+            - Remove o registro da notificação do banco de dados.
 
         Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário autenticado solicitante.
-            notification_id: UUID público da notificação.
+            notification_id: Identificador único da notificação.
 
         Raises:
-            ObjectNotFoundError: Se a notificação não existir ou pertencer
-                a outro usuário.
+            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro usuário/tenant.
         """
         notification = (
             Notification.objects.for_tenant(company)
@@ -275,13 +279,14 @@ class NotificationService:
     ) -> int:
         """Marca uma lista de notificações selecionadas como lidas.
 
+        Efeitos Colaterais:
+            - Atualiza em lote os campos is_read, read_at e updated_at dos registros selecionados.
+
         Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão atualizadas.
-            notification_ids: Sequência de UUIDs das notificações.
+            notification_ids: Sequência de identificadores das notificações a marcar como lidas.
 
         Returns:
-            int: Quantidade de notificações atualizadas.
+            Quantidade de notificações atualizadas para o estado lida.
         """
         qs = (
             Notification.objects.for_tenant(company)
@@ -303,15 +308,16 @@ class NotificationService:
         user: User,
         notification_ids: Sequence[UUID | str],
     ) -> int:
-        """Exclui uma lista de notificações selecionadas.
+        """Exclui uma lista de notificações selecionadas no tenant.
+
+        Efeitos Colaterais:
+            - Remove em lote os registros de notificações selecionadas do banco de dados.
 
         Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão excluídas.
-            notification_ids: Sequência de UUIDs das notificações.
+            notification_ids: Sequência de identificadores das notificações a excluir.
 
         Returns:
-            int: Quantidade de notificações excluídas.
+            Quantidade de notificações excluídas.
         """
         qs = (
             Notification.objects.for_tenant(company)
@@ -331,12 +337,11 @@ class NotificationService:
     def clear_all(company: Company, user: User) -> int:
         """Exclui todas as notificações do usuário no tenant atual.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão limpas.
+        Efeitos Colaterais:
+            - Remove todas as notificações do usuário no tenant do banco de dados.
 
         Returns:
-            int: Quantidade total de notificações excluídas.
+            Quantidade total de notificações excluídas.
         """
         qs = Notification.objects.for_tenant(company).for_user(user)
         count, _ = qs.delete()

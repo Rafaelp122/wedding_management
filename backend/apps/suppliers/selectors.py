@@ -19,15 +19,16 @@ def supplier_list_selector(
     search: str = "",
     is_active: bool | None = None,
 ) -> SupplierQuerySet:
-    """Lista os fornecedores do tenant com suporte a filtros e busca.
+    """Lista fornecedores do tenant com contagem agregada de contratos.
+
+    Aplica anotação 'with_contracts_count' e filtros opcionais de texto e status.
 
     Args:
-        company: O tenant atual para isolamento de dados.
         search: Termo para busca textual em nome, e-mail, telefone ou CNPJ.
-        is_active: Filtro opcional por status ativo/inativo.
+        is_active: Filtro por status ativo/inativo.
 
     Returns:
-        SupplierQuerySet filtrado e anotado com contagem de contratos.
+        QuerySet de fornecedores anotado com a contagem de contratos.
     """
     qs = Supplier.objects.for_tenant(company).with_contracts_count()
     if search:
@@ -38,17 +39,13 @@ def supplier_list_selector(
 
 
 def supplier_get_selector(company: Company, uuid: UUID | str) -> Supplier:
-    """Busca um fornecedor específico pelo UUID com isolamento multi-tenant.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único do fornecedor.
+    """Recupera um fornecedor específico por identificador único no tenant.
 
     Returns:
-        A instância do Supplier correspondente.
+        Instância do fornecedor localizado.
 
     Raises:
-        ObjectNotFoundError: Se o fornecedor não for encontrado ou acesso for negado.
+        ObjectNotFoundError: Se o fornecedor não for encontrado ou não pertencer ao tenant.
     """
     return get_object_or_404_for_tenant(
         Supplier,

@@ -38,15 +38,13 @@ def wedding_report_data_selector(
     company: Company,
     wedding_uuid: UUID | str,
 ) -> WeddingReportDataDTO:
-    """
-    Agrega todos os conjuntos de dados necessários para a geração de relatórios.
+    """Agrega os conjuntos de dados necessários para a geração de relatórios do casamento.
 
     Args:
-        company: Tenant autenticado.
         wedding_uuid: Identificador único do casamento.
 
     Returns:
-        Instância tipada de WeddingReportDataDTO.
+        DTO consolidado contendo casamento, overview, categorias, parcelas, contratos e tarefas.
     """
     uuid_obj = (
         UUID(str(wedding_uuid)) if not isinstance(wedding_uuid, UUID) else wedding_uuid

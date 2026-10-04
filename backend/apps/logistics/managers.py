@@ -27,14 +27,10 @@ class ItemQuerySet(TenantQuerySet["SupplyItem"]):
     def for_contract(
         self, contract: UUID | str | Contract | None = None
     ) -> ItemQuerySet:
-        """
-        Filtra itens associados a um contrato específico.
-
-        Args:
-            contract: Instância de Contract, UUID ou string identificadora.
+        """Filtra itens associados a um contrato específico.
 
         Returns:
-            ItemQuerySet filtrado pelo contrato.
+            QuerySet filtrado pelo contrato informado.
         """
         if not contract:
             return self
@@ -43,14 +39,10 @@ class ItemQuerySet(TenantQuerySet["SupplyItem"]):
         return self.filter(contract__uuid=contract)
 
     def for_wedding(self, wedding: UUID | str | Wedding | None = None) -> ItemQuerySet:
-        """
-        Filtra itens associados a um casamento específico.
-
-        Args:
-            wedding: Instância de Wedding, UUID ou string identificadora.
+        """Filtra itens associados a um casamento específico.
 
         Returns:
-            ItemQuerySet filtrado pelo casamento.
+            QuerySet filtrado pelo casamento informado.
         """
         if not wedding:
             return self
@@ -59,38 +51,35 @@ class ItemQuerySet(TenantQuerySet["SupplyItem"]):
         return self.filter(wedding__uuid=wedding)
 
     def by_status(self, status: str | None = None) -> ItemQuerySet:
-        """
-        Filtra itens pelo status de aquisição.
+        """Filtra itens pelo status de aquisição.
 
         Args:
             status: Status de aquisição (ex: PENDING, IN_PROGRESS, DONE).
 
         Returns:
-            ItemQuerySet filtrado pelo status.
+            QuerySet filtrado pelo status informado.
         """
         if not status:
             return self
         return self.filter(acquisition_status=status)
 
     def search(self, query: str | None = None) -> ItemQuerySet:
-        """
-        Filtra itens por busca textual no nome.
+        """Filtra itens por busca textual no nome.
 
         Args:
-            query: Termo de busca.
+            query: Termo de busca textual.
 
         Returns:
-            ItemQuerySet filtrado pelo termo.
+            QuerySet filtrado pelo termo informado.
         """
         if not query:
             return self
         return self.filter(name__icontains=query)
 
     def with_details(self) -> ItemQuerySet:
-        """
-        Carrega relacionamentos de wedding, contract e fornecedor para evitar N+1.
+        """Carrega relacionamentos de wedding, contract e fornecedor para evitar N+1.
 
         Returns:
-            ItemQuerySet com select_related aplicado.
+            QuerySet com select_related aplicado aos relacionamentos vinculados.
         """
         return self.select_related("wedding", "contract", "contract__supplier")

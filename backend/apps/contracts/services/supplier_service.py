@@ -22,20 +22,17 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: SupplierIn) -> Supplier:
-        """
-        Cria um novo fornecedor para o tenant.
+        """Cria um novo fornecedor para o tenant.
 
         Aplica as validações do modelo ao salvar.
 
         Regra de Negócio:
-            BR-L-CNPJ-01:
-            docs/architecture/business-rules/logistics/cnpj-validation-rules.md
+            BR-SUP-CNPJ-01 (docs/architecture/business-rules/logistics/cnpj-validation-rules.md)
         Decisão Arquitetural:
             ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do fornecedor.
+        Efeitos Colaterais:
+            - Persiste a instância do Supplier no banco de dados.
 
         Returns:
             A instância do Supplier criada e salva.
@@ -57,15 +54,12 @@ class SupplierService:
     def update(
         company: Company, instance: Supplier, payload: SupplierPatchIn
     ) -> Supplier:
-        """
-        Atualiza os dados de um fornecedor existente.
+        """Atualiza os dados de um fornecedor existente.
 
         Valida a propriedade do tenant antes de aplicar e salvar as alterações.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Supplier a ser atualizada.
-            payload: Dados parciais para atualização do fornecedor.
+        Efeitos Colaterais:
+            - Atualiza os dados cadastrais e status de ativação do fornecedor.
 
         Returns:
             A instância atualizada do Supplier.
@@ -108,14 +102,12 @@ class SupplierService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Supplier) -> None:
-        """
-        Remove um fornecedor do banco de dados.
+        """Remove um fornecedor do banco de dados.
 
         Valida a propriedade do tenant antes da exclusão.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Supplier a ser removida.
+        Efeitos Colaterais:
+            - Remove o registro de fornecedor do banco de dados.
 
         Raises:
             ObjectNotFoundError: Se o fornecedor não pertencer ao tenant.

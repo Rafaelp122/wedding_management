@@ -1,7 +1,4 @@
-"""
-Selectors de leitura para o domínio de Despesas (Expense).
-Consultas otimizadas e encapsuladas de leitura para Expense.
-"""
+"""Seletores de leitura para o domínio de Despesas (Expense)."""
 
 from __future__ import annotations
 
@@ -26,16 +23,13 @@ def expense_list_selector(
     category_id: UUID | str | None = None,
 ) -> ExpenseQuerySet:
     """
-    Lista despesas vinculadas ao tenant com filtros opcionais.
+    Lista despesas do tenant com relacionamentos e agregações calculadas.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador opcional do casamento para filtragem.
-        category_id: Identificador opcional da categoria para filtragem.
+    Utiliza with_details() para carregar 'category', 'contract' e 'wedding' via
+    select_related, além de anotar contagens e somas de parcelas pagas/pendentes.
 
     Returns:
-        ExpenseQuerySet filtrado e anotado com contagens de parcelas
-        e valores agregados.
+        QuerySet de despesas filtrado e anotado com métricas de parcelamento.
     """
     qs: ExpenseQuerySet = Expense.objects.for_tenant(company).with_details()
     if wedding_id:
@@ -47,15 +41,13 @@ def expense_list_selector(
 
 def expense_get_selector(*, company: Company, uuid: UUID | str) -> Expense:
     """
-    Recupera uma despesa específica pelo UUID, com detalhes anotados.
-    Suporta busca por UUID de parcela vinculada como fallback de conveniência.
+    Recupera uma despesa por UUID com detalhes e métricas anotadas via with_details().
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único da despesa (ou de uma parcela vinculada).
+    Otimiza a leitura com select_related e agregações de parcelas. Suporta busca
+    por UUID de parcela vinculada como fallback de conveniência.
 
     Returns:
-        A instância do Expense encontrada com detalhes e relacionamentos carregados.
+        A instância de despesa com relacionamentos e métricas carregados.
 
     Raises:
         ObjectNotFoundError: Se a despesa não for encontrada ou não pertencer ao tenant.

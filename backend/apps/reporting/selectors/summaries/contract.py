@@ -17,17 +17,11 @@ if TYPE_CHECKING:
 
 
 class ContractSummarySelector:
-    """
-    Camada de consulta para consolidação de resumos e estatísticas de contratos.
-    """
+    """Camada de consulta para consolidação de resumos e estatísticas de contratos."""
 
     @staticmethod
     def pending_contracts_count(*, company: Company) -> int:
-        """
-        Retorna a quantidade de contratos em rascunho ou pendentes do tenant.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
+        """Retorna a quantidade de contratos em rascunho ou pendentes do tenant.
 
         Returns:
             Quantidade total de contratos nos status DRAFT ou PENDING.
@@ -47,17 +41,12 @@ class ContractSummarySelector:
     def wedding_contract_stats(
         *, company: Company, wedding: Wedding
     ) -> tuple[int, int]:
-        """
-        Retorna as estatísticas de contratos assinados e totais de um casamento.
+        """Retorna as estatísticas de contratos assinados e totais de um casamento.
 
         Considera apenas contratos que não foram cancelados no cômputo total.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento a ser consultado.
-
         Returns:
-            Uma tupla contendo (contratos_assinados, total_contratos_ativos).
+            Tupla contendo contratos assinados e total de contratos ativos.
         """
         contracts = Contract.objects.for_tenant(company).filter(wedding=wedding)
         total = int(contracts.exclude(status=Contract.StatusChoices.CANCELED).count())
@@ -68,10 +57,7 @@ class ContractSummarySelector:
     def annotate_financial_totals(
         qs: QuerySet[Contract],
     ) -> QuerySet[Contract]:
-        """
-        Anota contratos com informações financeiras agregadas (expense_id e total_paid)
-        evitando queries N+1.
-        """
+        """Anota contratos com informações financeiras agregadas evitando queries N+1."""
         from decimal import Decimal
 
         from django.db.models import OuterRef, Subquery, Sum, Value
@@ -107,16 +93,13 @@ class ContractSummarySelector:
         company: Company,
         limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """
-        Retorna os Top N contratos pendentes ou em rascunho do tenant.
+        """Retorna os Top N contratos pendentes ou em rascunho do tenant.
 
         Args:
-            company: O tenant atual para isolamento de dados.
             limit: Quantidade máxima de contratos retornados (padrão: 10).
 
         Returns:
-            Lista de dicionários contendo uuid, wedding_name, supplier_name,
-            total_amount e status.
+            Lista de dicionários contendo os dados resumidos dos contratos pendentes.
         """
         contracts = (
             Contract.objects.for_tenant(company)

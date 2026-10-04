@@ -2,7 +2,7 @@ from typing import Protocol, TypedDict
 
 
 class OIDCClaims(TypedDict, total=False):
-    """Claims usadas pelo fluxo OIDC de autenticação entre serviços."""
+    """Claims utilizadas no fluxo de autenticação segura via OIDC entre serviços."""
 
     iss: str
     aud: str
@@ -11,21 +11,27 @@ class OIDCClaims(TypedDict, total=False):
 
 class OIDCVerifier(Protocol):
     """
-    Protocolo definindo a interface para serviços de verificação OIDC (ADR-005).
+    Protocolo de interface para serviços de validação de tokens OIDC.
+
+    Decisão Arquitetural:
+        ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
     """
 
     def verify_token(self, token: str) -> OIDCClaims:
         """
-        Valida o token OIDC e retorna as claims contidas no token.
+        Valida o token OIDC e retorna as claims contidas no payload.
+
+        Decisão Arquitetural:
+            ADR-005 (docs/architecture/adr/005-oidc-scheduler.md)
 
         Args:
-            token: O token JWT OIDC recebido no cabeçalho Authorization.
+            token: Token JWT OIDC recebido no cabeçalho Authorization.
 
         Returns:
             Dicionário contendo as claims verificadas do token OIDC.
 
         Raises:
-            PermissionError: Se o token for válido mas a conta não for autorizada.
-            ValueError: Se o token for inválido ou malformado.
+            PermissionError: Se o token for válido mas a conta de serviço não for autorizada.
+            ValueError: Se o token for inválido, expirado ou malformado.
         """
         ...  # pragma: no cover

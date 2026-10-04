@@ -10,18 +10,15 @@ from django.core.exceptions import ValidationError
 def validate_cnpj_modulo11(value: str) -> None:
     """Valida um número de CNPJ utilizando a regra canônica do Módulo 11 da Receita Federal.
 
-    Regras aplicadas:
-    1. Limpa formatação mantendo apenas dígitos numéricos.
-    2. Exige exatamente 14 dígitos (quando preenchido).
-    3. Rejeita sequências homogêneas (dígitos idênticos repetidos).
-    4. Valida o primeiro dígito verificador (DV1) via pesos [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2].
-    5. Valida o segundo dígito verificador (DV2) via pesos [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2].
+    Regra de Negócio:
+        BR-SUP-CNPJ-01: Exige 14 dígitos numéricos e rejeita dígitos homogêneos repetidos.
+        BR-SUP-CNPJ-02: Validação dos dois dígitos verificadores via pesos do módulo 11.
 
     Args:
-        value: String contendo o CNPJ mascarado ou somente dígitos.
+        value: Número de CNPJ com ou sem máscara de pontuação.
 
     Raises:
-        ValidationError: Se o CNPJ for matematicamente inválido ou não seguir as especificações.
+        ValidationError: Se o CNPJ for matematicamente inválido ou possuir formato incompatível.
     """
     if not value:
         return

@@ -14,17 +14,22 @@ from apps.users.models import User
 
 
 class EmailVerificationService:
-    """Serviço responsável por gerar tokens e enviar e-mails de verificação."""
+    """
+    Serviço de geração de tokens e envio de e-mails para verificação de contas.
+    """
 
     @classmethod
     def send_verification_email(
         cls, user: User, frontend_url: str | None = None
     ) -> None:
-        """Gera o token e envia o e-mail de verificação para o usuário.
+        """
+        Gera o token e envia o e-mail transacional de confirmação para o usuário.
+
+        Efeitos Colaterais:
+            - Envia mensagem de e-mail via EmailMultiAlternatives.
 
         Args:
-            user (User): Usuário que receberá o e-mail.
-            frontend_url (str | None): URL base do frontend. Se None, usará do settings.
+            frontend_url: URL base customizada do frontend. Se omitido, utiliza o FRONTEND_URL configurado.
         """
         uidb64 = urlsafe_base64_encode(force_bytes(str(user.uuid)))
         token = default_token_generator.make_token(user)
@@ -54,17 +59,21 @@ class EmailVerificationService:
 
     @classmethod
     def verify_email(cls, uid: str, token: str) -> User:
-        """Verifica o token de e-mail e ativa o usuário.
+        """
+        Valida o token de verificação e ativa o cadastro do usuário.
+
+        Efeitos Colaterais:
+            - Atualiza os campos is_email_verified, email_verified_at e is_active no banco de dados.
 
         Args:
-            uid (str): UID codificado em base64 do usuário.
-            token (str): Token gerado pelo default_token_generator.
+            uid: Identificador UUID do usuário codificado em base64.
+            token: Token criptográfico de verificação de e-mail.
 
         Returns:
-            User: O usuário verificado.
+            Instância do usuário verificado e ativado.
 
         Raises:
-            ApplicationError: Se o uid, token forem inválidos ou expirados.
+            ApplicationError: Se o token for inválido, expirado ou se o usuário não for encontrado.
         """
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode()
@@ -95,14 +104,14 @@ class EmailVerificationService:
     def resend_verification_email(
         cls, email: str, frontend_url: str | None = None
     ) -> None:
-        """Reenvia o e-mail de verificação.
+        """
+        Reenvia o e-mail de confirmação caso o usuário exista e não esteja verificado.
 
-        Apenas reenvia se o usuário existir e não estiver verificado.
-
+        Efeitos Colaterais:
+            - Dispara o envio de novo e-mail de verificação se o usuário for elegível.
 
         Args:
-            email (str): E-mail do usuário.
-            frontend_url (str | None): URL base do frontend.
+            frontend_url: URL base customizada do frontend. Se omitido, utiliza o FRONTEND_URL configurado.
         """
         email = User.objects.normalize_email(email)
         user = User.objects.filter(email=email).first()

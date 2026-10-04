@@ -20,14 +20,11 @@ def get_wedding_display_name(
     company: Company,
     wedding_uuid: UUID | str,
 ) -> str | None:
-    """Recupera o nome formatado de exibição do casamento com isolamento multitenant.
-
-    Args:
-        company: Empresa (tenant) proprietária do registro.
-        wedding_uuid: UUID identificador do casamento.
+    """
+    Recupera o nome formatado de exibição do casamento com isolamento multitenant.
 
     Returns:
-        str | None: Nome formatado ou None se não encontrado.
+        Nome formatado do casamento ou None se não encontrado.
     """
     wedding = (
         Wedding.objects.for_tenant(company)

@@ -18,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 class PasswordResetService:
+    """
+    Camada de serviço para recuperação e redefinição de senhas de usuários.
+
+    Regra de Negócio:
+        BR-U05 (docs/architecture/domains/users-domain.md)
+    """
+
     @classmethod
     def _send_reset_email(cls, user: User, reset_url: str) -> None:
         """Envia o e-mail de redefinição de senha para o usuário."""
@@ -47,12 +54,13 @@ class PasswordResetService:
         Inicia o fluxo de redefinição de senha para o e-mail fornecido.
 
         Gera token seguro via PasswordResetTokenGenerator e envia o e-mail
-        transacional contendo o link de recuperação de forma assíncrona pós-commit.
-        Retorna silenciosamente caso o usuário não exista para evitar
-        enumeração de e-mails.
+        transacional contendo o link de recuperação. Retorna silenciosamente
+        caso o usuário não exista para mitigar ataques de enumeração de e-mails.
+
+        Efeitos Colaterais:
+            - Envia e-mail transacional contendo o link de recuperação.
 
         Args:
-            email: E-mail do usuário que solicita a redefinição.
             frontend_url: URL base opcional do frontend para construção do link.
         """
         email_normalized = email.strip().lower()
@@ -81,15 +89,19 @@ class PasswordResetService:
     @staticmethod
     def confirm_password_reset(uid: str, token: str, new_password: str) -> None:
         """
-        Confirma a redefinição de senha validando o uid e o token.
+        Confirma a redefinição de senha validando o identificador e o token.
+
+        Efeitos Colaterais:
+            - Atualiza o hash da nova senha do usuário no banco de dados.
 
         Args:
-            uid: Identificador do usuário em base64 (uidb64).
+            uid: Identificador UUID do usuário codificado em base64.
             token: Token criptográfico de redefinição de senha.
-            new_password: Nova senha a ser validada e salva para o usuário.
+            new_password: Nova senha em texto puro sujeita às regras de complexidade.
 
         Raises:
-            ApplicationError: Se o token for inválido, expirado ou se a senha for fraca.
+            ApplicationError: Se o token for inválido ou expirado, ou se a nova
+                senha não atender aos critérios de validação.
         """
 
         try:

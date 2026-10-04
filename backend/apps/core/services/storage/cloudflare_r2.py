@@ -18,13 +18,13 @@ class CloudflareR2StorageService:
         region_name: str = "us-east-1",
     ):
         """
-        Inicializa o serviço com credenciais explícitas ou defaults.
+        Inicializa o serviço com credenciais explícitas ou configurações padrão.
 
         Args:
             endpoint_url: URL de endpoint do R2 ou S3 compatível.
             access_key_id: ID da chave de acesso do serviço de nuvem.
             secret_access_key: Chave secreta de acesso do serviço.
-            region_name: O nome da região (default: us-east-1).
+            region_name: Nome da região de hospedagem (padrão 'us-east-1').
         """
         self._endpoint_url = endpoint_url
         self._access_key_id = access_key_id
@@ -37,7 +37,7 @@ class CloudflareR2StorageService:
         Obtém a URL do endpoint a partir do settings do Django ou inicialização.
 
         Returns:
-            A URL do endpoint ou None.
+            URL do endpoint configurada ou None se ausente.
         """
         return (
             self._endpoint_url
@@ -51,7 +51,7 @@ class CloudflareR2StorageService:
         Obtém o ID da chave de acesso configurada.
 
         Returns:
-            O ID da chave de acesso ou None.
+            ID da chave de acesso configurado ou None se ausente.
         """
         return (
             self._access_key_id
@@ -65,7 +65,7 @@ class CloudflareR2StorageService:
         Obtém a chave de acesso secreta configurada.
 
         Returns:
-            A chave de acesso secreta ou None.
+            Chave secreta de acesso configurada ou None se ausente.
         """
         return (
             self._secret_access_key
@@ -77,11 +77,8 @@ class CloudflareR2StorageService:
         """
         Obtém o cliente S3 configurado, validando as credenciais sob demanda.
 
-        Args:
-            bucket: O nome do bucket de destino no storage.
-
         Returns:
-            Cliente boto3 para S3.
+            Cliente boto3 para S3 inicializado.
 
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.
@@ -108,20 +105,19 @@ class CloudflareR2StorageService:
         self, bucket: str, object_key: str, content_type: str, expires_in: int = 900
     ) -> str:
         """
-        Gera uma URL pré-assinada para upload de um objeto no Cloudflare R2.
+        Gera URL pré-assinada para upload direto de um objeto no Cloudflare R2.
 
         Args:
-            bucket: O nome do bucket de destino no storage.
-            object_key: O caminho/nome único do objeto no bucket.
-            content_type: O tipo MIME do arquivo (ex: image/png).
-            expires_in: Tempo em segundos para a URL expirar.
+            bucket: Nome do bucket de destino no storage.
+            object_key: Identificador ou caminho do objeto no bucket.
+            content_type: Tipo MIME do arquivo a ser enviado.
+            expires_in: Tempo em segundos para a URL expirar (padrão de 900s).
 
         Returns:
-            A URL gerada para upload direto de arquivos via PUT.
+            URL pré-assinada para upload direto via PUT.
 
         Raises:
-            BusinessRuleViolation: Se as credenciais ou o bucket não
-                estiverem devidamente configurados no servidor.
+            BusinessRuleViolation: Se a configuração do storage estiver incompleta.
         """
         s3_client = self._get_client(bucket)
         presigned_url: str = s3_client.generate_presigned_url(
@@ -139,15 +135,15 @@ class CloudflareR2StorageService:
         self, bucket: str, object_key: str, expires_in: int = 900
     ) -> str:
         """
-        Gera uma URL pré-assinada para download/leitura segura de um objeto via GET.
+        Gera URL pré-assinada para leitura ou download seguro de um objeto via GET.
 
         Args:
-            bucket: O nome do bucket no storage.
-            object_key: O caminho/nome único do objeto no bucket.
-            expires_in: Tempo em segundos para a URL expirar.
+            bucket: Nome do bucket no storage.
+            object_key: Identificador ou caminho do objeto no bucket.
+            expires_in: Tempo em segundos para a URL expirar (padrão de 900s).
 
         Returns:
-            A URL pré-assinada gerada para leitura do arquivo.
+            URL pré-assinada para leitura segura via GET.
 
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.
@@ -167,16 +163,19 @@ class CloudflareR2StorageService:
         self, bucket: str, object_key: str, data: bytes, content_type: str
     ) -> str:
         """
-        Faz upload direto de uma sequência de bytes para o bucket de storage.
+        Realiza upload direto de conteúdo binário para o bucket de storage.
+
+        Efeitos Colaterais:
+            - Envia o payload de bytes diretamente para o bucket de storage configurado.
 
         Args:
-            bucket: O nome do bucket de destino no storage.
-            object_key: O caminho/nome único do objeto no bucket.
+            bucket: Nome do bucket de destino no storage.
+            object_key: Identificador ou caminho do objeto no bucket.
             data: Conteúdo binário a ser persistido.
-            content_type: O tipo MIME do arquivo (ex: application/pdf).
+            content_type: Tipo MIME do arquivo.
 
         Returns:
-            A chave única do objeto persistido no storage (object_key).
+            Chave única do objeto persistido no storage.
 
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.

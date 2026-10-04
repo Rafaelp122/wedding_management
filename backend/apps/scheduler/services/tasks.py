@@ -32,18 +32,16 @@ class TaskService:
     @transaction.atomic
     def create(company: Company, payload: TaskIn) -> Task:
         """
-        Cria uma nova tarefa para o tenant especificado.
+        Cria uma nova tarefa no checklist do casamento.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação da tarefa.
+        Efeitos Colaterais:
+            - Persiste a instância de Task vinculada ao casamento e empresa.
 
         Returns:
-            A tarefa criada e salva no banco de dados.
+            Instância de Task criada e persistida.
 
         Raises:
-            ObjectNotFoundError: Se o casamento associado não for encontrado ou
-                pertencer a outro tenant.
+            ObjectNotFoundError: Se o casamento associado não for encontrado no tenant.
         """
         logger.info(f"Iniciando criação de Tarefa para company_id={company.id}")
 
@@ -71,18 +69,17 @@ class TaskService:
     @transaction.atomic
     def update(company: Company, instance: Task, payload: TaskPatchIn) -> Task:
         """
-        Atualiza as informações de uma tarefa existente.
+        Atualiza as informações de uma tarefa existente no checklist.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da tarefa a ser atualizada.
-            payload: Dados com as alterações a serem aplicadas.
+        Efeitos Colaterais:
+            - Persiste as alterações cadastrais e de prazo no banco de dados.
+            - Invoca métodos de domínio complete() ou reopen() quando is_completed for alterado.
 
         Returns:
-            A instância da tarefa atualizada.
+            Instância de Task atualizada e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -131,17 +128,18 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def complete(company: Company, instance: Task) -> Task:
-        """Marca a tarefa como concluída no contexto do tenant.
+        """
+        Marca a tarefa como concluída no contexto do tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A tarefa a ser concluída.
+        Efeitos Colaterais:
+            - Define is_completed como True e registra o timestamp de conclusão.
+            - Persiste a alteração no banco de dados.
 
         Returns:
-            Task: A tarefa atualizada.
+            Instância de Task concluída e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -157,17 +155,18 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def reopen(company: Company, instance: Task) -> Task:
-        """Reabre uma tarefa concluída no contexto do tenant.
+        """
+        Reabre uma tarefa concluída no contexto do tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A tarefa a ser reaberta.
+        Efeitos Colaterais:
+            - Define is_completed como False e limpa o timestamp de conclusão.
+            - Persiste a alteração no banco de dados.
 
         Returns:
-            Task: A tarefa atualizada.
+            Instância de Task reaberta e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -184,14 +183,13 @@ class TaskService:
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
         """
-        Exclui uma tarefa existente.
+        Exclui uma tarefa existente do checklist.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da tarefa a ser excluída.
+        Efeitos Colaterais:
+            - Remove a instância de Task do banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -215,7 +213,8 @@ class TaskService:
         days_threshold: int = 3,
         today: date | None = None,
     ) -> int:
-        """Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
+        """
+        Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
 
         Busca tarefas não concluídas com data de vencimento definida e enfileira
         notificações para os usuários ativos da empresa proprietária. Tarefas
@@ -223,15 +222,15 @@ class TaskService:
         enquanto tarefas com prazo dentro da janela de antecedência geram alertas
         de prazo próximo (TASK_DEADLINE).
 
+        Efeitos Colaterais:
+            - Enfileira disparos assíncronos de notificação via send_notification_async.
+
         Args:
-            company: Empresa (tenant) opcional para filtrar tarefas.
-            days_threshold: Quantidade de dias futuros para alertar sobre prazos
-                próximos (padrão: 3).
-            today: Data base de referência. Se omitida, utiliza a data corrente
-                da aplicação via timezone.localdate().
+            days_threshold: Quantidade de dias futuros para alertar sobre prazos próximos (padrão: 3).
+            today: Data base de referência para cálculo de vencimento (padrão: data atual).
 
         Returns:
-            int: Quantidade de tarefas que geraram notificações.
+            Quantidade de tarefas que geraram notificações aos usuários.
         """
         if today is None:
             today = timezone.localdate()

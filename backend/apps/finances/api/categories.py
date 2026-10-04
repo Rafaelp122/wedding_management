@@ -28,9 +28,7 @@ budget_categories_router = Router(tags=["Finances"])
 def list_categories(
     request: AuthRequest, wedding_id: UUID4 | None = None
 ) -> QuerySet[BudgetCategory]:
-    """
-    Exibe todos os módulos separadores de custos, como Buffet e Cerimonial.
-    """
+    """Lista as categorias de orçamento do tenant com filtros opcionais."""
     user = request.user
     return budget_category_list_selector(company=user.company, wedding_id=wedding_id)
 
@@ -41,10 +39,7 @@ def list_categories(
     operation_id="finances_categories_read",
 )
 def get_category(request: AuthRequest, uuid: UUID4) -> BudgetCategory:
-    """
-    Acessa os detalhamentos da categoria isolada de forma simples e visual.
-    Garante a segurança contábil sem vazar detalhes restritos a terceiros.
-    """
+    """Recupera detalhes de uma categoria de orçamento específica."""
     user = request.user
     return budget_category_get_selector(company=user.company, uuid=uuid)
 
@@ -57,10 +52,7 @@ def get_category(request: AuthRequest, uuid: UUID4) -> BudgetCategory:
 def create_category(
     request: AuthRequest, payload: BudgetCategoryIn
 ) -> tuple[int, BudgetCategory]:
-    """
-    Abre mais um bloco de centro de custo em conta específica da festa.
-    Associa devidamente ao orçamento atrelado em tela.
-    """
+    """Cria uma nova categoria orçamentária vinculada a um orçamento."""
     user = request.user
     created = BudgetCategoryService.create(user.company, payload)
     return 201, budget_category_get_selector(company=user.company, uuid=created.uuid)
@@ -74,10 +66,7 @@ def create_category(
 def update_category(
     request: AuthRequest, uuid: UUID4, payload: BudgetCategoryPatchIn
 ) -> BudgetCategory:
-    """
-    Corrige o título, ou altera o valor dos gastos planejados.
-    Evita sobrescrições acidentais errôneas em outras rotas.
-    """
+    """Atualiza nome, descrição ou verba alocada de uma categoria."""
     user = request.user
     instance = budget_category_get_selector(company=user.company, uuid=uuid)
     BudgetCategoryService.update(user.company, instance, payload)
@@ -90,10 +79,7 @@ def update_category(
     operation_id="finances_categories_delete",
 )
 def delete_category(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Fecha um agrupamento no orçamento permanentemente.
-    Exclui anotações de faturas de modo destrutivo para balanceamento.
-    """
+    """Exclui uma categoria de orçamento sem despesas vinculadas."""
     user = request.user
     instance = budget_category_get_selector(company=user.company, uuid=uuid)
     BudgetCategoryService.delete(user.company, instance)

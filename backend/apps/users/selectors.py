@@ -18,13 +18,11 @@ if TYPE_CHECKING:
 
 
 def user_get_by_email_selector(*, email: str) -> User:
-    """Recupera um usuário pelo endereço de e-mail normalizado.
-
-    Args:
-        email: Endereço de e-mail do usuário.
+    """
+    Recupera um usuário pelo endereço de e-mail normalizado.
 
     Returns:
-        User: Instância do usuário encontrado.
+        Instância do usuário encontrado.
 
     Raises:
         ObjectNotFoundError: Se nenhum usuário for encontrado com o e-mail fornecido.
@@ -37,13 +35,11 @@ def user_get_by_email_selector(*, email: str) -> User:
 
 
 def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
-    """Recupera um usuário pelo seu identificador público UUID.
-
-    Args:
-        uuid: Identificador UUID único do usuário.
+    """
+    Recupera um usuário pelo seu identificador público UUID.
 
     Returns:
-        User: Instância do usuário encontrado.
+        Instância do usuário encontrado.
 
     Raises:
         ObjectNotFoundError: Se nenhum usuário for encontrado com o UUID fornecido.
@@ -55,13 +51,11 @@ def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
 
 
 def user_list_selector(*, company: Company | None = None) -> QuerySet[User]:
-    """Lista usuários do sistema, opcionalmente filtrados por empresa (tenant).
-
-    Args:
-        company: Empresa opcional para filtrar os usuários.
+    """
+    Lista usuários do sistema com filtro opcional por empresa (tenant).
 
     Returns:
-        QuerySet[User]: QuerySet com os usuários correspondentes.
+        QuerySet contendo os usuários correspondentes.
     """
     qs = User.objects.all()
     if company is not None:

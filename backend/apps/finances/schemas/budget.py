@@ -12,8 +12,6 @@ if TYPE_CHECKING:
 
 
 class BudgetIn(Schema):
-    """Schema de entrada para criação de orçamento."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     wedding: UUID4
@@ -22,8 +20,6 @@ class BudgetIn(Schema):
 
 
 class BudgetPatchIn(Schema):
-    """Schema de entrada para atualização parcial de orçamento."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     total_estimated: Decimal | None = Field(default=None, ge=0)
@@ -31,8 +27,6 @@ class BudgetPatchIn(Schema):
 
 
 class BudgetOut(Schema):
-    """Schema de saída para exibição de orçamento."""
-
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     total_estimated: Decimal

@@ -21,8 +21,9 @@ from apps.tenants.models import TenantModel
 
 class Installment(TenantModel, WeddingOwnedMixin):
     """
-    Parcelamento (RF04).
-    Representa uma fatia financeira de uma Despesa.
+    Parcela financeira vinculada a uma despesa (RF04).
+
+    Encapsula valores, cronograma de vencimento, máquina de estados e imutabilidade de parcelas pagas.
     """
 
     objects = InstallmentManager()  # type: ignore[misc]
@@ -66,7 +67,7 @@ class Installment(TenantModel, WeddingOwnedMixin):
         return f"Parcela {self.installment_number} - {self.expense.description} ({self.status})"
 
     def clean(self) -> None:
-        """Validações de consistência paid_date ↔ status."""
+        """Valida consistência entre data de pagamento e status, além da imutabilidade de parcelas pagas (BR-F04)."""
         super().clean()
 
         if self.amount is not None and self.amount < 0:
@@ -104,13 +105,13 @@ class Installment(TenantModel, WeddingOwnedMixin):
 
     def validate_chronology(self, new_due_date: date) -> None:
         """
-        Valida a regra BR-F05 de consistência temporal com parcelas vizinhas.
+        Valida a ordenação cronológica estrita em relação às parcelas vizinhas (BR-F05).
 
         Args:
             new_due_date: Nova data de vencimento proposta.
 
         Raises:
-            BusinessRuleViolation: Se a data conflitar com parcelas vizinhas.
+            BusinessRuleViolation: Se a data violar a sequência temporal com parcelas adjacentes.
         """
         if not self.expense_id or not self.installment_number:
             return
@@ -152,25 +153,27 @@ class Installment(TenantModel, WeddingOwnedMixin):
             )
 
     def can_transition_to(self, target_status: str | StatusChoices) -> bool:
-        """Verifica se a transição para o status informado é válida.
+        """
+        Verifica se a transição para o status informado é permitida pela máquina de estados.
 
         Args:
             target_status: Status de destino a ser avaliado.
 
         Returns:
-            True se a transição for permitida, False caso contrário.
+            Verdadeiro se a transição for permitida, falso caso contrário.
         """
         target = str(target_status)
         return target in self.ALLOWED_TRANSITIONS.get(self.status, set())
 
     def transition_to(self, target_status: str | StatusChoices) -> None:
-        """Executa a transição de status da parcela validando as regras do domínio.
+        """
+        Executa a transição de status da parcela validando a máquina de estados.
 
         Args:
             target_status: Status de destino desejado.
 
         Raises:
-            BusinessRuleViolation: Se a transição for inválida.
+            BusinessRuleViolation: Se a transição for inválida na máquina de estados.
         """
         target = str(target_status)
         if self.status == target:
@@ -185,10 +188,11 @@ class Installment(TenantModel, WeddingOwnedMixin):
         self.status = target
 
     def mark_as_paid(self, *, paid_date: date | None = None) -> None:
-        """Marca a parcela como paga com a data informada ou atual.
+        """
+        Marca a parcela como paga registrando a data de liquidação.
 
         Args:
-            paid_date: Data opcional do pagamento. Se omitida, utiliza a data atual.
+            paid_date: Data opcional do pagamento (se omitida, utiliza a data corrente).
 
         Raises:
             BusinessRuleViolation: Se a parcela já estiver marcada como paga.
@@ -202,10 +206,11 @@ class Installment(TenantModel, WeddingOwnedMixin):
         self.transition_to(self.StatusChoices.PAID)
 
     def unmark_as_paid(self) -> None:
-        """Desmarca o pagamento da parcela, restaurando o status adequado ao vencimento.
+        """
+        Reverte o pagamento da parcela, restaurando o status adequado ao vencimento.
 
         Raises:
-            BusinessRuleViolation: Se a parcela não estiver marcada como paga.
+            BusinessRuleViolation: Se a parcela não estiver com status pago.
         """
         if self.status != self.StatusChoices.PAID:
             raise BusinessRuleViolation(
@@ -219,10 +224,11 @@ class Installment(TenantModel, WeddingOwnedMixin):
             self.transition_to(self.StatusChoices.PENDING)
 
     def mark_as_overdue(self) -> None:
-        """Altera status para atrasado caso a data de vencimento tenha passado.
+        """
+        Transiciona a parcela pendente para atrasada caso o vencimento tenha expirado.
 
         Raises:
-            BusinessRuleViolation: Se a data de vencimento ainda não tiver passado.
+            BusinessRuleViolation: Se a data de vencimento for igual ou posterior à data corrente.
         """
         if self.due_date >= date.today():
             raise BusinessRuleViolation(

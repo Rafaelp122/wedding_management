@@ -42,16 +42,17 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Cria um novo termo aditivo vinculado ao contrato especificado.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_id: Identificador do contrato principal.
-            payload: Dados de entrada do termo aditivo.
+        Regra de Negócio:
+            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância de ContractAddendum com status PENDING no banco de dados.
 
         Returns:
             Instância persistida de ContractAddendum.
 
         Raises:
-            BusinessRuleViolation: Se ocorrer falha de validação de modelo.
+            BusinessRuleViolation: Se ocorrer falha de validação de modelo ao salvar.
         """
         contract = resolve_tenant_resource(
             Contract,
@@ -99,14 +100,13 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Formaliza a assinatura de um termo aditivo e atualiza finanças.
 
-        Funciona tanto para contratos de fornecedores quanto para contratos de assessoria.
-        Enfileira tarefa reativa assíncrona pós-commit (ADR-017).
+        Regra de Negócio:
+            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_id: Identificador do contrato principal.
-            addendum_id: Identificador do termo aditivo.
-            payload: Metadados opcionais da assinatura (ex: data).
+        Efeitos Colaterais:
+            - Altera o status do termo aditivo para SIGNED e registra a data de assinatura.
+            - Registra o ajuste financeiro síncrono no domínio de Finanças (ADR-031).
+            - Enfileira tarefa assíncrona pós-commit on_contract_addendum_signed_task (ADR-017).
 
         Returns:
             Instância de ContractAddendum com status SIGNED.
@@ -185,16 +185,18 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Cancela um termo aditivo previamente registrado.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_id: Identificador do contrato principal.
-            addendum_id: Identificador do termo aditivo a cancelar.
+        Regra de Negócio:
+            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+
+        Efeitos Colaterais:
+            - Altera e persiste o status do termo aditivo para CANCELED.
 
         Returns:
             Instância de ContractAddendum com status CANCELED.
 
         Raises:
             DomainIntegrityError: Se o aditivo não pertencer ao contrato especificado.
+            BusinessRuleViolation: Se ocorrer falha de validação de modelo ao cancelar.
         """
         contract = resolve_tenant_resource(
             Contract,
@@ -235,10 +237,11 @@ class ContractAddendumService:
     ) -> None:
         """Exclui um termo aditivo pendente do banco de dados.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_id: Identificador do contrato principal.
-            addendum_id: Identificador do termo aditivo a excluir.
+        Regra de Negócio:
+            BR-L02-D (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+
+        Efeitos Colaterais:
+            - Remove permanentemente o termo aditivo do banco de dados.
 
         Raises:
             DomainIntegrityError: Se o aditivo não pertencer ao contrato informado.

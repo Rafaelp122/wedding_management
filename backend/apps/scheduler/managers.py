@@ -27,11 +27,8 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         """
         Filtra tarefas pertencentes a um casamento específico.
 
-        Args:
-            wedding_id_or_instance: Instância de Wedding, UUID, string ou id numérico.
-
         Returns:
-            TaskQuerySet filtrado pelo casamento.
+            QuerySet filtrado pelo casamento.
         """
         if hasattr(wedding_id_or_instance, "_meta"):
             return self.filter(wedding=wedding_id_or_instance)  # type: ignore[misc]
@@ -44,7 +41,7 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         Filtra apenas tarefas concluídas.
 
         Returns:
-            TaskQuerySet com tarefas marcadas como concluídas.
+            QuerySet com tarefas marcadas como concluídas.
         """
         return self.filter(is_completed=True)
 
@@ -53,7 +50,7 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         Filtra apenas tarefas pendentes (não concluídas).
 
         Returns:
-            TaskQuerySet com tarefas pendentes.
+            QuerySet com tarefas pendentes.
         """
         return self.filter(is_completed=False)
 
@@ -62,10 +59,10 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         Filtra tarefas pendentes e atrasadas/vencendo até a data de referência.
 
         Args:
-            today: Data de referência para verificar vencimento.
+            today: Data base de referência para avaliar vencimento.
 
         Returns:
-            TaskQuerySet com tarefas urgentes.
+            QuerySet com tarefas urgentes.
         """
         return self.pending().filter(due_date__lte=today)
 
@@ -76,11 +73,11 @@ class TaskQuerySet(TenantQuerySet["Task"]):
         Filtra tarefas com prazo de vencimento dentro de um intervalo de datas.
 
         Args:
-            start_date: Data inicial do intervalo (inclusive).
-            end_date: Data final do intervalo (inclusive).
+            start_date: Limite inicial opcional do intervalo (inclusive).
+            end_date: Limite final opcional do intervalo (inclusive).
 
         Returns:
-            TaskQuerySet filtrado pelo intervalo de vencimento.
+            QuerySet filtrado pelo intervalo de vencimento.
         """
         qs = self
         if start_date is not None:
@@ -103,11 +100,8 @@ class EventQuerySet(TenantQuerySet["Event"]):
         """
         Filtra eventos pertencentes a um casamento específico.
 
-        Args:
-            wedding_id_or_instance: Instância de Wedding, UUID, string ou id numérico.
-
         Returns:
-            EventQuerySet filtrado pelo casamento.
+            QuerySet filtrado pelo casamento.
         """
         if hasattr(wedding_id_or_instance, "_meta"):
             return self.filter(wedding=wedding_id_or_instance)  # type: ignore[misc]
@@ -120,7 +114,7 @@ class EventQuerySet(TenantQuerySet["Event"]):
         Ordena os eventos cronologicamente por horário de início.
 
         Returns:
-            EventQuerySet ordenado por start_time ascendente.
+            QuerySet ordenado por start_time ascendente.
         """
         return self.order_by("start_time")
 
@@ -133,11 +127,11 @@ class EventQuerySet(TenantQuerySet["Event"]):
         Filtra eventos dentro de um período específico.
 
         Args:
-            start_datetime: Data/hora inicial do período (inclusive).
-            end_datetime: Data/hora final do período (inclusive).
+            start_datetime: Limite inicial opcional do período (inclusive).
+            end_datetime: Limite final opcional do período (inclusive).
 
         Returns:
-            EventQuerySet filtrado pelo período.
+            QuerySet filtrado pelo período informado.
         """
         qs = self
         if start_datetime is not None:
@@ -157,9 +151,9 @@ class EventQuerySet(TenantQuerySet["Event"]):
         Filtra eventos pelo tipo especificado.
 
         Args:
-            event_type: Tipo do evento (ex: 'reuniao', 'pagamento', etc.).
+            event_type: Tipo do evento pretendido (ex: reuniao, pagamento).
 
         Returns:
-            EventQuerySet filtrado pelo tipo.
+            QuerySet filtrado pelo tipo informado.
         """
         return self.filter(event_type=event_type)

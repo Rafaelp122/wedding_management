@@ -22,12 +22,7 @@ def validate_future_date(value: date) -> None:
 
 
 class Wedding(TenantModel):
-    """
-    Agregado central que representa um evento de casamento no sistema.
-
-    Encapsula o ciclo de vida do planejamento, máquina de estados de transição,
-    invariantes de data, dados do contratante e template de cronograma.
-    """
+    """Agregado central que representa um evento de casamento e seu ciclo de vida."""
 
     objects = WeddingQuerySet.as_manager()  # type: ignore[assignment,misc]
 
@@ -216,21 +211,7 @@ class Wedding(TenantModel):
         client_role: str | None = None,
         days_before_in_progress: int | None = None,
     ) -> None:
-        """
-        Atualiza dados cadastrais descritivos e do contratante do casamento.
-
-        Args:
-            groom_name: Nome do noivo.
-            bride_name: Nome da noiva.
-            location: Local planejado para a realização.
-            expected_guests: Quantidade estimada de convidados.
-            client_name: Nome do contratante principal.
-            client_cpf: CPF do contratante principal.
-            client_email: E-mail do contratante principal.
-            client_phone: Telefone do contratante principal.
-            client_role: Papel ou parentesco do contratante principal.
-            days_before_in_progress: Dias de antecedência para disparo da reta final.
-        """
+        """Atualiza dados cadastrais descritivos e do contratante do casamento."""
         attrs: dict[str, Any] = {
             "groom_name": groom_name,
             "bride_name": bride_name,
@@ -305,9 +286,6 @@ class Wedding(TenantModel):
     def convert_to_planning(self) -> None:
         """
         Transiciona o casamento de PROPOSTA para PLANEJAMENTO (PLANNING).
-
-        Valida que o evento possa transitar para planejamento e que a data
-        da cerimônia não seja retroativa.
 
         Raises:
             BusinessRuleViolation: Se o status atual for incompatível ou a data for no passado.
@@ -388,7 +366,7 @@ class Wedding(TenantModel):
     @property
     def primary_signatory_client(self) -> Any:
         """
-        Retorna o cliente (Client) configurado como signatário principal do contrato do casamento.
+        Retorna o cliente configurado como signatário principal do contrato do casamento.
         """
         if (
             hasattr(self, "_prefetched_objects_cache")
@@ -407,12 +385,7 @@ class Wedding(TenantModel):
 
 
 class WeddingClient(TenantModel, WeddingOwnedMixin):
-    """
-    Associação entre um Casamento e um Cliente sob um papel específico (ADR-030).
-
-    Permite mapear noivos, contratantes financeiros, signatários legais e outros
-    envolvidos com rastreamento de quem assina o contrato e observações.
-    """
+    """Associação entre um Casamento e um Cliente sob um papel específico."""
 
     class RoleChoices(models.TextChoices):
         BRIDE = "BRIDE", "Noiva"
@@ -473,12 +446,7 @@ class WeddingClient(TenantModel, WeddingOwnedMixin):
                 )
 
     def mark_as_primary_signatory(self, is_signatory: bool = True) -> None:
-        """
-        Define ou revoga a condição de signatário do contrato para o participante.
-
-        Args:
-            is_signatory: Se o participante deve assinar o instrumento contratual.
-        """
+        """Define ou revoga a condição de signatário do contrato para o participante."""
         self.is_primary_signatory = is_signatory
 
 

@@ -26,12 +26,10 @@ def notification_list_selector(
     """Retorna o queryset encadeável de notificações de um usuário no tenant.
 
     Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário das notificações.
         unread_only: Se True, filtra apenas notificações não lidas.
 
     Returns:
-        NotificationQuerySet: QuerySet encadeável anotado com wedding_name.
+        QuerySet encadeável anotado com wedding_name e ordenado pelos mais recentes.
     """
     qs: NotificationQuerySet = (
         Notification.objects.for_tenant(company)
@@ -47,12 +45,8 @@ def notification_list_selector(
 def notification_unread_count_selector(*, company: Company, user: User) -> int:
     """Retorna a contagem de notificações não lidas de um usuário no tenant.
 
-    Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário das notificações.
-
     Returns:
-        int: Quantidade de notificações não lidas (is_read=False).
+        Quantidade total de notificações pendentes de leitura.
     """
     return int(Notification.objects.for_tenant(company).for_user(user).unread().count())
 
@@ -66,15 +60,13 @@ def notification_get_selector(
     """Recupera uma notificação específica garantindo isolamento de tenant e usuário.
 
     Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário da notificação.
         uuid: Identificador único da notificação.
 
     Returns:
-        Notification: Instância da notificação anotada com wedding_name.
+        Instância da notificação anotada com wedding_name.
 
     Raises:
-        ObjectNotFoundError: Se a notificação não for encontrada.
+        ObjectNotFoundError: Se a notificação não for encontrada no tenant para o usuário.
     """
     notification = (
         Notification.objects.for_tenant(company)

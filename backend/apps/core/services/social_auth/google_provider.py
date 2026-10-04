@@ -19,17 +19,17 @@ class GoogleOAuthProvider:
 
     def verify_token(self, token: str) -> OAuthUserInfo:
         """
-        Verifica o token do Google e extrai as informações do usuário.
+        Valida o token do Google e extrai as informações do usuário.
 
         Args:
-            token: O token JWT de identidade emitido pelo Google.
+            token: Token JWT de identidade emitido pelo Google OAuth.
 
         Returns:
-            OAuthUserInfo contendo os dados do usuário.
+            Dados normalizados do usuário autenticado no Google.
 
         Raises:
-            HttpError: Se a configuração estiver ausente (401), token for
-                inválido/expirado (401), ou e-mail não for verificado (401).
+            HttpError: Se a configuração do Google estiver ausente, o token for
+                inválido/expirado ou o e-mail não estiver verificado.
         """
         client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
         if not client_id:

@@ -71,14 +71,7 @@ class ChecklistItem(TenantModel, WeddingOwnedMixin):
         due_date: dt.date | None = None,
         priority: str | None = None,
     ) -> None:
-        """Atualiza os dados cadastrais da tarefa.
-
-        Args:
-            title: Novo título opcional.
-            description: Nova descrição opcional.
-            due_date: Novo prazo estimado opcional.
-            priority: Nova prioridade opcional.
-        """
+        """Atualiza os dados cadastrais e prazo estimado da tarefa."""
         if title is not None:
             self.title = title
         if description is not None:

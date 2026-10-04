@@ -45,16 +45,20 @@ class GoogleAuthService:
         """
         Autentica usuário existente ou cadastra um novo via ID Token do Google.
 
+        Efeitos Colaterais:
+            - Provisiona novo usuário e respectiva empresa em caso de primeiro login.
+            - Atualiza o status de e-mail verificado se ainda pendente.
+
         Args:
-            id_token: O token JWT de identidade emitido pelo Google OAuth.
-            provider: Provedor OAuth opcional para injeção de dependência.
+            id_token: Token JWT de identidade emitido pelo Google OAuth.
+            provider: Provedor OAuth customizado para injeção de dependência.
 
         Returns:
-            TokenOut contendo os tokens de acesso, atualização e os dados do usuário.
+            Tokens de acesso, atualização e dados do usuário autenticado.
 
         Raises:
-            HttpError: Se o token do Google for inválido ou expirado (HTTP 401),
-                ou se a conta do usuário estiver inativa (HTTP 401).
+            AuthenticationFailedError: Se a conta estiver inativa no sistema.
+            HttpError: Se a validação do token do Google falhar.
         """
         logger.info("Iniciando verificação de token de identidade do Google.")
 
@@ -88,16 +92,17 @@ class GoogleAuthService:
     @transaction.atomic
     def _get_or_create_user(user_info: OAuthUserInfo) -> User:
         """
-        Busca um usuário existente ou cadastra um novo com tenant no banco de dados.
+        Recupera usuário existente ou provisiona nova conta e tenant atomicamente.
 
-        Args:
-            user_info: As informações do usuário obtidas do provedor OAuth.
+        Efeitos Colaterais:
+            - Cria empresa e usuário proprietário quando inexistente.
+            - Atualiza status de verificação de e-mail se aplicável.
 
         Returns:
-            A instância de User recuperada ou recém-criada.
+            Instância do usuário recuperado ou recém-criado.
 
         Raises:
-            HttpError: Se a conta do usuário existente estiver desativada.
+            AuthenticationFailedError: Se a conta existente estiver inativa.
         """
         # Tenant desconhecido no fluxo de login — email é global único
         user = User.objects.filter(email=user_info.email).first()
