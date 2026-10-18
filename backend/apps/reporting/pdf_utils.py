@@ -26,9 +26,7 @@ from apps.finances.models import Installment
 
 
 class NumberedCanvas(canvas.Canvas):  # type: ignore[misc]
-    """
-    Canvas customizado do ReportLab com suporte a numeração de páginas em dois passos.
-    """
+    """Canvas customizado do ReportLab com suporte a numeração de páginas em dois passos."""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -400,8 +398,16 @@ def render_wedding_pdf(
     contracts: list[Any],
     tasks: list[Any],
 ) -> bytes:
-    """
-    Renderiza o relatório PDF diagramado do casamento aderente ao DESIGN.md.
+    """Renderiza o relatório PDF diagramado do casamento aderente ao DESIGN.md.
+
+    Consolida cabeçalho executivo, grade de KPIs, tabelas financeiras,
+    contratos e checklist de tarefas em fluxo ReportLab formatado em página A4.
+
+    Efeitos Colaterais:
+        - Gera binário PDF em memória (buffer io.BytesIO).
+
+    Returns:
+        Conteúdo binário do documento PDF renderizado.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(

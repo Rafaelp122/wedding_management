@@ -26,26 +26,16 @@ logger = logging.getLogger(__name__)
 
 
 class ItemService:
-    """
-    Camada de serviço para gestão de itens de logística.
-    Garante a integridade entre contratos e casamentos em operações de escrita.
-    """
+    """Camada de serviço de aplicação para gestão e ciclo de vida de itens de logística."""
 
     @staticmethod
     def _resolve_wedding(
         company: Company, wedding_input: UUID | str | Wedding | None
     ) -> Wedding | None:
-        """
-        Resolve um casamento garantindo o isolamento multitenant.
-
-        Aceita uma instância de Wedding, UUID ou string identificadora.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_input: Instância, UUID ou string do casamento.
+        """Resolve um casamento garantindo o isolamento multitenant.
 
         Returns:
-            A instância resolvida do casamento, ou None se não fornecido.
+            Instância resolvida do casamento, ou None se não fornecido.
 
         Raises:
             ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
@@ -72,17 +62,10 @@ class ItemService:
     def _resolve_contract(
         company: Company, contract_input: UUID | str | Contract | None
     ) -> Contract | None:
-        """
-        Resolve um contrato garantindo o isolamento multitenant.
-
-        Aceita uma instância de Contract, UUID ou string identificadora.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_input: Instância, UUID ou string do contrato.
+        """Resolve um contrato garantindo o isolamento multitenant.
 
         Returns:
-            A instância resolvida do contrato, ou None se não fornecido.
+            Instância resolvida do contrato, ou None se não fornecido.
 
         Raises:
             ObjectNotFoundError: Se o contrato não for encontrado para o tenant.
@@ -108,25 +91,21 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: ItemIn) -> Item:
-        """
-        Cria um novo item de logística associado ao tenant.
+        """Cria um novo item de logística associado ao tenant.
 
-        Garante que o item esteja vinculado a um casamento válido e,
-        se houver contrato associado, valida a correspondência do
-        casamento com o do contrato.
+        Regra de Negócio:
+            BR-L04: Desacoplamento de suprimentos e pagamentos.
+            ADR-030: Validação de consistência entre casamento do item e do contrato.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do item.
+        Efeitos Colaterais:
+            Persiste o novo item de logística na base de dados.
 
         Returns:
-            A instância do Item criada e salva no banco.
+            Instância do item criada e salva no banco.
 
         Raises:
-            DomainIntegrityError: Se o casamento do item não coincidir
-                com o casamento do contrato informado.
-            BusinessRuleViolation: Se nem o casamento nem o contrato
-                forem informados.
+            DomainIntegrityError: Se o casamento do item não coincidir com o do contrato.
+            BusinessRuleViolation: Se nem casamento nem contrato forem informados.
         """
         logger.info(f"Iniciando criação de Item para company_id={company.id}")
 
@@ -134,24 +113,24 @@ class ItemService:
 
         wedding_input = data.pop("wedding", None)
 
-        # 2. Tratamento de contrato
+        # 2. Tratamento de contrato e casamento
         contract_input = data.pop("contract", None)
         contract = ItemService._resolve_contract(company, contract_input)
 
-        wedding: Wedding | None = None
-        if contract:
-            wedding = contract.wedding
-            if wedding_input:
-                resolved_wedding = ItemService._resolve_wedding(company, wedding_input)
-                if resolved_wedding:
-                    wedding = resolved_wedding
-        else:
-            wedding = ItemService._resolve_wedding(company, wedding_input)
+        resolved_wedding = (
+            ItemService._resolve_wedding(company, wedding_input)
+            if wedding_input
+            else None
+        )
+        wedding = resolved_wedding or (contract.wedding if contract else None)
 
         # 3. Instanciação
         if wedding is None:
             raise BusinessRuleViolation(
-                detail="É necessário informar um casamento ou um contrato vinculado.",
+                detail=(
+                    f"É necessário informar um casamento ou um contrato vinculado; "
+                    f"wedding_input='{wedding_input}', contract_input='{contract_input}'."
+                ),
                 code="item_missing_wedding",
             )
 
@@ -160,9 +139,16 @@ class ItemService:
             item.save()
         except ValidationError as exc:
             if "contract" in getattr(exc, "message_dict", {}):
+                wedding_id = getattr(wedding, "uuid", getattr(wedding, "id", wedding))
+                contract_wedding_id = getattr(
+                    getattr(contract, "wedding", None),
+                    "uuid",
+                    getattr(contract, "wedding_id", None),
+                )
                 raise DomainIntegrityError(
                     detail=(
-                        "O wedding informado não corresponde ao wedding do contrato."
+                        f"O wedding informado não corresponde ao wedding do contrato; "
+                        f"wedding='{wedding_id}', contract_wedding='{contract_wedding_id}'."
                     ),
                     code="item_contract_wedding_mismatch",
                 ) from exc
@@ -174,23 +160,16 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Item, payload: ItemPatchIn) -> Item:
-        """
-        Atualiza os dados de um item de logística existente.
+        """Atualiza os dados de um item de logística existente.
 
-        Valida a propriedade do tenant antes da alteração e garante
-        que o contrato informado pertença ao mesmo casamento do item.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância atual do Item a ser atualizada.
-            payload: Dados parciais para atualização do item.
+        Efeitos Colaterais:
+            Persiste as alterações cadastrais ou de status do item no banco.
 
         Returns:
-            A instância atualizada do Item.
+            Instância atualizada do item.
 
         Raises:
-            DomainIntegrityError: Se o novo contrato informado não pertencer
-                ao casamento do item.
+            DomainIntegrityError: Se o novo contrato não pertencer ao casamento do item.
             ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
@@ -235,14 +214,10 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Item) -> None:
-        """
-        Remove um item de logística do banco de dados.
+        """Remove um item de logística do banco de dados.
 
-        Verifica a propriedade do tenant antes de efetuar a exclusão.
-
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser removida.
+        Efeitos Colaterais:
+            Exclui o registro do item de logística da base de dados.
 
         Raises:
             ObjectNotFoundError: Se o item não pertencer ao tenant.
@@ -266,22 +241,22 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def transition_status(company: Company, instance: Item, new_status: str) -> Item:
-        """
-        Realiza a transição do status de aquisição de um item.
+        """Realiza a transição do status de aquisição de um item.
 
-        Valida as regras de transição e a propriedade do tenant.
+        Regra de Negócio:
+            BR-L04: Autômato de estados de aquisição do suprimento logístico.
+
+        Efeitos Colaterais:
+            Persiste o novo status de aquisição do item na base de dados.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ter o status alterado.
-            new_status: O novo status desejado para o item.
+            new_status: Novo status de aquisição pretendido para o item.
 
         Returns:
-            A instância do Item com o status atualizado.
+            Instância do item com o status atualizado.
 
         Raises:
-            BusinessRuleViolation: Se a transição de status for inválida
-                segundo as regras de validação do modelo.
+            BusinessRuleViolation: Se a transição de status for inválida.
             ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
@@ -310,14 +285,13 @@ class ItemService:
     @staticmethod
     @transaction.atomic
     def start(company: Company, instance: Item) -> Item:
-        """Inicia a aquisição/execução do item, transitando para EM ANDAMENTO.
+        """Inicia a aquisição ou execução do item, transitando para EM ANDAMENTO.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser iniciada.
+        Efeitos Colaterais:
+            Persiste a transição para EM ANDAMENTO na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item.
 
         Raises:
             BusinessRuleViolation: Se a transição for inválida.
@@ -344,12 +318,11 @@ class ItemService:
     def complete(company: Company, instance: Item) -> Item:
         """Conclui a aquisição do item, transitando para CONCLUÍDO.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser concluída.
+        Efeitos Colaterais:
+            Persiste a transição para CONCLUÍDO na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item.
 
         Raises:
             BusinessRuleViolation: Se a transição for inválida.
@@ -376,12 +349,11 @@ class ItemService:
     def reopen(company: Company, instance: Item) -> Item:
         """Reabre um item concluído, transitando de volta para EM ANDAMENTO.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser reaberta.
+        Efeitos Colaterais:
+            Persiste a transição para EM ANDAMENTO na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item.
 
         Raises:
             BusinessRuleViolation: Se a transição for inválida.
@@ -408,12 +380,11 @@ class ItemService:
     def revert_to_pending(company: Company, instance: Item) -> Item:
         """Reverte o item em andamento de volta para PENDENTE.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser revertida.
+        Efeitos Colaterais:
+            Persiste a reversão para PENDENTE na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item.
 
         Raises:
             BusinessRuleViolation: Se a transição for inválida.
@@ -440,13 +411,21 @@ class ItemService:
     def discard(company: Company, instance: Item, reason: str) -> Item:
         """Descarta o item do escopo registrando compulsoriamente a justificativa (RF-15).
 
+        Regra de Negócio:
+            BR-L06: Justificativa obrigatória no descarte do suprimento do escopo.
+
+        Efeitos Colaterais:
+            Atualiza o status de escopo para DESCARTADO e salva o motivo na base de dados.
+
         Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser descartada.
-            reason: Motivo do descarte / rejeição.
+            reason: Motivo ou justificativa obrigatória para o descarte.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item descartado.
+
+        Raises:
+            BusinessRuleViolation: Se o motivo de descarte for vazio.
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -464,12 +443,14 @@ class ItemService:
     def include(company: Company, instance: Item) -> Item:
         """Reintegra o item ao escopo aprovado do evento.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser reintegrada.
+        Efeitos Colaterais:
+            Atualiza o status de escopo para INCLUÍDO e limpa o motivo de rejeição.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item reintegrado.
+
+        Raises:
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -487,12 +468,14 @@ class ItemService:
     def deliver(company: Company, instance: Item) -> Item:
         """Registra a conferência física e entrega do material no local (RF-15).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser marcada como entregue.
+        Efeitos Colaterais:
+            Atualiza o status de entrega para ENTREGUE na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item com entrega registrada.
+
+        Raises:
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,
@@ -510,12 +493,14 @@ class ItemService:
     def mark_returned(company: Company, instance: Item) -> Item:
         """Registra a devolução física do material após o evento.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do Item a ser marcada como devolvida.
+        Efeitos Colaterais:
+            Atualiza o status de entrega para DEVOLVIDO na base de dados.
 
         Returns:
-            A instância do Item atualizada.
+            Instância atualizada do item com devolução registrada.
+
+        Raises:
+            ObjectNotFoundError: Se o item não pertencer ao tenant.
         """
         validate_tenant_ownership(
             company,

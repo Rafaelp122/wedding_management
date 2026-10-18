@@ -21,15 +21,13 @@ def client_list_selector(
     company: Company,
     q: str = "",
 ) -> QuerySet[Client]:
-    """
-    Retorna a listagem de clientes do tenant com suporte a busca textual.
+    """Lista clientes do tenant com suporte a busca textual ordenados por nome.
 
     Args:
-        company: O tenant atual para isolamento de dados.
         q: Termo opcional para busca textual em nome, CPF, e-mail ou telefone.
 
     Returns:
-        QuerySet de instâncias de Client ordenadas por nome.
+        QuerySet contendo os clientes do tenant ordenados por nome.
     """
     qs = Client.objects.for_tenant(company)
     if q:
@@ -41,15 +39,10 @@ def client_get_selector(
     company: Company,
     uuid: UUID | str,
 ) -> Client:
-    """
-    Recupera um cliente específico pelo identificador público (UUID).
-
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único público do cliente.
+    """Recupera um cliente específico por identificador único no tenant.
 
     Returns:
-        A instância de Client encontrada e pertencente à empresa.
+        Instância do cliente localizado.
 
     Raises:
         ObjectNotFoundError: Se o cliente não existir ou pertencer a outro tenant.

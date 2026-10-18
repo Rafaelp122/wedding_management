@@ -22,8 +22,9 @@ from apps.tenants.models import TenantModel
 
 class BudgetCategory(TenantModel, WeddingOwnedMixin):
     """
-    Categorias de gastos (RF03).
-    Permite o agrupamento logístico e financeiro vinculando despesas a um orçamento.
+    Categoria orçamentária para agrupamento logístico e financeiro (RF03).
+
+    Vincula despesas a um orçamento mestre respeitando o teto de alocação (BR-F04).
     """
 
     objects = BudgetCategoryManager()  # type: ignore[misc]

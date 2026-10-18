@@ -22,14 +22,15 @@ def create_item_for_contract(
 ) -> Any:
     """Cria um item de suprimento vinculado a um contrato.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        payload: Schema de entrada com os dados do item.
-        contract_uuid: UUID do contrato ao qual o item será associado.
-        wedding_uuid: UUID do casamento ao qual o item será associado.
+    Regra de Negócio:
+        BR-L04 (docs/architecture/domains/logistics-domain.md)
 
-    Returns:
-        Instância do item criado.
+    Efeitos Colaterais:
+        Persiste o novo item de logística associado ao contrato e casamento informados.
+
+    Raises:
+        DomainIntegrityError: Se o casamento do item não coincidir com o do contrato.
+        BusinessRuleViolation: Se nem casamento nem contrato forem informados.
     """
     from apps.logistics.schemas import ItemIn
     from apps.logistics.services.item_service import ItemService

@@ -89,7 +89,13 @@ class Notification(BaseModel):
         super().clean()
         if self.user_id and self.company_id and self.user.company_id != self.company_id:
             raise ValidationError(
-                {"user": "O usuário destinatário deve pertencer à empresa informada."}
+                {
+                    "user": (
+                        "O usuário destinatário deve pertencer à empresa informada; "
+                        f"recebido user.company_id='{self.user.company_id}', "
+                        f"esperado company_id='{self.company_id}'."
+                    )
+                }
             )
         if self.is_read and not self.read_at:
             self.read_at = timezone.now()

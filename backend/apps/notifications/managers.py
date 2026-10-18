@@ -43,8 +43,11 @@ class NotificationQuerySet(TenantQuerySet["Notification"]):
     def mark_as_read(self) -> int:
         """Marca notificações pendentes do queryset como lidas de forma atômica.
 
+        Efeitos Colaterais:
+            - Atualiza em lote os campos is_read, read_at e updated_at no banco de dados.
+
         Returns:
-            int: Quantidade de registros atualizados.
+            Quantidade de registros atualizados para o estado lido.
         """
         from django.utils import timezone
 

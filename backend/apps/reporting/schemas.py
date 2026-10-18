@@ -12,8 +12,6 @@ from pydantic import UUID4, Field
 
 # ── Global Dashboard Schemas ──
 class CriticalWeddingOut(Schema):
-    """Métricas de atenção de um casamento crítico nos próximos 90 dias."""
-
     uuid: UUID4
     groom_name: str
     bride_name: str
@@ -25,8 +23,6 @@ class CriticalWeddingOut(Schema):
 
 
 class DashboardInstallmentDetailOut(Schema):
-    """Detalhes de parcela financeira para listas e modais no dashboard global."""
-
     uuid: UUID4
     wedding_name: str
     amount: str
@@ -36,8 +32,6 @@ class DashboardInstallmentDetailOut(Schema):
 
 
 class DashboardTaskDetailOut(Schema):
-    """Detalhes de tarefa urgente para listas e modais no dashboard global."""
-
     uuid: UUID4
     wedding_name: str
     title: str
@@ -45,8 +39,6 @@ class DashboardTaskDetailOut(Schema):
 
 
 class DashboardContractDetailOut(Schema):
-    """Detalhes de contrato pendente para listas e modais no dashboard global."""
-
     uuid: UUID4
     wedding_name: str
     supplier_name: str
@@ -55,16 +47,12 @@ class DashboardContractDetailOut(Schema):
 
 
 class CashFlowMonthOut(Schema):
-    """Projeção de fluxo de caixa mensal (parcelas pagas vs pendentes)."""
-
     month: int
     paid: str
     pending: str
 
 
 class TaskProgressWeddingOut(Schema):
-    """Progresso consolidado de tarefas agrupado por casamento."""
-
     wedding_uuid: UUID4
     wedding_name: str
     total_tasks: int
@@ -73,8 +61,6 @@ class TaskProgressWeddingOut(Schema):
 
 
 class UpcomingWeddingOut(Schema):
-    """Resumo simplificado de casamento próximo para o painel de operações."""
-
     uuid: UUID4
     bride_name: str
     groom_name: str
@@ -83,16 +69,12 @@ class UpcomingWeddingOut(Schema):
 
 
 class DashboardOperationsOut(Schema):
-    """Painel de operações consolidado (casamentos, tarefas e contratos)."""
-
     upcoming_weddings: list[UpcomingWeddingOut]
     urgent_tasks: list[DashboardTaskDetailOut]
     pending_contracts: list[DashboardContractDetailOut]
 
 
 class DashboardSummaryOut(Schema):
-    """Resumo consolidado de indicadores importantes para o dashboard da empresa."""
-
     pending_installments_7d: str
     urgent_tasks_count: int
     overdue_installments_amount: str
@@ -111,8 +93,6 @@ class DashboardSummaryOut(Schema):
 
 # ── Wedding Specific Dashboard / Overview Schemas ──
 class WeddingDashboardInstallmentOut(Schema):
-    """Métricas de parcela financeira no resumo do casamento."""
-
     uuid: UUID4
     installment_number: int
     amount: str
@@ -121,16 +101,12 @@ class WeddingDashboardInstallmentOut(Schema):
 
 
 class WeddingDashboardTaskOut(Schema):
-    """Métricas de tarefa no resumo do casamento."""
-
     uuid: UUID4
     title: str
     due_date: datetime.date | None = None
 
 
 class WeddingDashboardCategoryOut(Schema):
-    """Resumo de gastos por categoria no orçamento do casamento."""
-
     name: str
     allocated: str
     spent: str
@@ -138,8 +114,6 @@ class WeddingDashboardCategoryOut(Schema):
 
 
 class WeddingDashboardOut(Schema):
-    """Visão geral agregada de indicadores de um casamento específico."""
-
     days_until_wedding: int
     budget_percentage_used: float
     tasks_completed: int

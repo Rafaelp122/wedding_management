@@ -22,10 +22,7 @@ from apps.tenants.models import TenantModel
 
 
 class ContractAddendum(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
-    """
-    Entidade filha de termos aditivos contratuais (RFC-001 / ADR-030).
-    Vinculada exclusivamente a um contrato principal de forma acíclica.
-    """
+    """Entidade de Termo Aditivo Contratual vinculada 1:N ao contrato principal (RFC-001 / ADR-030)."""
 
     objects = ContractAddendumQuerySet.as_manager()  # type: ignore[assignment,misc]
 
@@ -109,23 +106,38 @@ class ContractAddendum(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         self._clean_contract_alignment()
 
     def _clean_status_transition(self) -> None:
-        if self.pk:
-            orig = ContractAddendum.objects.filter(pk=self.pk).values("status").first()
-            if orig and orig["status"] != self.status:
-                allowed = self.ALLOWED_TRANSITIONS.get(orig["status"], [])
-                if self.status not in allowed:
-                    raise ValidationError(
-                        f"Não é permitido transitar de '{orig['status']}' para '{self.status}'."
-                    )
+        if not self.pk:
+            return
+
+        orig = ContractAddendum.objects.filter(pk=self.pk).values("status").first()
+        if not orig or orig["status"] == self.status:
+            return
+
+        allowed = self.ALLOWED_TRANSITIONS.get(orig["status"], [])
+        if self.status not in allowed:
+            raise ValidationError(
+                f"Transição inválida: Não é permitido transitar de '{orig['status']}' para '{self.status}'; "
+                f"opções válidas: {sorted(allowed)}."
+            )
 
     def _clean_invariants(self) -> None:
         if self.amount is None or self.amount <= Decimal("0.00"):
-            raise ValidationError({"amount": "O valor do aditivo deve ser positivo."})
+            raise ValidationError(
+                {
+                    "amount": (
+                        f"O valor do aditivo deve ser positivo; "
+                        f"recebido: {self.amount} (esperado > R$ 0,00)."
+                    )
+                }
+            )
 
         if self.status == self.StatusChoices.SIGNED and not self.signed_date:
             raise ValidationError(
                 {
-                    "signed_date": "A data de assinatura é obrigatória para aditivos assinados."
+                    "signed_date": (
+                        f"A data de assinatura é obrigatória para aditivos assinados; "
+                        f"recebido status '{self.status}' com data {self.signed_date}."
+                    )
                 }
             )
 
@@ -133,28 +145,36 @@ class ContractAddendum(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
             raise ValidationError(
                 {
                     "justification": (
-                        "A justificativa do aditivo é obrigatória e não pode "
-                        "conter apenas espaços."
+                        f"A justificativa do aditivo é obrigatória e não pode conter apenas espaços; "
+                        f"recebido: {self.justification!r}."
                     )
                 }
             )
 
     def _clean_contract_alignment(self) -> None:
-        if hasattr(self, "contract") and self.contract:
-            if not self.wedding_id:
-                self.wedding = self.contract.wedding
-            elif self.contract.wedding_id != self.wedding_id:
-                raise ValidationError(
-                    {
-                        "wedding": "O aditivo deve pertencer ao mesmo casamento do contrato principal."
-                    }
-                )
+        if not (hasattr(self, "contract") and self.contract):
+            return
 
-            if not self.company_id:
-                self.company = self.contract.company
-            elif self.contract.company_id != self.company_id:
-                raise ValidationError(
-                    {
-                        "company": "O aditivo deve pertencer à mesma empresa do contrato principal."
-                    }
-                )
+        if not self.wedding_id:
+            self.wedding = self.contract.wedding
+        elif self.contract.wedding_id != self.wedding_id:
+            raise ValidationError(
+                {
+                    "wedding": (
+                        f"O aditivo deve pertencer ao mesmo casamento do contrato principal; "
+                        f"recebido casamento '{self.wedding_id}' vs contrato '{self.contract.wedding_id}'."
+                    )
+                }
+            )
+
+        if not self.company_id:
+            self.company = self.contract.company
+        elif self.contract.company_id != self.company_id:
+            raise ValidationError(
+                {
+                    "company": (
+                        f"O aditivo deve pertencer à mesma empresa do contrato principal; "
+                        f"recebido empresa '{self.company_id}' vs contrato '{self.contract.company_id}'."
+                    )
+                }
+            )

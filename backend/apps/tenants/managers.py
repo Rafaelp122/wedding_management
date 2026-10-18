@@ -15,7 +15,12 @@ class TenantQuerySet(models.QuerySet[_ModelT]):
     """QuerySet base para isolamento de dados por Tenant (Company)."""
 
     def for_tenant(self, company: Company) -> Self:
-        """Filtra os registros estritamente pela empresa fornecida."""
+        """
+        Filtra os registros pertencentes à empresa informada.
+
+        Returns:
+            QuerySet filtrado pelo tenant.
+        """
         return self.filter(company=company)
 
 
@@ -25,7 +30,19 @@ class TenantManager(models.Manager[_ModelT]):
     _queryset_class = TenantQuerySet
 
     def get_queryset(self) -> TenantQuerySet[_ModelT]:
+        """
+        Retorna o QuerySet customizado com suporte a isolamento de tenant.
+
+        Returns:
+            Instância de TenantQuerySet associada ao modelo.
+        """
         return self._queryset_class(self.model, using=self._db)
 
     def for_tenant(self, company: Company) -> TenantQuerySet[_ModelT]:
+        """
+        Filtra os registros pertencentes à empresa informada.
+
+        Returns:
+            TenantQuerySet filtrado pelo tenant.
+        """
         return self.get_queryset().for_tenant(company)

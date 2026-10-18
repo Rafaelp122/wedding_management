@@ -34,15 +34,7 @@ class DailyBatchResponse(Schema):
 )
 @require_oidc_auth
 def run_daily_cron_batch(request: HttpRequest) -> tuple[int, DailyBatchResponse]:
-    """
-    Endpoint de disparo em lote (Daily Batch) para tarefas agendadas.
-    Invocado pelo GCP Cloud Scheduler via POST seguro com OIDC (ADR-005).
-    Executa todas as tarefas registradas no CronRegistry em uma única chamada On-Demand.
-
-    Retorna HTTP 200 se todas as tarefas obtiverem sucesso.
-    Retorna HTTP 207 (Multi-Status) se houver falha parcial ou total no lote,
-    garantindo que o GCP Cloud Scheduler e alertas de monitoramento detectem o erro.
-    """
+    """Executa em lote as tarefas diárias agendadas registradas no sistema."""
     logger.info("Iniciando execução do lote diário de tarefas (Daily Batch Cron)...")
 
     # Executa todas as tarefas dinamicamente registradas no CronRegistry

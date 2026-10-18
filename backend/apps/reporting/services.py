@@ -10,11 +10,10 @@ from apps.tenants.models import Company
 
 
 class ReportGenerationService:
-    """
-    Serviço de orquestração e exportação de relatórios consolidados do casamento.
+    """Serviço de orquestração e exportação de relatórios consolidados do casamento.
 
-    Delega a agregação de dados aos selectors multi-tenant e a diagramação
-    visual aos renderizadores especializados (PDF e Excel).
+    Delega a agregação de dados aos selectors multitenant e a diagramação
+    visual aos renderizadores especializados (PDF ReportLab e Excel openpyxl).
 
     Regras de Negócio e SSOT:
     - Hub do Domínio de Relatórios (BR-R01..04):
@@ -29,15 +28,10 @@ class ReportGenerationService:
         company: Company,
         wedding_uuid: UUID | str,
     ) -> bytes:
-        """
-        Gera um relatório diagramado completo do casamento em formato PDF.
+        """Gera um relatório diagramado completo do casamento em formato PDF.
 
-        Args:
-            company: Empresa tenant autenticada.
-            wedding_uuid: Identificador único do casamento.
-
-        Returns:
-            Bytes do arquivo PDF gerado.
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Renderiza binário PDF em memória via ReportLab.
         """
         from apps.reporting.pdf_utils import render_wedding_pdf
 
@@ -60,15 +54,10 @@ class ReportGenerationService:
         company: Company,
         wedding_uuid: UUID | str,
     ) -> bytes:
-        """
-        Gera um relatório operacional completo do casamento em planilha Excel (.xlsx).
+        """Gera um relatório operacional completo do casamento em planilha Excel (.xlsx).
 
-        Args:
-            company: Empresa tenant autenticada.
-            wedding_uuid: Identificador único do casamento.
-
-        Returns:
-            Bytes do arquivo Excel (.xlsx) gerado.
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Renderiza binário Excel em memória via openpyxl.
         """
         from apps.reporting.excel_utils import render_wedding_excel
 
@@ -92,16 +81,10 @@ class ReportGenerationService:
         wedding_uuid: UUID | str,
         report_format: Literal["pdf", "excel"] = "pdf",
     ) -> tuple[bytes, str, str]:
-        """
-        Exporta o relatório consolidado do casamento com metadados de transporte HTTP.
+        """Exporta o relatório consolidado do casamento com metadados de transporte HTTP.
 
-        Args:
-            company: Empresa tenant autenticada.
-            wedding_uuid: Identificador único do casamento.
-            report_format: Formato desejado ('pdf' ou 'excel').
-
-        Returns:
-            Tupla contendo (file_bytes, content_type, filename).
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Delega a geração do binário aos renderizadores em memória.
         """
         uuid_str = str(wedding_uuid)
         if report_format == "excel":

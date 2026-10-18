@@ -87,6 +87,36 @@ class Event(TenantModel, WeddingOwnedMixin):
     def __str__(self) -> str:
         return self.title
 
+    def _validate_payment_event_mutation(self, orig: dict[str, Any]) -> None:
+        """Valida que eventos de pagamento não sofram mutações indevidas (BR-S01)."""
+        if orig["event_type"] == self.TypeChoices.PAYMENT:
+            field_checks = [
+                ("event_type", self.event_type, orig["event_type"]),
+                ("start_time", self.start_time, orig["start_time"]),
+                ("end_time", self.end_time, orig["end_time"]),
+                ("title", self.title, orig["title"]),
+            ]
+            modified_fields = [
+                f"{name} ('{current}' != '{original}')"
+                for name, current, original in field_checks
+                if current != original
+            ]
+            if modified_fields:
+                raise ValidationError(
+                    f"Eventos de pagamento são gerados automaticamente "
+                    f"e não podem ser editados manualmente. "
+                    f"Evento id='{self.pk}', campos modificados: {', '.join(modified_fields)}."
+                )
+
+        if (
+            orig["event_type"] != self.TypeChoices.PAYMENT
+            and self.event_type == self.TypeChoices.PAYMENT
+        ):
+            raise ValidationError(
+                f"Não é permitido alterar o tipo de um evento para 'pagamento'. "
+                f"Evento id='{self.pk}', tipo original: '{orig['event_type']}', novo: '{self.event_type}'."
+            )
+
     def clean(self) -> None:
         """Valida integridade do intervalo de horários e proteção de pagamento."""
         super().clean()
@@ -94,40 +124,31 @@ class Event(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {
                     "end_time": (
-                        "A hora de término não pode ser anterior à hora de início."
+                        f"A hora de término não pode ser anterior à hora de início. "
+                        f"Horário de término: '{self.end_time}', início: '{self.start_time}'."
                     )
                 }
             )
 
         # BR-S01: Blindagem de eventos de pagamento contra mutação indevida
-        if self.pk and not getattr(self, "_allow_payment_mutation", False):
-            orig = (
-                Event.objects.filter(pk=self.pk)
-                .values("event_type", "start_time", "end_time", "title")
-                .first()
-            )
-            if orig:
-                if orig["event_type"] == self.TypeChoices.PAYMENT:
-                    if (
-                        self.event_type != self.TypeChoices.PAYMENT
-                        or self.start_time != orig["start_time"]
-                        or self.end_time != orig["end_time"]
-                        or self.title != orig["title"]
-                    ):
-                        raise ValidationError(
-                            "Eventos de pagamento são gerados automaticamente "
-                            "e não podem ser editados manualmente."
-                        )
-                elif (
-                    orig["event_type"] != self.TypeChoices.PAYMENT
-                    and self.event_type == self.TypeChoices.PAYMENT
-                ):
-                    raise ValidationError(
-                        "Não é permitido alterar o tipo de um evento para 'pagamento'."
-                    )
+        if not self.pk or getattr(self, "_allow_payment_mutation", False):
+            return
+
+        orig = (
+            Event.objects.filter(pk=self.pk)
+            .values("event_type", "start_time", "end_time", "title")
+            .first()
+        )
+        if orig:
+            self._validate_payment_event_mutation(orig)
 
     def delete(self, *args: Any, **kwargs: Any) -> tuple[int, dict[str, int]]:
-        """Deleção blindada conforme BR-S01 (eventos de pagamento são protegidos)."""
+        """
+        Executa a exclusão aplicando salvaguarda para eventos de pagamento (BR-S01).
+
+        Raises:
+            BusinessRuleViolation: Se o evento for de pagamento e não for autorizada mutação interna.
+        """
         skip_payment_guard = kwargs.pop("skip_payment_guard", False)
         if (
             self.is_payment_event
@@ -136,8 +157,9 @@ class Event(TenantModel, WeddingOwnedMixin):
         ):
             raise BusinessRuleViolation(
                 detail=(
-                    "Eventos de pagamento são gerados automaticamente e não podem ser "
-                    "deletados manualmente. Acesse o módulo financeiro para ajustar."
+                    f"Eventos de pagamento são gerados automaticamente e não podem ser "
+                    f"deletados manualmente. Acesse o módulo financeiro para ajustar. "
+                    f"Evento uuid='{self.uuid}', tipo='{self.event_type}'."
                 ),
                 code="payment_event_readonly",
             )
@@ -155,21 +177,26 @@ class Event(TenantModel, WeddingOwnedMixin):
     def reschedule(
         self, start_time: datetime, end_time: datetime | None = None
     ) -> None:
-        """Reagenda o evento para novo horário validando suas invariantes.
+        """
+        Reagenda o evento para novo horário validando suas invariantes.
 
         Args:
             start_time: Novo início do evento.
-            end_time: Novo término do evento opcional.
+            end_time: Novo término opcional do evento.
+
+        Raises:
+            ValidationError: Se o término for anterior ao início.
         """
         self.start_time = start_time
         self.end_time = end_time
         self.clean()
 
     def enable_reminder(self, minutes_before: int = 60) -> None:
-        """Habilita o lembrete automático com antecedência em minutos.
+        """
+        Habilita o lembrete automático com antecedência em minutos.
 
         Args:
-            minutes_before: Antecedência em minutos para disparo do lembrete.
+            minutes_before: Antecedência em minutos para disparo do lembrete (padrão: 60).
         """
         self.reminder_enabled = True
         self.reminder_minutes_before = minutes_before

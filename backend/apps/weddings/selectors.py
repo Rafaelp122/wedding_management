@@ -29,13 +29,15 @@ def wedding_list_selector(
     """
     Retorna o QuerySet encadeável de casamentos do tenant com filtros aplicados.
 
+    Otimiza a leitura com select_related('company') e prefetch_related de contratos
+    e participantes vinculados.
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        search: Termo de busca para filtrar por noivos ou local.
+        search: Termo de busca textual por noivos ou local.
         status: Filtro por status do casamento (ex: IN_PROGRESS).
 
     Returns:
-        WeddingQuerySet com casamentos filtrados.
+        QuerySet com casamentos filtrados.
     """
     qs = Wedding.objects.for_tenant(company)
     return (
@@ -54,12 +56,11 @@ def wedding_get_selector(
     """
     Recupera um casamento específico pelo UUID garantindo o isolamento multitenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: O identificador único do casamento.
+    Otimiza a leitura com select_related('company') e prefetch_related de contratos
+    e participantes vinculados.
 
     Returns:
-        A instância do casamento solicitada.
+        Instância do casamento solicitada.
 
     Raises:
         ObjectNotFoundError: Se o casamento não existir ou pertencer a outro tenant.
@@ -79,14 +80,12 @@ def wedding_lookup_selector(
     company: Company,
 ) -> WeddingQuerySet:
     """
-    Retorna uma lista simplificada de casamentos para seleção rápida (comboboxes).
+    Retorna lista simplificada de casamentos para seleção rápida (comboboxes).
 
-    Args:
-        company: O tenant atual para isolamento de dados.
+    Otimiza a consulta restringindo apenas aos campos uuid, bride_name e groom_name.
 
     Returns:
-        WeddingQuerySet restrito aos campos uuid, bride_name e groom_name,
-        ordenado por bride_name.
+        QuerySet restrito aos campos essenciais, ordenado por bride_name.
     """
     qs = Wedding.objects.for_tenant(company)
     return qs.only_lookup()
@@ -100,13 +99,13 @@ def wedding_count_by_month_selector(
     """
     Agrupa e conta a quantidade de casamentos por mês para um determinado ano.
 
+    Utiliza agregação no banco de dados com annotate(Count).
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        year: O ano correspondente para filtragem dos casamentos.
+        year: Ano correspondente para filtragem dos casamentos.
 
     Returns:
-        Sequência de dicionários com chaves 'month' e 'count',
-        ordenada cronologicamente pelo mês.
+        Sequência de dicionários com chaves 'month' e 'count', ordenada pelo mês.
     """
     qs = (
         Wedding.objects.for_tenant(company)

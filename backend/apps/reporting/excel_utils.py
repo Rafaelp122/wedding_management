@@ -21,8 +21,7 @@ _EXCEL_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 
 def _sanitize_excel_value(val: Any) -> Any:
-    """
-    Neutraliza injeção de fórmulas (CWE-1236) em células de texto exportadas.
+    """Neutraliza injeção de fórmulas (CWE-1236) em células de texto exportadas.
 
     Prefixa apóstrofo em strings iniciadas por fórmula (=, +, -, @, \\t, \\r).
     """
@@ -236,6 +235,19 @@ def _build_excel_tasks_sheet(wb: Workbook, tasks: list[Task]) -> None:
         ws_tasks.append([status_sym, title_safe, due_str, desc_safe])
 
 
+def _format_cell_monetary(
+    cell: Any,
+    header_val: str,
+    monetary_keys: list[str],
+    currency_format: str,
+) -> None:
+    """Aplica formatação monetária se o cabeçalho e tipo da célula corresponderem."""
+    if isinstance(cell.value, (int, float, Decimal)) and any(
+        k in header_val for k in monetary_keys
+    ):
+        cell.number_format = currency_format
+
+
 def _format_columns_and_borders(sheet: Worksheet) -> None:
     """Aplica bordas finas, formatação monetária e auto-ajuste de colunas."""
     thin_border = Border(
@@ -254,13 +266,9 @@ def _format_columns_and_borders(sheet: Worksheet) -> None:
             cell.border = thin_border
             col_idx = cast(int, cell.column)
             header_val = str(sheet.cell(row=1, column=col_idx).value).lower()
-            if isinstance(cell.value, (int, float, Decimal)) and any(
-                k in header_val for k in monetary_keys
-            ):
-                cell.number_format = currency_format
+            _format_cell_monetary(cell, header_val, monetary_keys, currency_format)
             val_str = str(cell.value or "")
-            if len(val_str) > max_len:
-                max_len = len(val_str)
+            max_len = max(max_len, len(val_str))
         sheet.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
 
@@ -289,8 +297,17 @@ def render_wedding_excel(
     contracts: list[Contract],
     tasks: list[Task],
 ) -> bytes:
-    """
-    Renderiza a planilha Excel (.xlsx) completa com 5 abas estilizadas (DESIGN.md).
+    """Renderiza a pasta de trabalho Excel (.xlsx) consolidada do casamento.
+
+    Estrutura o relatório em 5 abas estilizadas (Resumo Executivo, Categorias
+    Orçamentárias, Cronograma de Parcelas, Contratos & Fornecedores, Checklist de Tarefas)
+    com formatação visual aderente ao DESIGN.md e proteção contra injeção de fórmulas (CWE-1236).
+
+    Efeitos Colaterais:
+        - Gera binário Excel (.xlsx) em memória via openpyxl.
+
+    Returns:
+        Conteúdo binário da pasta de trabalho Excel gerada.
     """
     wb = Workbook()
     ws_summary = _build_excel_summary_sheet(wb, wedding, overview, installments, tasks)

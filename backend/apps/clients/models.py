@@ -14,11 +14,9 @@ from apps.tenants.models import TenantModel
 
 
 class Client(TenantModel):
-    """
-    Representa uma pessoa física cadastrada como cliente ou contato (ADR-030).
+    """Pessoa física cadastrada como cliente ou contato no tenant (ADR-030).
 
-    Pode participar de um ou múltiplos casamentos sob diferentes papéis (noiva,
-    noivo, contratante financeiro, representante legal, etc.).
+    Pode participar de casamentos sob diferentes papéis (noiva, noivo, contratante).
     """
 
     objects: ClientManager = ClientManager()  # type: ignore[misc]
@@ -58,15 +56,19 @@ class Client(TenantModel):
         super().clean_fields(exclude=exclude)
 
     def clean(self) -> None:
-        """
-        Guardião de integridade e sanitização de dados do cliente (ADR-030).
+        """Guardião de integridade e sanitização de dados do cliente (ADR-030).
+
+        Raises:
+            ValidationError: Se o nome for omitido ou o CPF exceder o limite de caracteres.
         """
         super().clean()
 
         if self.name:
             self.name = self.name.strip()
         if not self.name:
-            raise ValidationError({"name": "O nome do cliente é obrigatório."})
+            raise ValidationError(
+                {"name": f"O nome do cliente é obrigatório; recebido '{self.name}'."}
+            )
 
         if self.email:
             self.email = self.email.strip().lower()
@@ -78,7 +80,12 @@ class Client(TenantModel):
             self.cpf = self.cpf.strip()
             if len(self.cpf) > 14:
                 raise ValidationError(
-                    {"cpf": "O CPF não pode ter mais de 14 caracteres."}
+                    {
+                        "cpf": (
+                            f"O CPF não pode ter mais de 14 caracteres; "
+                            f"recebido '{self.cpf}' ({len(self.cpf)} caracteres)."
+                        )
+                    }
                 )
 
     def update_contact_info(
@@ -90,14 +97,13 @@ class Client(TenantModel):
         phone: str | None = None,
         notes: str | None = None,
     ) -> None:
-        """
-        Atualiza dados cadastrais e de contato do cliente.
+        """Atualiza dados cadastrais e de contato do cliente.
 
         Args:
             name: Nome completo atualizado.
             cpf: CPF atualizado.
             email: E-mail de contato atualizado.
-            phone: Telefone com DDD atualizado.
+            phone: Telefone de contato atualizado.
             notes: Observações cadastrais atualizadas.
         """
         if name is not None:

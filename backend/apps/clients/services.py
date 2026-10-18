@@ -24,25 +24,18 @@ logger = logging.getLogger(__name__)
 
 
 class ClientService:
-    """
-    Serviço que encapsula as mutações do ciclo de vida de clientes.
-    """
+    """Serviço de aplicação para mutações do ciclo de vida de clientes."""
 
     @staticmethod
     @transaction.atomic
     def create(company: Company, payload: ClientIn) -> Client:
-        """
-        Cria e persiste um novo cliente associado ao tenant.
+        """Cria e persiste um novo cliente associado ao tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados validados de entrada para criação do cliente.
-
-        Returns:
-            A nova instância de Client criada e validada.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Persiste o novo registro de cliente na base de dados.
 
         Raises:
-            BusinessRuleViolation: Se houver violação de validação nos dados do cliente.
+            BusinessRuleViolation: Se houver violação de validação nos dados informados.
         """
         logger.info(f"Criando cliente para company_id={company.id}")
         client = Client(
@@ -72,19 +65,13 @@ class ClientService:
     @staticmethod
     @transaction.atomic
     def update(company: Company, instance: Client, payload: ClientPatchIn) -> Client:
-        """
-        Atualiza os dados cadastrais de um cliente existente do tenant.
+        """Atualiza os dados cadastrais de um cliente existente do tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do modelo Client a ser atualizada.
-            payload: Dados parciais validados para alteração do cliente.
-
-        Returns:
-            A instância de Client atualizada e persistida.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Persiste as alterações cadastrais do cliente no banco de dados.
 
         Raises:
-            BusinessRuleViolation: Se os dados informados violarem regras de validação.
+            BusinessRuleViolation: Se os dados violarem regras de validação ou o tenant for incompatível.
         """
         validate_tenant_ownership(company, instance)
 
@@ -112,19 +99,14 @@ class ClientService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Client) -> None:
-        """
-        Remove com segurança um cliente pertencente ao tenant.
+        """Remove com segurança um cliente pertencente ao tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância do cliente a ser removido.
-
-        Returns:
-            None.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Exclui o registro de cliente da base de dados.
 
         Raises:
-            DomainIntegrityError: Se o cliente estiver protegido por vínculos ativos
-                (como participações em casamentos).
+            DomainIntegrityError: Se o cliente estiver protegido por vínculos ativos com casamentos.
+            BusinessRuleViolation: Se o cliente pertencer a outro tenant.
         """
         validate_tenant_ownership(company, instance)
 
@@ -141,7 +123,9 @@ class ClientService:
                 instance.uuid,
             )
             raise DomainIntegrityError(
-                detail="Não é possível excluir este cliente pois ele está vinculado "
-                "como participante em casamentos.",
+                detail=(
+                    f"Não é possível excluir o cliente '{instance.name}' (UUID '{instance.uuid}') "
+                    "pois ele está vinculado como participante em casamentos."
+                ),
                 code="client_protected_error",
             ) from exc

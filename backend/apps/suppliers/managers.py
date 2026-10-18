@@ -21,7 +21,7 @@ class SupplierQuerySet(TenantQuerySet["Supplier"]):
         """Anota cada fornecedor com a contagem total de contratos vinculados.
 
         Returns:
-            SupplierQuerySet com a anotação contracts_count.
+            QuerySet com anotação 'contracts_count'.
         """
         return self.annotate(contracts_count=Count("contracts"))
 
@@ -32,7 +32,7 @@ class SupplierQuerySet(TenantQuerySet["Supplier"]):
             query: Termo de busca textual.
 
         Returns:
-            SupplierQuerySet filtrado pelo termo informado.
+            QuerySet filtrado pelo termo informado.
         """
         if not query:
             return self
@@ -48,7 +48,7 @@ class SupplierQuerySet(TenantQuerySet["Supplier"]):
         """Filtra fornecedores disponíveis para novos contratos.
 
         Returns:
-            SupplierQuerySet com fornecedores ativos.
+            QuerySet contendo apenas fornecedores ativos.
         """
         return self.filter(is_active=True)
 

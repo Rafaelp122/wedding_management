@@ -24,15 +24,10 @@ def on_contract_addendum_signed_task(
     """Reação pós-commit à assinatura de termo aditivo (RFC-001 / ADR-017).
 
     Valida a cadeia company → contrato → aditivo via interfaces internas e
-    registra o evento para consumo futuro (notifications/dashboard, Onda 4).
-    Sem efeitos colaterais: o ajuste financeiro já ocorreu de forma síncrona
-    em `ContractAddendumService.sign`.
+    notifica os usuários ativos da empresa tenant.
 
-    Args:
-        company_id: ID numérico ou UUID da empresa tenant.
-        contract_id: Identificador ou UUID do contrato principal.
-        addendum_id: Identificador ou UUID do aditivo assinado.
-        amount: Montante do aditivo (string serializável ou Decimal).
+    Efeitos Colaterais:
+        - Dispara notificação in-app aos usuários ativos da empresa tenant.
     """
     from apps.contracts.interfaces import get_contract_for_company
     from apps.contracts.models import ContractAddendum
@@ -106,9 +101,8 @@ def evaluate_guest_count_impact_task(
     old_count: int,
     new_count: int,
 ) -> None:
-    """
-    Avalia o impacto da alteração no número de convidados sobre contratos
-    (RFC-001 / ADR-017). Consumidor assíncrono disparado via enqueue_guest_count_evaluation.
+    """Avalia o impacto da alteração no número de convidados sobre contratos (RFC-001 / ADR-017).
+
     Identifica fornecedores sensíveis ao headcount (buffet, bebidas,
     mobiliário, doces) e registra orientações para conferência do cerimonial.
     """

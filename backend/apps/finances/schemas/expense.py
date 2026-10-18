@@ -13,8 +13,6 @@ if TYPE_CHECKING:
 
 
 class ExpenseIn(Schema):
-    """Schema de entrada para criação de despesa."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     category: UUID4
@@ -28,8 +26,6 @@ class ExpenseIn(Schema):
 
 
 class ExpensePatchIn(Schema):
-    """Schema de entrada para atualização parcial de despesa."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     contract: UUID4 | None = None
@@ -40,8 +36,6 @@ class ExpensePatchIn(Schema):
 
 
 class ExpenseRenegotiateIn(Schema):
-    """Schema de entrada para renegociação e redistribuição de parcelas."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     num_installments: int = Field(gt=0)
@@ -49,8 +43,6 @@ class ExpenseRenegotiateIn(Schema):
 
 
 class ExpenseFromDocumentOut(Schema):
-    """Schema de saída com dados extraídos de documento/contrato."""
-
     name: str
     description: str = ""
     contract: UUID4
@@ -61,8 +53,6 @@ class ExpenseFromDocumentOut(Schema):
 
 
 class ContractLookupOut(Schema):
-    """Schema de saída para listagem simplificada de contratos em dropdowns/lookups."""
-
     uuid: UUID4
     name: str
     status: str
@@ -70,8 +60,6 @@ class ContractLookupOut(Schema):
 
 
 class ExpenseOut(Schema):
-    """Schema de saída para exibição de despesa (CQRS puro sem queries ORM)."""
-
     uuid: UUID4
     wedding: UUID4 = Field(alias="wedding.uuid")
     category: UUID4 = Field(alias="category.uuid")

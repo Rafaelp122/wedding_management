@@ -28,7 +28,7 @@ def require_oidc_auth[R](view_func: Callable[..., R]) -> Callable[..., R]:
                 "Cron request rejected: Missing Bearer token in Authorization header"
             )
             raise AuthenticationFailedError(
-                detail="Token OIDC ausente.",
+                detail=f"Token OIDC ausente no cabeçalho Authorization: '{auth_header}'.",
                 code="missing_token",
             )
 
@@ -41,13 +41,13 @@ def require_oidc_auth[R](view_func: Callable[..., R]) -> Callable[..., R]:
         except PermissionError as pe:
             logger.warning("OIDC: SA não autorizada - %s", pe)
             raise PermissionDeniedError(
-                detail="Service account não autorizada.",
+                detail=f"Service account não autorizada: {pe}.",
                 code="unauthorized_sa",
             ) from None
         except Exception as e:
             logger.error("OIDC token verification failed: %s", type(e).__name__)
             raise PermissionDeniedError(
-                detail="Token OIDC inválido.",
+                detail=f"Token OIDC inválido: token='{token[:15]}...' erro='{type(e).__name__}: {e}'.",
                 code="invalid_token",
             ) from None
 

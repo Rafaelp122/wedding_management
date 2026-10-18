@@ -46,30 +46,33 @@ class EventService:
         force_overlap: bool,
         instance: Event | None = None,
     ) -> None:
-        if (
-            event_type != Event.TypeChoices.PAYMENT
-            and not force_overlap
-            and end_time is not None
-        ):
-            overlap_qs = (
-                Event.objects.for_tenant(company)
-                .filter(
-                    wedding=wedding,
-                    start_time__lt=end_time,
-                    end_time__gt=start_time,
-                )
-                .exclude(event_type=Event.TypeChoices.PAYMENT)
+        """Valida conflito de sobreposição entre eventos no calendário (BR-S03)."""
+        if event_type == Event.TypeChoices.PAYMENT or force_overlap or end_time is None:
+            return
+
+        overlap_qs = (
+            Event.objects.for_tenant(company)
+            .filter(
+                wedding=wedding,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
             )
-            if instance is not None and instance.pk:
-                overlap_qs = overlap_qs.exclude(pk=instance.pk)
-            if overlap_qs.exists():
-                raise BusinessRuleViolation(
-                    "event_schedule_conflict",
-                    message=(
-                        "Existe outro compromisso agendado para este "
-                        "horário no casamento."
-                    ),
-                )
+            .exclude(event_type=Event.TypeChoices.PAYMENT)
+        )
+        if instance is not None and instance.pk:
+            overlap_qs = overlap_qs.exclude(pk=instance.pk)
+
+        conflicting_event = overlap_qs.first()
+        if conflicting_event:
+            wedding_id = getattr(wedding, "uuid", getattr(wedding, "id", wedding))
+            raise BusinessRuleViolation(
+                detail=(
+                    f"Existe outro compromisso agendado para este horário no casamento '{wedding_id}'. "
+                    f"Intervalo solicitado: [{start_time} - {end_time}], "
+                    f"conflitante: '{conflicting_event.title}' [{conflicting_event.start_time} - {conflicting_event.end_time}]."
+                ),
+                code="event_schedule_conflict",
+            )
 
     @staticmethod
     @transaction.atomic
@@ -80,26 +83,18 @@ class EventService:
         _caller_internal: bool = False,
         _allow_historical_start: bool = False,
     ) -> Event:
-        """
-        Cria um novo evento para o tenant especificado.
+        """Cria um novo evento no calendário para o tenant especificado.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do evento (EventIn ou dict).
-            _caller_internal: Flag interna indicando se a chamada foi originada
-                por outro serviço do sistema para gerar eventos financeiros.
-            _allow_historical_start: Permissão interna restrita à aplicação de
-                templates com marcos anteriores à data atual.
+        Regra de Negócio:
+            BR-S01 (docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md)
 
-        Returns:
-            O evento criado e salvo no banco de dados.
+        Efeitos Colaterais:
+            - Persiste a instância de Event no banco de dados.
+            - Aplica validação de sobreposição e salvaguarda read-only para pagamento (BR-S01).
 
         Raises:
-            BusinessRuleViolation: Se o início estiver no passado ou for tentada
-                a criação manual de um evento de pagamento
-                (_caller_internal=False).
-            ObjectNotFoundError: Se o casamento associado não for encontrado ou
-                pertencer a outro tenant.
+            ObjectNotFoundError: Se o casamento associado não for encontrado no tenant.
+            BusinessRuleViolation: Se o início for retroativo, houver conflito ou pagamento manual.
         """
         logger.info(f"Iniciando criação de Evento para company_id={company.id}")
 
@@ -116,8 +111,13 @@ class EventService:
             not _allow_historical_start
             and timezone.localdate(data["start_time"]) < timezone.localdate()
         ):
+            start_date = timezone.localdate(data["start_time"])
+            current_date = timezone.localdate()
             raise BusinessRuleViolation(
-                detail="A data e hora de início do evento não pode estar no passado.",
+                detail=(
+                    f"A data e hora de início do evento não pode estar no passado. "
+                    f"Data informada: '{start_date}', atual: '{current_date}'."
+                ),
                 code="event_start_time_in_past",
             )
 
@@ -132,7 +132,7 @@ class EventService:
                 detail=(
                     "Eventos de pagamento são gerados automaticamente e não podem "
                     "ser criados manualmente. Use o módulo financeiro para criar "
-                    "despesas com parcelas."
+                    f"despesas com parcelas. Tipo informado: '{data.get('event_type')}'."
                 ),
                 code="payment_event_readonly",
             )
@@ -169,7 +169,8 @@ class EventService:
             raise BusinessRuleViolation(
                 detail=(
                     "Eventos de pagamento são gerados automaticamente e não podem "
-                    "ser editados manualmente. Acesse o módulo financeiro para ajustar."
+                    "ser editados manualmente. Acesse o módulo financeiro para ajustar. "
+                    f"Evento uuid='{instance.uuid}', tipo='{instance.event_type}'."
                 ),
                 code="payment_event_readonly",
             )
@@ -179,7 +180,8 @@ class EventService:
             raise BusinessRuleViolation(
                 detail=(
                     "Não é permitido alterar o tipo de um evento para 'pagamento'. "
-                    "Eventos de pagamento são gerados automaticamente."
+                    "Eventos de pagamento são gerados automaticamente. "
+                    f"Evento uuid='{instance.uuid}', novo_tipo='{data.get('event_type')}'."
                 ),
                 code="payment_event_readonly",
             )
@@ -207,21 +209,17 @@ class EventService:
         instance: Event,
         payload: EventPatchIn | EventUpdateIn | dict[str, Any],
     ) -> Event:
-        """
-        Atualiza as informações de um evento existente.
+        """Atualiza as informações de um evento existente no calendário.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do evento a ser atualizada.
-            payload: Dados com as alterações a serem aplicadas.
+        Regra de Negócio:
+            BR-S01 (docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md)
 
-        Returns:
-            A instância do evento atualizada.
+        Efeitos Colaterais:
+            - Atualiza os campos do evento e persiste no banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se o evento pertencer a outro tenant.
-            BusinessRuleViolation: Se o evento for de pagamento ou se for
-                tentada a alteração do tipo para pagamento.
+            ObjectNotFoundError: Se o evento não pertencer à empresa informada.
+            BusinessRuleViolation: Se o evento for de pagamento, houver conflito ou falha de validação.
         """
         validate_tenant_ownership(
             company,
@@ -298,16 +296,17 @@ class EventService:
     @staticmethod
     @transaction.atomic
     def delete(company: Company, instance: Event) -> None:
-        """
-        Exclui um evento existente.
+        """Exclui um evento existente do calendário.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do evento a ser excluída.
+        Regra de Negócio:
+            BR-S01 (docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md)
+
+        Efeitos Colaterais:
+            - Remove a instância do evento do banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se o evento pertencer a outro tenant.
-            BusinessRuleViolation: Se o evento for do tipo pagamento.
+            ObjectNotFoundError: Se o evento não pertencer à empresa informada.
+            BusinessRuleViolation: Se o evento for protegido contra exclusão manual (BR-S01).
         """
         validate_tenant_ownership(
             company,
@@ -325,7 +324,8 @@ class EventService:
             raise BusinessRuleViolation(
                 detail=(
                     "Eventos de pagamento são gerados automaticamente e não podem ser "
-                    "deletados manualmente. Acesse o módulo financeiro para ajustar."
+                    "deletados manualmente. Acesse o módulo financeiro para ajustar. "
+                    f"Evento uuid='{instance.uuid}', tipo='{instance.event_type}'."
                 ),
                 code="payment_event_readonly",
             )

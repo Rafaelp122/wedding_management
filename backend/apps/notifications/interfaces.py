@@ -38,19 +38,8 @@ def notify_installment_overdue(
 ) -> None:
     """Enfileira notificações de parcela vencida para os usuários do tenant.
 
-    Registra o despacho assíncrono exclusivamente após a confirmação da transação
-    (transaction.on_commit) para mitigar envio de notificações em caso de rollback.
-
-    Args:
-        company: Empresa (tenant) proprietária da parcela.
-        installment_uuid: Identificador único da parcela ou despesa.
-        expense_name: Nome descritivo da despesa vinculada.
-        installment_number: Número ordinal da parcela.
-        amount: Valor monetário da parcela.
-        due_date: Data de vencimento da parcela.
-        wedding_uuid: UUID opcional do casamento relacionado.
-        wedding_name: Nome formatado opcional do casamento.
-        users: Lista de usuários destinatários da notificação.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Enfileira despacho assíncrono via dispatch_async_notification_task pós-commit.
     """
     if not users:
         return
@@ -98,17 +87,8 @@ def notify_contract_addendum_signed(
 ) -> None:
     """Enfileira notificações de termo aditivo assinado para os usuários do tenant.
 
-    Registra o despacho assíncrono exclusivamente após a confirmação da transação
-    (transaction.on_commit) para mitigar envio de notificações em caso de rollback.
-
-    Args:
-        company: Empresa (tenant) proprietária do contrato.
-        contract_name: Nome descritivo do contrato principal.
-        addendum_amount: Valor monetário do aditivo formalizado.
-        addendum_uuid: Identificador único do termo aditivo.
-        wedding_uuid: UUID opcional do casamento relacionado.
-        wedding_name: Nome formatado opcional do casamento.
-        users: Lista de usuários destinatários da notificação.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Enfileira despacho assíncrono via dispatch_async_notification_task pós-commit.
     """
     if not users:
         return
@@ -157,20 +137,11 @@ def send_notification_async(
 ) -> None:
     """Enfileira o envio assíncrono de notificação genérica pós-commit.
 
-    Args:
-        company_id: ID ou UUID da empresa tenant.
-        user_id: ID ou UUID do usuário destinatário.
-        title: Título da notificação.
-        message: Conteúdo detalhado.
-        notification_type: Tipo da notificação (ex: GENERAL, REMINDER).
-        link: Link de redirecionamento opcional.
-        target_type: Tipo do recurso vinculado.
-        target_id: Identificador do recurso vinculado.
-        wedding_id: Identificador do casamento relacionado.
-        wedding_name: Nome do casamento relacionado.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Enfileira despacho assíncrono via dispatch_async_notification_task pós-confirmação.
     """
     target_id_str = str(target_id) if target_id else None
-    wedding_id_str = str(wedding_id) if wedding_id else None
+    wedding_id_str = str(wedding_uuid) if (wedding_uuid := wedding_id) else None
 
     def _enqueue() -> None:
         dispatch_async_notification_task.enqueue(
@@ -204,20 +175,11 @@ def create_notification(
 ) -> Notification:
     """Cria e persiste uma notificação diretamente no domínio de notificações.
 
-    Args:
-        company: Empresa (tenant) proprietária.
-        user: Usuário destinatário.
-        title: Título da notificação.
-        message: Mensagem textual detalhada.
-        notification_type: Tipo da notificação.
-        link: URL ou rota associada.
-        target_type: Tipo do recurso ERP.
-        target_id: Identificador do recurso.
-        wedding_id: UUID do casamento.
-        wedding_name: Nome do casamento.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Persiste o registro de notificação no banco de dados.
 
-    Returns:
-        Notification: A notificação persistida.
+    Raises:
+        BusinessRuleViolation: Se o usuário não pertencer à empresa informada.
     """
     from apps.notifications.services import NotificationService
 

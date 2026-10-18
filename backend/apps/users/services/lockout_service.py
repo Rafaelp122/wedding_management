@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class LockoutService:
-    """Serviço responsável pelo controle de tentativas de login e bloqueio de contas.
+    """
+    Serviço de controle de tentativas de autenticação e bloqueio temporário de contas.
 
-    Regras de Negócio e SSOT:
-    - Hub do Domínio de Usuários (BR-U06): docs/architecture/domains/users-domain.md
-    - Fluxo de Autenticação JWT: docs/architecture/concepts/auth-jwt-flow.md
+    Regra de Negócio:
+        BR-U06 (docs/architecture/domains/users-domain.md)
     """
 
     CACHE_ALIAS = "default"
@@ -40,13 +40,9 @@ class LockoutService:
 
     @classmethod
     def is_locked(cls, email: str) -> bool:
-        """Verifica se a conta do e-mail está temporariamente bloqueada.
+        """Verifica se a conta associada ao e-mail está temporariamente bloqueada.
 
-        Args:
-            email: E-mail do usuário a ser verificado.
-
-        Returns:
-            bool: True se a conta estiver bloqueada, False caso contrário.
+        Regra de Negócio: [BR-U06](docs/architecture/domains/users-domain.md)
         """
         cache = cls._get_cache()
         key = f"{cls.BLOCKED_KEY_PREFIX}{cls._normalize_key(email)}"
@@ -54,13 +50,10 @@ class LockoutService:
 
     @classmethod
     def record_failure(cls, email: str) -> tuple[int, bool]:
-        """Registra falha de login e aplica bloqueio se o limite for atingido.
+        """Registra tentativa falha de autenticação e aplica bloqueio se o limite for atingido.
 
-        Args:
-            email: E-mail da conta que sofreu a tentativa falha.
-
-        Returns:
-            tuple[int, bool]: (tentativas_atuais, esta_bloqueado_agora).
+        Regra de Negócio: [BR-U06](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Incrementa tentativas no cache e aplica bloqueio temporário se atingir o teto.
         """
         cache = cls._get_cache()
         norm_email = cls._normalize_key(email)
@@ -93,10 +86,8 @@ class LockoutService:
     def reset_failures(cls, email: str) -> None:
         """Limpa o histórico de falhas e qualquer bloqueio ativo para a conta.
 
-        Deve ser invocado após um login bem-sucedido.
-
-        Args:
-            email: E-mail da conta a ser desbloqueada/limpa.
+        Regra de Negócio: [BR-U06](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Remove as chaves de tentativas e de bloqueio do cache.
         """
         cache = cls._get_cache()
         norm_email = cls._normalize_key(email)
@@ -109,13 +100,9 @@ class LockoutService:
 
     @classmethod
     def get_remaining_lockout_seconds(cls, email: str) -> int:
-        """Retorna o tempo restante de bloqueio em segundos.
+        """Calcula o tempo restante de bloqueio em segundos para a conta informada.
 
-        Args:
-            email: E-mail da conta bloqueada.
-
-        Returns:
-            int: Segundos restantes de bloqueio (0 se não bloqueada).
+        Regra de Negócio: [BR-U06](docs/architecture/domains/users-domain.md)
         """
         cache = cls._get_cache()
         blocked_key = f"{cls.BLOCKED_KEY_PREFIX}{cls._normalize_key(email)}"

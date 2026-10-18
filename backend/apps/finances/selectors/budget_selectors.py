@@ -1,7 +1,4 @@
-"""
-Selectors de leitura para o domínio de Orçamento (Budget).
-Consultas otimizadas e encapsuladas de leitura para Budget.
-"""
+"""Seletores de leitura para o domínio de Orçamento (Budget)."""
 
 from __future__ import annotations
 
@@ -22,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def _attach_tenant_budget_metrics(budget: Budget, company: Company) -> None:
-    """Calcula e anota a média do orçamento e percentual comparativo do tenant."""
+    """Calcula e anota a média orçamentária e percentual comparativo do tenant (BR-F06)."""
     avg = Budget.objects.for_tenant(company).aggregate(avg=Avg("total_estimated"))[
         "avg"
     ]
@@ -43,15 +40,13 @@ def budget_list_selector(
     wedding_id: UUID | str | None = None,
 ) -> BudgetQuerySet:
     """
-    Lista os orçamentos pertencentes ao tenant com filtros opcionais
-    e anotação de gasto total.
+    Lista os orçamentos mestres do tenant com anotação de gasto total.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador opcional do casamento para filtragem.
+    Otimiza a leitura com select_related para 'wedding' e agrega o total
+    gasto via with_total_spent() (Coalesce/Sum).
 
     Returns:
-        BudgetQuerySet filtrado e anotado com o gasto total calculado.
+        QuerySet de orçamentos filtrado e anotado com métricas.
     """
     qs: BudgetQuerySet = (
         Budget.objects.for_tenant(company).with_total_spent().select_related("wedding")
@@ -68,20 +63,16 @@ def budget_get_selector(
     wedding_id: int | UUID | str | None = None,
 ) -> Budget:
     """
-    Recupera um orçamento específico pelo UUID ou pelo casamento com o
-    total gasto anotado.
+    Recupera um orçamento por UUID ou casamento com gasto total e benchmark (BR-F06).
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único do orçamento (opcional).
-        wedding_id: ID primário ou UUID do casamento associado (opcional).
+    Otimiza a consulta com select_related('wedding'), agrega o total gasto via
+    with_total_spent() e anota a média e desvio percentual do tenant.
 
     Returns:
-        A instância do Budget encontrada com total gasto anotado.
+        A instância de orçamento encontrada com métricas anotadas.
 
     Raises:
-        ObjectNotFoundError: Se o orçamento não for encontrado ou
-            não pertencer ao tenant.
+        ObjectNotFoundError: Se o orçamento não for encontrado ou não pertencer ao tenant.
         ValueError: Se nem uuid nem wedding_id forem informados.
     """
     if uuid is None and wedding_id is None:
@@ -116,18 +107,16 @@ def budget_get_for_wedding_selector(
     wedding_uuid: UUID | str,
 ) -> Budget:
     """
-    Recupera o orçamento de um casamento específico pelo UUID do casamento.
+    Recupera o orçamento de um casamento com total gasto anotado e benchmark (BR-F06).
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_uuid: Identificador único do casamento.
+    Carrega a relação 'wedding' via select_related, calcula o gasto total via
+    with_total_spent() e computa as métricas de benchmark do tenant.
 
     Returns:
-        A instância do Budget vinculada ao casamento com total gasto anotado.
+        A instância de orçamento vinculada ao casamento com métricas anotadas.
 
     Raises:
-        ObjectNotFoundError: Se o orçamento não for encontrado para
-            o casamento informado.
+        ObjectNotFoundError: Se o orçamento não for encontrado para o casamento informado.
     """
     try:
         budget = (

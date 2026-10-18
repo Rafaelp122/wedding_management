@@ -32,18 +32,16 @@ class TaskService:
     @transaction.atomic
     def create(company: Company, payload: TaskIn) -> Task:
         """
-        Cria uma nova tarefa para o tenant especificado.
+        Cria uma nova tarefa no checklist do casamento.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação da tarefa.
+        Efeitos Colaterais:
+            - Persiste a instância de Task vinculada ao casamento e empresa.
 
         Returns:
-            A tarefa criada e salva no banco de dados.
+            Instância de Task criada e persistida.
 
         Raises:
-            ObjectNotFoundError: Se o casamento associado não for encontrado ou
-                pertencer a outro tenant.
+            ObjectNotFoundError: Se o casamento associado não for encontrado no tenant.
         """
         logger.info(f"Iniciando criação de Tarefa para company_id={company.id}")
 
@@ -71,18 +69,17 @@ class TaskService:
     @transaction.atomic
     def update(company: Company, instance: Task, payload: TaskPatchIn) -> Task:
         """
-        Atualiza as informações de uma tarefa existente.
+        Atualiza as informações de uma tarefa existente no checklist.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da tarefa a ser atualizada.
-            payload: Dados com as alterações a serem aplicadas.
+        Efeitos Colaterais:
+            - Persiste as alterações cadastrais e de prazo no banco de dados.
+            - Invoca métodos de domínio complete() ou reopen() quando is_completed for alterado.
 
         Returns:
-            A instância da tarefa atualizada.
+            Instância de Task atualizada e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -131,17 +128,18 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def complete(company: Company, instance: Task) -> Task:
-        """Marca a tarefa como concluída no contexto do tenant.
+        """
+        Marca a tarefa como concluída no contexto do tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A tarefa a ser concluída.
+        Efeitos Colaterais:
+            - Define is_completed como True e registra o timestamp de conclusão.
+            - Persiste a alteração no banco de dados.
 
         Returns:
-            Task: A tarefa atualizada.
+            Instância de Task concluída e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -157,17 +155,18 @@ class TaskService:
     @staticmethod
     @transaction.atomic
     def reopen(company: Company, instance: Task) -> Task:
-        """Reabre uma tarefa concluída no contexto do tenant.
+        """
+        Reabre uma tarefa concluída no contexto do tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A tarefa a ser reaberta.
+        Efeitos Colaterais:
+            - Define is_completed como False e limpa o timestamp de conclusão.
+            - Persiste a alteração no banco de dados.
 
         Returns:
-            Task: A tarefa atualizada.
+            Instância de Task reaberta e persistida.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -184,14 +183,13 @@ class TaskService:
     @transaction.atomic
     def delete(company: Company, instance: Task) -> None:
         """
-        Exclui uma tarefa existente.
+        Exclui uma tarefa existente do checklist.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da tarefa a ser excluída.
+        Efeitos Colaterais:
+            - Remove a instância de Task do banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se a tarefa pertencer a outro tenant.
+            ObjectNotFoundError: Se a tarefa não pertencer à empresa informada.
         """
         validate_tenant_ownership(
             company,
@@ -210,6 +208,41 @@ class TaskService:
         )
 
     @staticmethod
+    def _dispatch_task_notifications(
+        task: Task,
+        title: str,
+        message: str,
+        notification_type: str,
+    ) -> bool:
+        """Enfileira notificações para os usuários ativos da empresa da tarefa."""
+        active_users = [u for u in task.company.users.all() if u.is_active]
+        if not active_users:
+            return False
+
+        wedding_id = task.wedding.uuid if task.wedding else None
+        wedding_name = task.wedding.display_name if task.wedding else ""
+        link = (
+            f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
+            if task.wedding
+            else ""
+        )
+
+        for user in active_users:
+            send_notification_async(
+                company_id=task.company.id,
+                user_id=user.id,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                link=link,
+                target_type="task",
+                target_id=task.uuid,
+                wedding_id=wedding_id,
+                wedding_name=wedding_name,
+            )
+        return True
+
+    @staticmethod
     def notify_due_tasks(
         company: Company | None = None,
         days_threshold: int = 3,
@@ -217,21 +250,11 @@ class TaskService:
     ) -> int:
         """Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
 
-        Busca tarefas não concluídas com data de vencimento definida e enfileira
-        notificações para os usuários ativos da empresa proprietária. Tarefas
-        já vencidas geram notificações de checklist atrasado (CHECKLIST_ITEM_OVERDUE),
-        enquanto tarefas com prazo dentro da janela de antecedência geram alertas
-        de prazo próximo (TASK_DEADLINE).
+        Regra de Negócio:
+            BR-S02 (docs/architecture/domains/scheduler-domain.md)
 
-        Args:
-            company: Empresa (tenant) opcional para filtrar tarefas.
-            days_threshold: Quantidade de dias futuros para alertar sobre prazos
-                próximos (padrão: 3).
-            today: Data base de referência. Se omitida, utiliza a data corrente
-                da aplicação via timezone.localdate().
-
-        Returns:
-            int: Quantidade de tarefas que geraram notificações.
+        Efeitos Colaterais:
+            - Enfileira disparos assíncronos de notificação via send_notification_async.
         """
         if today is None:
             today = timezone.localdate()
@@ -273,32 +296,9 @@ class TaskService:
             else:
                 continue
 
-            active_users = [u for u in task.company.users.all() if u.is_active]
-            if not active_users:
-                continue
-
-            wedding_id = task.wedding.uuid if task.wedding else None
-            wedding_name = task.wedding.display_name if task.wedding else ""
-            link = (
-                f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
-                if task.wedding
-                else ""
-            )
-
-            for user in active_users:
-                send_notification_async(
-                    company_id=task.company.id,
-                    user_id=user.id,
-                    title=title,
-                    message=message,
-                    notification_type=notification_type,
-                    link=link,
-                    target_type="task",
-                    target_id=task.uuid,
-                    wedding_id=wedding_id,
-                    wedding_name=wedding_name,
-                )
-
-            notified_tasks_count += 1
+            if TaskService._dispatch_task_notifications(
+                task, title, message, notification_type
+            ):
+                notified_tasks_count += 1
 
         return notified_tasks_count

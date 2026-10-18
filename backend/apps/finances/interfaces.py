@@ -28,19 +28,61 @@ def create_expense_from_contract(
     payload: ExpenseIn,
     contract_uuid: UUID | str,
 ) -> Expense:
-    """
-    Cria uma despesa vinculada a um contrato logístico.
+    """Cria uma despesa vinculada a um contrato logístico.
 
-    Args:
-        company: Tenant para isolamento de dados.
-        payload: Dados da despesa informados.
-        contract_uuid: Identificador único do contrato a ser vinculado.
+    Regra de Negócio:
+        BR-F02 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-    Returns:
-        A instância de Expense criada e persistida.
+    Efeitos Colaterais:
+        - Delega ao ExpenseService a persistência atômica da despesa e parcelas.
     """
     expense_payload = payload.model_copy(update={"contract": contract_uuid})
     return ExpenseService.create(company=company, payload=expense_payload)
+
+
+def _ensure_planner_budget(company: Company, wedding: Any, fee: Decimal) -> Budget:
+    """Garante a existência do orçamento mestre com teto adequado aos honorários."""
+    budget = Budget.objects.filter(company=company, wedding=wedding).first()
+    if not budget:
+        budget = Budget(
+            company=company,
+            wedding=wedding,
+            total_estimated=max(Decimal("0.00"), fee),
+            notes="Orçamento mestre gerado na formalização do contrato de assessoria.",
+        )
+        budget.freeze_baseline()
+        budget.save()
+        return budget
+
+    if budget.total_estimated < budget.total_allocated + fee:
+        budget.total_estimated = budget.total_allocated + fee
+        budget.save(update_fields=["total_estimated", "updated_at"])
+    return budget
+
+
+def _ensure_planner_category(
+    company: Company, wedding: Any, budget: Budget, fee: Decimal
+) -> BudgetCategory:
+    """Garante a categoria 'Assessoria' com alocação compatível aos honorários."""
+    cat = BudgetCategory.objects.filter(
+        company=company, budget=budget, name__iexact="Assessoria"
+    ).first()
+    if not cat:
+        cat = BudgetCategory(
+            company=company,
+            budget=budget,
+            wedding=wedding,
+            name="Assessoria",
+            description="Honorários da assessoria cerimonial",
+            allocated_budget=fee,
+        )
+        cat.save()
+        return cat
+
+    if cat.allocated_budget < fee:
+        cat.allocated_budget = fee
+        cat.save(update_fields=["allocated_budget", "updated_at"])
+    return cat
 
 
 def create_expense_from_planner_contract(
@@ -50,20 +92,14 @@ def create_expense_from_planner_contract(
     planner_contract: Any,
     category_id: UUID | str | None = None,
 ) -> Expense:
-    """
-    Cria uma despesa e suas parcelas a partir do contrato de assessoria cerimonial.
+    """Cria despesa e parcelas a partir do contrato de assessoria cerimonial.
 
-    Garante a existência do orçamento mestre e da categoria 'Assessoria',
-    alocando a verba e lançando a despesa com tolerância zero (BR-F01/BR-F04).
+    Regra de Negócio:
+        BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-    Args:
-        company: Tenant para isolamento de dados.
-        wedding: Instância do casamento associado.
-        planner_contract: Instância do Contract com honorários e parcelamento.
-        category_id: Categoria orçamentária opcional; se omitida, busca ou cria 'Assessoria'.
-
-    Returns:
-        A instância de Expense criada e persistida com suas parcelas.
+    Efeitos Colaterais:
+        - Cria ou atualiza o orçamento mestre e a categoria 'Assessoria'.
+        - Persiste a despesa e suas parcelas via ExpenseService.
     """
     fee = getattr(
         planner_contract,
@@ -82,41 +118,8 @@ def create_expense_from_planner_contract(
         )
         budget = category.budget
     else:
-        existing_budget = Budget.objects.filter(
-            company=company, wedding=wedding
-        ).first()
-        if not existing_budget:
-            budget = Budget(
-                company=company,
-                wedding=wedding,
-                total_estimated=max(Decimal("0.00"), fee),
-                notes="Orçamento mestre gerado na formalização do contrato de assessoria.",
-            )
-            budget.freeze_baseline()
-            budget.save()
-        else:
-            budget = existing_budget
-            if budget.total_estimated < budget.total_allocated + fee:
-                budget.total_estimated = budget.total_allocated + fee
-                budget.save(update_fields=["total_estimated", "updated_at"])
-
-        cat = BudgetCategory.objects.filter(
-            company=company, budget=budget, name__iexact="Assessoria"
-        ).first()
-        if not cat:
-            cat = BudgetCategory(
-                company=company,
-                budget=budget,
-                wedding=wedding,
-                name="Assessoria",
-                description="Honorários da assessoria cerimonial",
-                allocated_budget=fee,
-            )
-            cat.save()
-        elif cat.allocated_budget < fee:
-            cat.allocated_budget = fee
-            cat.save(update_fields=["allocated_budget", "updated_at"])
-        category = cat
+        budget = _ensure_planner_budget(company, wedding, fee)
+        category = _ensure_planner_category(company, wedding, budget, fee)
 
     if budget:
         budget.freeze_baseline()
@@ -148,19 +151,14 @@ def add_expense_adjustment_from_addendum(
     contract_uuid: UUID | str,
     addendum_amount: Decimal | float | str,
 ) -> Expense | None:
-    """
-    Ajusta o montante da despesa vinculada a um contrato após a formalização de um aditivo.
+    """Ajusta o montante da despesa vinculada a um contrato após aditivo.
 
-    Atualiza actual_amount somando o valor do aditivo e preserva a regra de Tolerância Zero
-    (BR-F01/ADR-010) gerando uma nova parcela para o aditivo caso já existam parcelas.
+    Regra de Negócio:
+        BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-    Args:
-        company: O tenant atual para isolamento multitenant.
-        contract_uuid: Identificador único (UUID ou string) do contrato principal.
-        addendum_amount: Valor do aditivo a ser acrescido na despesa.
-
-    Returns:
-        A instância de Expense atualizada, ou None caso o contrato não possua despesa vinculada.
+    Efeitos Colaterais:
+        - Persiste nova parcela com valor do aditivo sob lock pessimista no banco.
+        - Enfileira no commit a criação de evento PAYMENT na agenda (BR-S01-SYNC).
     """
     from datetime import timedelta
 
@@ -221,12 +219,13 @@ def freeze_budget_baseline_for_wedding(
     company: Company,
     wedding: Any,
 ) -> None:
-    """
-    Congela a linha de base original do orçamento mestre para o casamento.
+    """Congela a linha de base original do orçamento mestre para o casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding: Instância do casamento associado.
+    Regra de Negócio:
+        BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
+
+    Efeitos Colaterais:
+        - Atualiza o campo baseline_amount do orçamento mestre caso ainda não congelado.
     """
     budget = Budget.objects.filter(company=company, wedding=wedding).first()
     if budget:

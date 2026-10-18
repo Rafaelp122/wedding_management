@@ -70,6 +70,12 @@
       "sourceType": "local",
       "skillPath": ".agents/skills/wedding-frontend-testing/SKILL.md",
       "computedHash": "auto"
+    },
+    "wedding-pr-auditor": {
+      "source": "local",
+      "sourceType": "local",
+      "skillPath": ".agents/skills/wedding-pr-auditor/SKILL.md",
+      "computedHash": "auto"
     }
   }
 }

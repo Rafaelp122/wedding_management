@@ -23,13 +23,9 @@ class BudgetService:
     Garante que cada casamento tenha exatamente um teto financeiro (OneToOne)
     e isola a lógica de negócio por tenant.
 
-    Regras de Negócio e SSOT:
-    - BR-F04-A..D (Distribuição e Teto Orçamentário):
-      docs/architecture/business-rules/finances/budget-category-distribution.md
-    - BR-F06 (Benchmark da Assessoria):
-      docs/architecture/business-rules/finances/tenant-budget-benchmark.md
-    - Hub do Domínio Financeiro:
-      docs/architecture/domains/finances-domain.md
+    Regras de Negócio:
+        BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
+        BR-F06 (docs/architecture/business-rules/finances/tenant-budget-benchmark.md)
     """
 
     @staticmethod
@@ -37,18 +33,15 @@ class BudgetService:
     def create(company: Company, payload: BudgetIn) -> Budget:
         """Cria um novo orçamento mestre para um casamento.
 
-        Garante que casamentos não tenham orçamentos duplicados (restrição
-        OneToOne).
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do orçamento.
-
-        Returns:
-            Budget: A instância do orçamento criada.
+        Efeitos Colaterais:
+            - Persiste atomicamente o orçamento mestre vinculado ao casamento.
 
         Raises:
             DomainIntegrityError: Se o casamento já possuir um orçamento.
+            ObjectNotFoundError: Se o casamento informado não for encontrado ou não pertencer ao tenant.
         """
         logger.info(
             f"Iniciando criação de Orçamento Mestre para company_id={company.id}"
@@ -84,8 +77,10 @@ class BudgetService:
                 f"orçamento."
             )
             raise DomainIntegrityError(
-                detail="Este casamento já possui um orçamento definido. Atualize o "
-                "existente em vez de criar outro.",
+                detail=(
+                    f"Este casamento (uuid: '{wedding.uuid}') já possui um orçamento definido. "
+                    "Atualize o existente em vez de criar outro."
+                ),
                 code="budget_already_exists",
             ) from e
 
@@ -97,16 +92,14 @@ class BudgetService:
     def update(company: Company, instance: Budget, payload: BudgetPatchIn) -> Budget:
         """Atualiza um orçamento existente.
 
-        Garante o isolamento do tenant e valida as regras de negócios como
-        o validador de valor mínimo.
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do orçamento a ser atualizada.
-            payload: Dados parciais para atualização do orçamento.
+        Efeitos Colaterais:
+            - Atualiza e persiste atomicamente as alterações no orçamento mestre.
 
-        Returns:
-            Budget: A instância do orçamento atualizada.
+        Raises:
+            ObjectNotFoundError: Se o orçamento não for encontrado para o tenant.
         """
         validate_tenant_ownership(
             company,
@@ -140,15 +133,15 @@ class BudgetService:
     def delete(company: Company, instance: Budget) -> None:
         """Exclui um orçamento existente.
 
-        Verifica a propriedade do tenant e se o orçamento está protegido por
-        categorias ou despesas filhas antes de prosseguir com a exclusão.
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância do orçamento a ser excluída.
+        Efeitos Colaterais:
+            - Remove fisicamente a instância do orçamento mestre do banco de dados.
 
         Raises:
-            DomainIntegrityError: Se o orçamento possuir categorias ou despesas.
+            DomainIntegrityError: Se o orçamento possuir categorias ou despesas vinculadas.
+            ObjectNotFoundError: Se o orçamento não for encontrado para o tenant.
         """
         validate_tenant_ownership(
             company,
@@ -172,9 +165,12 @@ class BudgetService:
                 f"Falha de integridade ao deletar Orçamento uuid={instance.uuid}: "
                 "Protegido por relações filhas."
             )
+            protected_count = len(e.protected_objects)
             raise DomainIntegrityError(
-                detail="Não é possível apagar este orçamento principal pois existem "
-                "categorias e despesas vinculadas a ele.",
+                detail=(
+                    f"Não é possível apagar este orçamento principal (uuid: '{instance.uuid}') "
+                    f"pois existem {protected_count} categorias e despesas vinculadas a ele."
+                ),
                 code="budget_protected_error",
             ) from e
 
@@ -183,15 +179,14 @@ class BudgetService:
     def get_or_create_for_wedding(company: Company, wedding_uuid: UUID | str) -> Budget:
         """Retorna o orçamento existente ou cria um novo para o casamento.
 
-        Se for criado, também gera automaticamente as categorias padrão
-        do orçamento sob lock (select_for_update) para evitar condições de corrida.
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_uuid: O UUID do casamento associado.
+        Efeitos Colaterais:
+            - Cria o orçamento mestre e gera categorias canônicas padrão caso ainda não exista.
 
-        Returns:
-            Budget: A instância do orçamento (existente ou recém-criado).
+        Raises:
+            ObjectNotFoundError: Se o casamento não for encontrado para o tenant.
         """
         wedding = get_object_or_404_for_tenant(
             Wedding,

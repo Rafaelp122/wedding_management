@@ -20,9 +20,7 @@ def list_tasks(
     request: AuthRequest,
     wedding_id: UUID4 | None = None,
 ) -> QuerySet[Task]:
-    """
-    Lista tarefas e checklist.
-    """
+    """Lista tarefas do checklist com filtros opcionais por casamento."""
     user = request.user
     return task_list_selector(
         company=user.company,
@@ -36,9 +34,7 @@ def list_tasks(
     operation_id="scheduler_tasks_create",
 )
 def create_task(request: AuthRequest, payload: TaskIn) -> tuple[int, Task]:
-    """
-    Cria uma nova tarefa no checklist.
-    """
+    """Cria uma nova tarefa no checklist do casamento."""
     user = request.user
     created = TaskService.create(user.company, payload)
     return 201, task_get_selector(company=user.company, uuid=created.uuid)
@@ -50,9 +46,7 @@ def create_task(request: AuthRequest, payload: TaskIn) -> tuple[int, Task]:
     operation_id="scheduler_tasks_update",
 )
 def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task:
-    """
-    Atualiza uma tarefa (incluindo marcação de conclusão se `is_completed` for passado).
-    """
+    """Atualiza os dados de uma tarefa existente no checklist."""
     user = request.user
     instance = task_get_selector(company=user.company, uuid=uuid)
     updated = TaskService.update(user.company, instance, payload)
@@ -65,9 +59,7 @@ def update_task(request: AuthRequest, uuid: UUID4, payload: TaskPatchIn) -> Task
     operation_id="scheduler_tasks_complete",
 )
 def complete_task(request: AuthRequest, uuid: UUID4) -> Task:
-    """
-    Marca uma tarefa do checklist como concluída.
-    """
+    """Marca uma tarefa do checklist como concluída."""
     user = request.user
     instance = task_get_selector(company=user.company, uuid=uuid)
     completed = TaskService.complete(user.company, instance)
@@ -80,9 +72,7 @@ def complete_task(request: AuthRequest, uuid: UUID4) -> Task:
     operation_id="scheduler_tasks_reopen",
 )
 def reopen_task(request: AuthRequest, uuid: UUID4) -> Task:
-    """
-    Reabre uma tarefa concluída do checklist.
-    """
+    """Reabre uma tarefa previamente concluída do checklist."""
     user = request.user
     instance = task_get_selector(company=user.company, uuid=uuid)
     reopened = TaskService.reopen(user.company, instance)
@@ -95,9 +85,7 @@ def reopen_task(request: AuthRequest, uuid: UUID4) -> Task:
     operation_id="scheduler_tasks_delete",
 )
 def delete_task(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
-    """
-    Remove uma tarefa permanentemente.
-    """
+    """Remove uma tarefa existente do checklist."""
     user = request.user
     instance = task_get_selector(company=user.company, uuid=uuid)
     TaskService.delete(user.company, instance)

@@ -17,9 +17,7 @@ budgets_router = Router(tags=["Finances"])
 @budgets_router.get("/", response=list[BudgetOut], operation_id="finances_budgets_list")
 @paginate
 def list_budgets(request: AuthRequest) -> QuerySet[Budget]:
-    """
-    Lista as estatísticas de orçamento geral de todos os casamentos.
-    """
+    """Lista os orçamentos mestres de casamentos do tenant."""
     user = request.user
     return budget_list_selector(company=user.company)
 
@@ -30,9 +28,7 @@ def list_budgets(request: AuthRequest) -> QuerySet[Budget]:
     operation_id="finances_budgets_read",
 )
 def get_budget(request: AuthRequest, uuid: UUID4) -> Budget:
-    """
-    Retorna os totais e os saldos remanescentes autorizados de um projeto macro.
-    """
+    """Recupera detalhes e métricas de um orçamento mestre."""
     user = request.user
     return budget_get_selector(company=user.company, uuid=uuid)
 
@@ -43,9 +39,7 @@ def get_budget(request: AuthRequest, uuid: UUID4) -> Budget:
     operation_id="finances_budgets_create",
 )
 def create_budget(request: AuthRequest, payload: BudgetIn) -> tuple[int, Budget]:
-    """
-    Cria um novo orçamento mestre para um casamento.
-    """
+    """Cria um novo orçamento mestre para um casamento."""
     user = request.user
     created = BudgetService.create(user.company, payload)
     return 201, budget_get_selector(company=user.company, wedding_id=created.wedding_id)
@@ -57,9 +51,7 @@ def create_budget(request: AuthRequest, payload: BudgetIn) -> tuple[int, Budget]
     operation_id="finances_budgets_for_wedding",
 )
 def get_budget_for_wedding(request: AuthRequest, wedding_uuid: UUID4) -> Budget:
-    """
-    Retorna o orçamento de um casamento específico (lazy-create).
-    """
+    """Recupera ou inicializa sob demanda o orçamento de um casamento."""
     user = request.user
     return BudgetService.get_or_create_for_wedding(user.company, wedding_uuid)
 
@@ -70,10 +62,7 @@ def get_budget_for_wedding(request: AuthRequest, wedding_uuid: UUID4) -> Budget:
     operation_id="finances_budgets_update",
 )
 def update_budget(request: AuthRequest, uuid: UUID4, payload: BudgetPatchIn) -> Budget:
-    """
-    Atualiza métricas mestres de gasto e painéis globais.
-    Contorna referências numéricas totais.
-    """
+    """Atualiza o valor total estimado ou observações do orçamento mestre."""
     user = request.user
     instance = budget_get_selector(company=user.company, uuid=uuid)
     BudgetService.update(user.company, instance, payload)

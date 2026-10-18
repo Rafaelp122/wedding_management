@@ -61,17 +61,17 @@ class WeddingService:
     @transaction.atomic
     def create(company: Company, payload: WeddingIn) -> Wedding:
         """
-        Cria um novo casamento diretamente em andamento e opcionalmente aplica template.
+        Cria um novo casamento diretamente no status em andamento (IN_PROGRESS).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação do casamento.
+        Efeitos Colaterais:
+            - Persiste a instância de Wedding no banco de dados.
+            - Aplica template canônico de cronograma se especificado no payload (BR-W07).
 
         Returns:
-            A instância de Wedding criada e persistida.
+            Instância de Wedding criada e persistida.
 
         Raises:
-            BusinessRuleViolation: Se houver erro de validação nos dados fornecidos.
+            BusinessRuleViolation: Se houver erro de validação nos dados fornecidos ou invariantes de modelo.
         """
         logger.info(f"Criando casamento para company_id={company.id}")
 
@@ -122,17 +122,17 @@ class WeddingService:
         Cria uma proposta comercial de casamento no status preliminar PROPOSAL.
 
         Permite à assessoria simular dados, orçamentos e emitir propostas antes
-        da assinatura do contrato oficial de prestação de serviços.
+        da assinatura do contrato oficial de prestação de serviços (BR-W01).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada da proposta comercial.
+        Efeitos Colaterais:
+            - Persiste o casamento com status inicial PROPOSAL.
+            - Cria ou associa o cliente contratante principal (WeddingClient) quando informado o nome.
 
         Returns:
-            A instância de Wedding criada com status PROPOSAL.
+            Instância de Wedding criada com status PROPOSAL.
 
         Raises:
-            BusinessRuleViolation: Se houver erro de validação cadastral.
+            BusinessRuleViolation: Se houver erro de validação cadastral ou invariantes de modelo.
         """
         logger.info(
             f"Criando proposta comercial de casamento para company_id={company.id}"
@@ -197,16 +197,14 @@ class WeddingService:
         """
         Cria ou atualiza o contrato de honorários da assessoria cerimonial.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding: Instância do casamento associado.
-            payload: Dados do contrato de honorários.
+        Efeitos Colaterais:
+            - Persiste ou atualiza o contrato de honorários no módulo de contratos.
 
         Returns:
-            Tupla contendo a instância de Contract e um booleano
-            indicando se foi criado (True) ou atualizado (False).
+            Tupla contendo a instância de Contract e indicador booleano de criação (True) ou atualização (False).
 
         Raises:
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
             BusinessRuleViolation: Se os dados violarem as regras do contrato.
         """
         validate_tenant_ownership(
@@ -240,23 +238,28 @@ class WeddingService:
         Executa as seguintes etapas atomicamente:
         1. Valida a existência do casamento sob o tenant;
         2. Valida e garante a assinatura do contrato de honorários via interface de contratos;
-        3. Transiciona a máquina de estados do casamento para PLANNING;
+        3. Transiciona a máquina de estados do casamento para PLANNING (BR-W01);
         4. Congela a linha de base original do orçamento mestre (freeze_baseline);
         5. Invoca o módulo de Finanças para lançar a despesa de honorários e parcelas;
-        6. Aplica o template de cronograma, se configurado;
+        6. Aplica o template de cronograma, se configurado (BR-W07);
         7. Enfileira a tarefa assíncrona pós-commit on_wedding_activated_task.
 
+        Efeitos Colaterais:
+            - Atualiza o status do casamento para PLANNING.
+            - Congela a linha de base do orçamento mestre.
+            - Cria despesa de honorários e parcelas no módulo financeiro.
+            - Cria eventos e tarefas de cronograma baseados no template.
+            - Enfileira a tarefa assíncrona on_wedding_activated_task.
+
         Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador UUID ou PK do casamento.
-            category_id: Categoria orçamentária opcional para os honorários.
+            category_id: Categoria orçamentária opcional para alocação dos honorários.
 
         Returns:
-            A instância de Wedding ativada.
+            Instância de Wedding ativada na fase de planejamento.
 
         Raises:
-            BusinessRuleViolation: Se o contrato de assessoria estiver ausente
-                ou se a conversão violar regras de negócio.
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            BusinessRuleViolation: Se o contrato de assessoria estiver ausente, se a data for retroativa ou se a conversão violar regras de negócio.
         """
         wedding = get_object_or_404_for_tenant(
             Wedding,
@@ -269,7 +272,10 @@ class WeddingService:
         contract = get_planner_contract_for_wedding(company=company, wedding=wedding)
         if not contract:
             raise BusinessRuleViolation(
-                detail="O casamento deve possuir um contrato de assessoria para iniciar o planejamento.",
+                detail=(
+                    f"O casamento deve possuir um contrato de assessoria para iniciar o planejamento; "
+                    f"wedding_id='{wedding_id}', company_id='{company.id}'."
+                ),
                 code="planner_contract_required",
             )
 
@@ -321,6 +327,7 @@ class WeddingService:
     def _handle_status_update(
         company: Company, instance: Wedding, status_input: str | None
     ) -> bool:
+        """Aplica transição de status no modelo e enfileira tarefa pós-commit se cancelado."""
         if status_input is None or status_input == instance.status:
             return False
         instance.transition_to(status_input)
@@ -338,16 +345,17 @@ class WeddingService:
         """
         Atualiza dados de um casamento existente delegando mutações ao modelo.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância atual de Wedding a ser atualizada.
-            payload: Campos modificados a serem aplicados no casamento.
+        Efeitos Colaterais:
+            - Persiste no banco de dados os campos modificados.
+            - Enfileira tarefa de cancelamento pós-commit se o status transitar para CANCELED (BR-W01).
+            - Enfileira reavaliação de contagem de convidados se expected_guests for alterado.
 
         Returns:
-            A instância do casamento atualizada e salva.
+            Instância de Wedding atualizada e persistida.
 
         Raises:
-            BusinessRuleViolation: Se a atualização violar regras de negócio.
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            BusinessRuleViolation: Se a atualização violar transições de status, regras temporais ou validação cadastral.
         """
         validate_tenant_ownership(
             company,
@@ -427,14 +435,18 @@ class WeddingService:
     @transaction.atomic
     def complete(company: Company, instance: Wedding) -> Wedding:
         """
-        Caso de uso: Conclui um casamento existente delegando a regra para a entidade.
+        Conclui um casamento existente delegando a regra para a entidade (BR-W01).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância de Wedding a ser concluída.
+        Efeitos Colaterais:
+            - Transiciona o status do casamento para COMPLETED.
+            - Persiste a atualização no banco de dados.
 
         Returns:
-            A instância de Wedding concluída e persistida.
+            Instância de Wedding concluída e persistida.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            BusinessRuleViolation: Se a data do casamento for futura ou se houver erro de validação.
         """
         validate_tenant_ownership(
             company,
@@ -459,14 +471,19 @@ class WeddingService:
     @transaction.atomic
     def cancel(company: Company, instance: Wedding) -> Wedding:
         """
-        Caso de uso: Cancela um casamento existente delegando a regra para a entidade.
+        Cancela um casamento existente delegando a regra para a entidade (BR-W01).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância de Wedding a ser cancelada.
+        Efeitos Colaterais:
+            - Transiciona o status do casamento para CANCELED.
+            - Enfileira a tarefa assíncrona pós-commit on_wedding_canceled_task.
+            - Persiste a atualização no banco de dados.
 
         Returns:
-            A instância de Wedding cancelada e persistida.
+            Instância de Wedding cancelada e persistida.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            BusinessRuleViolation: Se a transição para cancelado for proibida pelo status atual.
         """
         validate_tenant_ownership(
             company,
@@ -497,14 +514,18 @@ class WeddingService:
     @transaction.atomic
     def reopen(*, company: Company, instance: Wedding) -> Wedding:
         """
-        Reabre um casamento previamente cancelado voltando para EM ANDAMENTO.
+        Reabre um casamento previamente cancelado voltando para o status em andamento (BR-W01).
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância de Wedding a ser reaberta.
+        Efeitos Colaterais:
+            - Transiciona o status do casamento de CANCELED para IN_PROGRESS.
+            - Persiste a atualização no banco de dados.
 
         Returns:
-            A instância de Wedding reaberta e persistida.
+            Instância de Wedding reaberta e persistida.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            BusinessRuleViolation: Se a transição for proibida ou houver erro de validação.
         """
         validate_tenant_ownership(
             company,
@@ -531,13 +552,12 @@ class WeddingService:
         """
         Deleta um casamento existente validando a propriedade de tenant.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: Instância de Wedding a ser deletada.
+        Efeitos Colaterais:
+            - Remove o registro de casamento e seus relacionamentos dependentes não protegidos.
 
         Raises:
-            DomainIntegrityError: Se houver violação de integridade ou se
-                o casamento possuir relacionamentos protegidos.
+            ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+            DomainIntegrityError: Se houver contratos ou despesas vinculadas impedindo a exclusão protegida.
         """
         validate_tenant_ownership(
             company,
@@ -559,8 +579,10 @@ class WeddingService:
                 f"Falha de integridade: Casamento uuid={instance.uuid} protegido por contratos/despesas."
             )
             raise DomainIntegrityError(
-                detail="Não é possível apagar este casamento pois existem contratos ou "
-                "despesas vinculadas a ele.",
+                detail=(
+                    f"Não é possível apagar este casamento '{instance.uuid}' pois existem contratos ou "
+                    f"despesas vinculadas a ele; motivo: {e}."
+                ),
                 code="wedding_protected_error",
             ) from e
 
@@ -577,15 +599,16 @@ class WeddingService:
         Adiciona um participante ao casamento delegando para a função pública de domínio.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador único do casamento.
-            client_id: Identificador único do cliente.
-            role: Papel do participante no evento.
-            is_primary_signatory: Se o participante deve assinar o contrato.
-            notes: Observações cadastrais sobre a participação.
+            role: Papel atribuído ao participante no evento (ex: BRIDE, GROOM, FINANCIAL_PAYER).
+            is_primary_signatory: Define se o participante assina o contrato da assessoria.
+            notes: Observações cadastrais adicionais sobre a participação.
 
         Returns:
-            A instância de WeddingClient criada e vinculada.
+            Instância de WeddingClient criada e vinculada.
+
+        Raises:
+            ObjectNotFoundError: Se o casamento ou cliente não pertencerem à empresa informada.
+            BusinessRuleViolation: Se o participante já estiver vinculado com o mesmo papel.
         """
         return add_wedding_participant(
             company=company,
@@ -605,13 +628,12 @@ class WeddingService:
         """
         Remove um participante do casamento delegando para a função pública de domínio.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            wedding_id: Identificador único do casamento.
-            participant_id: Identificador único do participante.
+        Efeitos Colaterais:
+            - Exclui o vínculo de participante (WeddingClient) do casamento.
 
-        Returns:
-            None.
+        Raises:
+            ObjectNotFoundError: Se o casamento ou participante não pertencerem à empresa informada.
+            BusinessRuleViolation: Se o participante não pertencer ao casamento especificado.
         """
         remove_wedding_participant(
             company=company,
@@ -632,20 +654,20 @@ def add_wedding_participant(
     """
     Adiciona um cliente como participante vinculado a um casamento.
 
+    Efeitos Colaterais:
+        - Persiste o registro de vínculo WeddingClient.
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador único do casamento.
-        client_id: Identificador único do cliente a ser vinculado.
         role: Papel do participante no casamento (ex: BRIDE, GROOM, FINANCIAL_PAYER).
-        is_primary_signatory: Indica se o participante assina o contrato.
-        notes: Observações cadastrais sobre a participação.
+        is_primary_signatory: Indica se o participante assina o contrato da assessoria.
+        notes: Observações cadastrais adicionais sobre a participação.
 
     Returns:
-        A instância de WeddingClient criada e persistida.
+        Instância de WeddingClient criada e persistida.
 
     Raises:
-        ObjectNotFoundError: Se o casamento ou cliente não pertencerem ao tenant.
-        BusinessRuleViolation: Se o participante já estiver com o mesmo papel.
+        ObjectNotFoundError: Se o casamento ou cliente não pertencerem à empresa informada.
+        BusinessRuleViolation: Se o participante já estiver cadastrado com o mesmo papel.
     """
     wedding = get_object_or_404_for_tenant(Wedding, company, uuid=wedding_id)
     client = get_client_for_tenant(company=company, client_id=client_id)
@@ -654,7 +676,10 @@ def add_wedding_participant(
         company=company, wedding=wedding, client=client, role=role
     ).exists():
         raise BusinessRuleViolation(
-            detail=f"O cliente já está cadastrado como '{role}' neste casamento.",
+            detail=(
+                f"O cliente '{client.name}' (id: '{client.uuid}') já está cadastrado "
+                f"como '{role}' neste casamento '{wedding.uuid}'."
+            ),
             code="wedding_participant_already_exists",
         )
 
@@ -687,16 +712,11 @@ def remove_wedding_participant(
     """
     Remove um participante vinculado a um casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador único do casamento.
-        participant_id: Identificador único do participante (WeddingClient).
-
-    Returns:
-        None.
+    Efeitos Colaterais:
+        - Remove o vínculo de participante (WeddingClient) do casamento.
 
     Raises:
-        ObjectNotFoundError: Se o casamento ou participante não existirem no tenant.
+        ObjectNotFoundError: Se o casamento ou participante não existirem na empresa informada.
         BusinessRuleViolation: Se o participante não pertencer ao casamento informado.
     """
     wedding = get_object_or_404_for_tenant(Wedding, company, uuid=wedding_id)
@@ -706,7 +726,10 @@ def remove_wedding_participant(
 
     if participant.wedding_id != wedding.id:
         raise BusinessRuleViolation(
-            detail="O participante não pertence ao casamento especificado.",
+            detail=(
+                f"O participante não pertence ao casamento especificado; "
+                f"casamento do participante: '{participant.wedding_id}', esperado: '{wedding.id}'."
+            ),
             code="wedding_participant_mismatch",
         )
 
@@ -717,12 +740,14 @@ def create_wedding_proposal(company: Company, payload: WeddingProposalIn) -> Wed
     """
     Função pública de fachada para criação de proposta de casamento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        payload: Dados cadastrais da proposta de casamento.
+    Efeitos Colaterais:
+        - Persiste proposta comercial de casamento com status PROPOSAL (BR-W01).
 
     Returns:
-        A instância de Wedding persistida no status PROPOSAL.
+        Instância de Wedding persistida no status PROPOSAL.
+
+    Raises:
+        BusinessRuleViolation: Se houver erro de validação cadastral ou de modelo.
     """
     return WeddingService.create_proposal(company=company, payload=payload)
 
@@ -735,13 +760,18 @@ def convert_wedding_to_planning(
     """
     Função pública de fachada para ativação/conversão de casamento para planejamento.
 
+    Efeitos Colaterais:
+        - Converte proposta de casamento para a fase ativa PLANNING e orquestra módulos (BR-W01).
+
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador único do casamento a converter.
         category_id: Categoria orçamentária opcional para os honorários.
 
     Returns:
-        A instância de Wedding ativada no status IN_PROGRESS.
+        Instância de Wedding ativada no status de planejamento.
+
+    Raises:
+        ObjectNotFoundError: Se o casamento não pertencer à empresa informada.
+        BusinessRuleViolation: Se o contrato de assessoria for ausente ou conversão inválida.
     """
     return WeddingService.convert_wedding_to_planning(
         company=company, wedding_id=wedding_id, category_id=category_id
@@ -754,7 +784,11 @@ def _apply_template_events(
 ) -> None:
     """
     Aplica um template de cronograma criando eventos para o casamento.
-    Delega para a fachada pública de interfaces do módulo scheduler.
+
+    Delega para a fachada pública de interfaces do módulo scheduler (BR-W07).
+
+    Args:
+        template_name: Nome do template canônico a ser aplicado.
     """
     from apps.scheduler.interfaces import apply_wedding_schedule_template
 

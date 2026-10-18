@@ -7,8 +7,6 @@ from pydantic import UUID4
 
 
 class NotificationOut(Schema):
-    """Schema de saída para exibição de notificação."""
-
     uuid: UUID4
     title: str
     message: str
@@ -24,14 +22,10 @@ class NotificationOut(Schema):
 
 
 class UnreadCountOut(Schema):
-    """Schema de saída para contagem de notificações não lidas."""
-
     count: int = Field(..., description="Quantidade de notificações não lidas")
 
 
 class MarkAllReadOut(Schema):
-    """Schema de saída para o total de notificações marcadas como lidas."""
-
     marked_count: int = Field(
         ..., description="Quantidade de notificações marcadas como lidas"
     )

@@ -1,7 +1,4 @@
-"""
-Selectors de leitura para o domínio de Parcelas (Installment).
-Consultas otimizadas e encapsuladas de leitura para Installment.
-"""
+"""Seletores de leitura para o domínio de Parcelas (Installment)."""
 
 from __future__ import annotations
 
@@ -29,19 +26,13 @@ def installment_list_selector(
     exclude_paid: bool = False,
 ) -> InstallmentQuerySet:
     """
-    Lista parcelas vinculadas ao tenant com filtros opcionais.
+    Lista parcelas do tenant com filtros de status e intervalo de vencimento.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        expense_id: Identificador opcional da despesa pai.
-        wedding_id: Identificador opcional do casamento.
-        status: Status desejado (PENDING, PAID, OVERDUE).
-        due_date_gte: Data de vencimento inicial para intervalo (inclusive).
-        due_date_lte: Data de vencimento final para intervalo (inclusive).
-        exclude_paid: Se True, exclui parcelas com status PAID.
+    Otimiza a leitura utilizando select_related para 'expense' e 'wedding' e
+    aplica filtros especializados por status e datas (BR-F05).
 
     Returns:
-        InstallmentQuerySet filtrado com relacionamentos pré-carregados.
+        QuerySet de parcelas filtrado com relacionamentos pré-carregados.
     """
     qs: InstallmentQuerySet = Installment.objects.for_tenant(company).select_related(
         "expense", "wedding"
@@ -68,14 +59,12 @@ def installment_list_selector(
 
 def installment_get_selector(*, company: Company, uuid: UUID | str) -> Installment:
     """
-    Recupera uma parcela específica pelo UUID, garantindo isolamento multitenant.
+    Recupera uma parcela pelo identificador único com relações pré-carregadas.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único da parcela.
+    Carrega 'expense' e 'wedding' via select_related garantindo o isolamento do tenant.
 
     Returns:
-        A instância de Installment encontrada com expense e wedding carregados.
+        A instância de parcela encontrada.
 
     Raises:
         ObjectNotFoundError: Se a parcela não existir ou pertencer a outro tenant.

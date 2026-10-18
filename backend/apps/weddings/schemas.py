@@ -132,8 +132,6 @@ class WeddingParticipantRoleEnum(StrEnum):
 
 
 class WeddingParticipantIn(Schema):
-    """Schema de entrada para vincular um cliente a um casamento."""
-
     model_config = {"extra": "ignore", "str_strip_whitespace": True}
 
     client_id: UUID4
@@ -143,8 +141,6 @@ class WeddingParticipantIn(Schema):
 
 
 class WeddingParticipantOut(Schema):
-    """Schema de saída para representação de participantes do casamento."""
-
     uuid: UUID4
     client_id: UUID4
     client_name: str

@@ -34,10 +34,7 @@ def list_suppliers(
     search: str = "",
     is_active: bool | None = None,
 ) -> QuerySet[Supplier]:
-    """Lista todos os fornecedores cadastrados pelo tenant autenticado.
-
-    Aceita filtros de busca textual e status ativo.
-    """
+    """Lista todos os fornecedores cadastrados pelo tenant autenticado."""
     user = request.user
     return supplier_list_selector(
         company=user.company, search=search, is_active=is_active

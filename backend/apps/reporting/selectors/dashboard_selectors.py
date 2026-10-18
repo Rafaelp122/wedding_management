@@ -24,15 +24,11 @@ logger = logging.getLogger(__name__)
 
 
 def dashboard_summary_selector(*, company: Company) -> dict[str, Any]:
-    """
-    Gera um resumo consolidado de indicadores importantes para o dashboard da empresa.
+    """Gera um resumo consolidado de indicadores importantes para o dashboard da empresa.
 
     Busca estatísticas financeiras gerais (parcelas a vencer e atrasadas),
     quantidade de tarefas urgentes, contratos pendentes, listas de detalhamento
-    e uma listagem de casamentos críticos ocorrendo nos próximos 90 dias com pendências.
-
-    Args:
-        company: O tenant atual para isolamento de dados.
+    e casamentos críticos ocorrendo nos próximos 90 dias com pendências.
 
     Returns:
         Dicionário contendo os KPIs agregados e as listas de detalhamento operacional.
@@ -109,22 +105,20 @@ def wedding_overview_selector(
     company: Company,
     wedding_uuid: UUID | str,
 ) -> dict[str, Any]:
-    """
-    Computa uma visão geral detalhada de indicadores de um casamento específico.
+    """Computa uma visão geral detalhada de indicadores de um casamento específico.
 
     Reúne métricas de contagem regressiva, uso do orçamento, progresso de tarefas,
     assinatura de contratos, parcelas financeiras a vencer, tarefas urgentes,
     resumo por categorias de despesa e totais orçados/gastos consolidados.
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_uuid: O identificador único (UUID) do casamento.
+        wedding_uuid: Identificador único do casamento a ser consultado.
 
     Returns:
         Dicionário com os indicadores consolidados do casamento.
 
     Raises:
-        ObjectNotFoundError: Se o casamento não for encontrado ou acesso negado.
+        ObjectNotFoundError: Se o casamento não for encontrado no tenant.
     """
     wedding = wedding_get_selector(company=company, uuid=wedding_uuid)
     logger.info(
@@ -182,15 +176,13 @@ def wedding_overview_selector(
 
 
 def dashboard_operations_selector(*, company: Company) -> dict[str, Any]:
-    """
-    Retorna os indicadores operacionais consolidados da empresa (Top 5 de cada):
-    próximos casamentos, tarefas urgentes e contratos pendentes.
+    """Retorna os indicadores operacionais consolidados da empresa (Top 5 de cada).
 
-    Args:
-        company: O tenant atual para isolamento de dados.
+    Agrega as listas de próximos casamentos futuros, tarefas urgentes
+    e contratos pendentes do tenant.
 
     Returns:
-        Dicionário com as listas de upcoming_weddings, urgent_tasks e pending_contracts.
+        Dicionário com as listas de casamentos futuros, tarefas urgentes e contratos pendentes.
     """
     logger.info(f"Computando painel de operações para company_id={company.id}")
     today = date.today()

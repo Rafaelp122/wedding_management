@@ -25,10 +25,9 @@ if TYPE_CHECKING:
 
 
 class SupplyItem(TenantModel, WeddingOwnedMixin):
-    """
-    Item de suprimento e logística (RF-15 / RFC-001).
-    Representa a necessidade física ou o serviço contratado sob 3 dimensões:
-    escopo (desejado vs descartado com justificativa), cotação/contratação e entrega física.
+    """Item de suprimento e logística com controle tridimensional de ciclo de vida (RF-15).
+
+    Controla escopo (desejado/descartado), cotação/contratação e entrega física.
     """
 
     objects = ItemQuerySet.as_manager()  # type: ignore[assignment,misc]
@@ -122,10 +121,21 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         return f"{self.name} ({self.quantity}x)"
 
     def clean(self) -> None:
+        """Valida invariantes intrínsecas de escopo, casamento e transição de estado.
+
+        Raises:
+            ValidationError: Se a quantidade for inferior a 1, o contrato pertencer a outro casamento,
+                o motivo de descarte for omitido em itens descartados ou a transição for ilegal.
+        """
         super().clean()
         if self.quantity is not None and self.quantity < 1:
             raise ValidationError(
-                {"quantity": "A quantidade deve ser de no mínimo 1 unidade."}
+                {
+                    "quantity": (
+                        f"A quantidade deve ser de no mínimo 1 unidade; "
+                        f"valor recebido: '{self.quantity}'."
+                    )
+                }
             )
         if (
             self.contract
@@ -135,7 +145,8 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {
                     "contract": (
-                        "O contrato informado não pertence ao casamento deste item."
+                        f"O contrato informado não pertence ao casamento deste item; "
+                        f"casamento do contrato: '{self.contract.wedding_id}', casamento do item: '{self.wedding_id}'."
                     )
                 }
             )
@@ -145,32 +156,49 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {
                     "rejection_reason": (
-                        "O motivo do descarte é obrigatório ao marcar o item como descartado."
+                        f"O motivo do descarte é obrigatório ao marcar o item como descartado; "
+                        f"valor recebido: '{self.rejection_reason}'."
                     )
                 }
             )
-        if self.pk:
-            orig = (
-                SupplyItem.objects.filter(pk=self.pk)
-                .values("acquisition_status")
-                .first()
+
+        if not self.pk:
+            return
+
+        orig = (
+            SupplyItem.objects.filter(pk=self.pk).values("acquisition_status").first()
+        )
+        if not orig or orig["acquisition_status"] == self.acquisition_status:
+            return
+
+        allowed = self.ALLOWED_TRANSITIONS.get(orig["acquisition_status"], [])
+        if self.acquisition_status not in allowed:
+            raise ValidationError(
+                f"Não é permitido transitar de "
+                f"'{orig['acquisition_status']}' para "
+                f"'{self.acquisition_status}'; transições permitidas: {sorted(allowed)}."
             )
-            if orig and orig["acquisition_status"] != self.acquisition_status:
-                allowed = self.ALLOWED_TRANSITIONS.get(orig["acquisition_status"], [])
-                if self.acquisition_status not in allowed:
-                    raise ValidationError(
-                        f"Não é permitido transitar de "
-                        f"'{orig['acquisition_status']}' para "
-                        f"'{self.acquisition_status}'."
-                    )
 
     # ── Métodos de Domínio e Ciclo de Vida da Entidade ──────────────────
 
     def discard(self, reason: str) -> None:
-        """Descarta o item do escopo registrando compulsoriamente a justificativa (RF-15)."""
+        """Descarta o item do escopo registrando compulsoriamente a justificativa (RF-15).
+
+        Regra de Negócio:
+            BR-L06: Exige justificativa obrigatória ao marcar item como descartado.
+
+        Args:
+            reason: Motivo ou justificativa para o descarte do suprimento.
+
+        Raises:
+            BusinessRuleViolation: Se o motivo informado for vazio ou contiver apenas espaços.
+        """
         if not reason or not reason.strip():
             raise BusinessRuleViolation(
-                detail="O motivo do descarte é obrigatório ao marcar o item como descartado.",
+                detail=(
+                    f"O motivo do descarte é obrigatório ao marcar o item como descartado; "
+                    f"valor recebido: '{reason}'."
+                ),
                 code="supply_item_rejection_reason_required",
             )
         self.scope_status = self.ScopeStatus.DISCARDED
@@ -190,18 +218,17 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         self.delivery_status = self.DeliveryStatus.RETURNED
 
     def assign_contract(self, contract: Contract) -> None:
-        """
-        Associa o item a um contrato garantindo consistência de casamento.
-
-        Args:
-            contract: Contrato a ser vinculado.
+        """Associa o item a um contrato garantindo consistência de casamento.
 
         Raises:
-            BusinessRuleViolation: Se o contrato pertencer a outro casamento.
+            DomainIntegrityError: Se o contrato pertencer a outro casamento.
         """
         if self.wedding_id and contract.wedding_id != self.wedding_id:
             raise DomainIntegrityError(
-                detail="O contrato informado não pertence ao casamento deste item.",
+                detail=(
+                    f"O contrato informado não pertence ao casamento deste item; "
+                    f"casamento do contrato: '{contract.wedding_id}', casamento do item: '{self.wedding_id}'."
+                ),
                 code="item_contract_wedding_mismatch",
             )
         self.contract = contract
@@ -211,7 +238,14 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         self.contract = None
 
     def can_transition_to(self, target_status: str | AcquisitionStatus) -> bool:
-        """Verifica se a transição para o status de aquisição informado é válida."""
+        """Verifica se a transição para o status de aquisição informado é válida.
+
+        Args:
+            target_status: Status de destino pretendido.
+
+        Returns:
+            True se a transição for permitida, False caso contrário.
+        """
         target = str(target_status)
         if self.acquisition_status == target:
             return True
@@ -219,16 +253,24 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         return target in allowed
 
     def transition_to(self, target_status: str | AcquisitionStatus) -> None:
-        """Executa a transição de status de aquisição validando as regras do domínio."""
+        """Executa a transição de status de aquisição validando as regras do autômato.
+
+        Args:
+            target_status: Status de destino para transição.
+
+        Raises:
+            BusinessRuleViolation: Se a transição for negada pelas regras de negócio.
+        """
         target = str(target_status)
         if self.acquisition_status == target:
             return
 
         if not self.can_transition_to(target):
+            allowed = self.ALLOWED_TRANSITIONS.get(self.acquisition_status, [])
             raise BusinessRuleViolation(
                 detail=(
                     f"Não é permitido transitar de '{self.acquisition_status}' "
-                    f"para '{target}'."
+                    f"para '{target}'; transições permitidas a partir de '{self.acquisition_status}': {sorted(allowed)}."
                 ),
                 code="item_invalid_status_transition",
             )
@@ -236,7 +278,7 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         self.acquisition_status = str(target_status)
 
     def start(self) -> None:
-        """Inicia a aquisição/execução do item, transitando para EM ANDAMENTO."""
+        """Inicia a aquisição ou execução do item, transitando para EM ANDAMENTO."""
         self.transition_to(self.AcquisitionStatus.IN_PROGRESS)
 
     def complete(self) -> None:

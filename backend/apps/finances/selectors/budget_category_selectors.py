@@ -1,7 +1,4 @@
-"""
-Selectors de leitura para o domínio de Categorias Orçamentárias (BudgetCategory).
-Consultas otimizadas e encapsuladas de leitura para BudgetCategory.
-"""
+"""Seletores de leitura para categorias orçamentárias (BudgetCategory)."""
 
 from __future__ import annotations
 
@@ -26,15 +23,13 @@ def budget_category_list_selector(
     wedding_id: UUID | str | None = None,
 ) -> BudgetCategoryQuerySet:
     """
-    Lista categorias de orçamento vinculadas ao tenant com filtros opcionais.
+    Lista categorias de orçamento vinculadas ao tenant com total gasto anotado.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        budget_id: Identificador opcional do orçamento pai para filtragem.
-        wedding_id: Identificador opcional do casamento para filtragem.
+    Otimiza a leitura utilizando select_related para 'budget' e 'wedding' e
+    agrega o total pago via with_total_spent() (Coalesce/Sum).
 
     Returns:
-        BudgetCategoryQuerySet filtrado e anotado com o total pago por categoria.
+        QuerySet de categorias orçamentárias anotado e filtrado.
     """
     qs: BudgetCategoryQuerySet = (
         BudgetCategory.objects.for_tenant(company)
@@ -54,18 +49,15 @@ def budget_category_get_selector(
     uuid: UUID | str,
 ) -> BudgetCategory:
     """
-    Recupera uma categoria de orçamento específica pelo UUID.
+    Recupera uma categoria de orçamento pelo identificador com total gasto anotado.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único da categoria de orçamento.
+    Carrega as relações 'budget' e 'wedding' via select_related e agrega despesas pagas.
 
     Returns:
-        A instância do BudgetCategory encontrada com total pago anotado.
+        A instância de categoria orçamentária encontrada.
 
     Raises:
-        ObjectNotFoundError: Se a categoria não for encontrada ou
-            não pertencer ao tenant.
+        ObjectNotFoundError: Se a categoria não for encontrada ou não pertencer ao tenant.
     """
     try:
         return (

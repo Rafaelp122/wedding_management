@@ -6,7 +6,10 @@ from django.db import models
 
 class BaseModel(models.Model):
     """
-    Model base para todos os modelos do sistema (ADR-007).
+    Modelo base abstrato para todas as entidades do sistema.
+
+    Decisão Arquitetural:
+        ADR-007 (docs/architecture/adr/007-hybrid-keys.md)
     """
 
     id = models.BigAutoField(primary_key=True, editable=False)
@@ -18,12 +21,15 @@ class BaseModel(models.Model):
         abstract = True
 
     def save(self, *args: Any, skip_clean: bool = False, **kwargs: Any) -> None:
-        """Garante a execução das validações do clean() antes de persistir (ADR-011).
+        """
+        Executa validações intrínsecas via full_clean antes de persistir o registro.
+
+        Decisão Arquitetural:
+            ADR-011 (docs/architecture/adr/011-basemodel-save-full-clean.md)
 
         Args:
-            skip_clean: Se True, pula o full_clean(). Usar apenas em cenários
-                controlados como bulk operations, migrations ou fixtures onde a
-                validação já foi feita externamente.
+            skip_clean: Se True, ignora o full_clean(). Uso restrito a migrações
+                e operações em lote de alta performance.
         """
         if not skip_clean:
             self.full_clean()
@@ -31,5 +37,10 @@ class BaseModel(models.Model):
 
     @classmethod
     def get_by_uuid(cls, uuid_value: UUID | str) -> Self | None:
-        """Busca rápida por identificador público."""
+        """
+        Busca rápida de registro pelo seu identificador público UUID.
+
+        Returns:
+            Instância encontrada ou None se inexistente.
+        """
         return cast(Self | None, cls.objects.filter(uuid=uuid_value).first())  # type: ignore[attr-defined]

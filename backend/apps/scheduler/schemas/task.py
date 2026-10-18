@@ -6,8 +6,6 @@ from pydantic import UUID4, ConfigDict
 
 
 class TaskIn(Schema):
-    """Schema de entrada para criação de tarefa."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     wedding: UUID4
@@ -19,8 +17,6 @@ class TaskIn(Schema):
 
 
 class TaskPatchIn(Schema):
-    """Schema de entrada para atualização parcial de tarefa."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     title: str | None = Field(default=None, min_length=1, max_length=255)
@@ -31,8 +27,6 @@ class TaskPatchIn(Schema):
 
 
 class TaskOut(Schema):
-    """Schema de saída para exibição de tarefa."""
-
     uuid: UUID4
     company_id: UUID4 = Field(alias="company.uuid")
     wedding: UUID4 = Field(alias="wedding.uuid")
@@ -53,8 +47,6 @@ ChecklistItemOut = TaskOut
 
 
 class TimelineCompressionOut(Schema):
-    """Schema de saída para análise de compressão da linha do tempo do casamento."""
-
     model_config = ConfigDict(str_strip_whitespace=True)
 
     is_timeline_compressed: bool

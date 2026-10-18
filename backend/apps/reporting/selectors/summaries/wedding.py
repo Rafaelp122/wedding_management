@@ -20,9 +20,8 @@ if TYPE_CHECKING:
 
 
 class WeddingSummarySelector:
-    """
-    Camada de consulta analítica para consolidação de resumos, métricas e
-    estatísticas de casamentos.
+    """Camada de consulta analítica para consolidação de resumos e métricas de casamentos.
+
     Centraliza subqueries cruzadas com outros domínios (finances, scheduler)
     para manter os models do domínio weddings puros.
     """
@@ -34,18 +33,16 @@ class WeddingSummarySelector:
         search: str = "",
         status: str = "",
     ) -> QuerySet[Wedding]:
-        """
-        Retorna o QuerySet encadeável de casamentos do tenant com métricas embutidas
-        (orçamento total, parcelas em atraso e tarefas pendentes).
+        """Retorna o QuerySet encadeável de casamentos do tenant com métricas embutidas.
+
+        Anota o orçamento total, quantidade de parcelas em atraso e tarefas pendentes.
 
         Args:
-            company: O tenant atual para isolamento de dados.
             search: Termo de busca textual para filtrar por noivos ou local.
             status: Filtro opcional por status do casamento.
 
         Returns:
-            QuerySet[Wedding] com anotações de total_budget, overdue_installments
-            e incomplete_tasks.
+            QuerySet de casamentos anotado com total_budget, overdue_installments e incomplete_tasks.
         """
         qs = (
             Wedding.objects.for_tenant(company)
@@ -96,17 +93,14 @@ class WeddingSummarySelector:
         today: date,
         limit: int = 5,
     ) -> QuerySet[Wedding]:
-        """
-        Retorna os casamentos em andamento nos próximos 90 dias anotados com
-        métricas críticas.
+        """Retorna os casamentos em andamento nos próximos 90 dias anotados com métricas críticas.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência para prazos.
-            limit: Quantidade máxima de registros (padrão: 5).
+            today: Data base de referência para cálculo dos prazos.
+            limit: Quantidade máxima de registros retornados (padrão: 5).
 
         Returns:
-            QuerySet[Wedding] ordenado por data e anotado com métricas críticas.
+            QuerySet ordenado por data e anotado com métricas críticas.
         """
         qs = (
             Wedding.objects.for_tenant(company)
@@ -177,17 +171,14 @@ class WeddingSummarySelector:
         today: date | None = None,
         limit: int = 5,
     ) -> list[dict[str, Any]]:
-        """
-        Retorna os Top N casamentos futuros do tenant com contagem regressiva de dias.
+        """Retorna os Top N casamentos futuros do tenant com contagem regressiva de dias.
 
         Args:
-            company: O tenant atual para isolamento de dados.
-            today: Data de referência (caso não informada, usa a data atual).
+            today: Data base de referência para contagem regressiva (padrão: data atual).
             limit: Quantidade máxima de casamentos retornados (padrão: 5).
 
         Returns:
-            Lista de dicionários contendo uuid, bride_name, groom_name,
-            date e days_until.
+            Lista de dicionários contendo os dados resumidos dos casamentos futuros com contagem de dias.
         """
         today = today or date.today()
         weddings = (

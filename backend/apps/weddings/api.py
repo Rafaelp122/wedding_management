@@ -52,6 +52,7 @@ def list_weddings(
     search: str = "",
     status: str = "",
 ) -> QuerySet[Wedding]:
+    """Lista casamentos do tenant com métricas e filtros aplicados."""
     user = request.user
     return WeddingSummarySelector.list_weddings_with_metrics(
         company=user.company, search=search, status=status
@@ -93,6 +94,7 @@ def create_wedding_proposal(
     operation_id="weddings_read",
 )
 def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
+    """Recupera os detalhes de um casamento específico pelo UUID."""
     user = request.user
     return wedding_get_selector(company=user.company, uuid=uuid)
 
@@ -103,6 +105,7 @@ def retrieve_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     operation_id="weddings_create",
 )
 def create_wedding(request: AuthRequest, payload: WeddingIn) -> tuple[int, Wedding]:
+    """Cria um novo casamento diretamente em andamento no sistema."""
     user = request.user
     wedding = WeddingService.create(company=user.company, payload=payload)
     return 201, wedding_get_selector(company=user.company, uuid=wedding.uuid)
@@ -118,6 +121,7 @@ def update_wedding(
     uuid: UUID4,
     payload: WeddingPatchIn,
 ) -> Wedding:
+    """Atualiza dados cadastrais, datas ou status de um casamento."""
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.update(company=user.company, instance=instance, payload=payload)
@@ -130,6 +134,7 @@ def update_wedding(
     operation_id="weddings_delete",
 )
 def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
+    """Exclui um casamento e registros vinculados não protegidos."""
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.delete(company=user.company, instance=instance)
@@ -142,7 +147,7 @@ def delete_wedding(request: AuthRequest, uuid: UUID4) -> tuple[int, None]:
     operation_id="weddings_complete",
 )
 def complete_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
-    """Caso de uso: Conclui um casamento existente garantindo data válida."""
+    """Conclui um casamento existente garantindo data válida."""
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.complete(company=user.company, instance=instance)
@@ -155,7 +160,7 @@ def complete_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     operation_id="weddings_cancel",
 )
 def cancel_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
-    """Caso de uso: Cancela um casamento em andamento."""
+    """Cancela um casamento em andamento."""
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.cancel(company=user.company, instance=instance)
@@ -168,9 +173,7 @@ def cancel_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
     operation_id="weddings_reopen",
 )
 def reopen_wedding(request: AuthRequest, uuid: UUID4) -> Wedding:
-    """
-    Caso de uso: Reabre um casamento cancelado voltando para em andamento.
-    """
+    """Reabre um casamento cancelado voltando para em andamento."""
     user = request.user
     instance = wedding_get_selector(company=user.company, uuid=uuid)
     WeddingService.reopen(company=user.company, instance=instance)

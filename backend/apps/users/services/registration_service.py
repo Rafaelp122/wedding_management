@@ -18,9 +18,8 @@ class RegistrationService:
     Assegura que o fluxo de cadastro e a criação do par Usuário-Empresa
     sejam executados de forma atômica no banco de dados.
 
-    Regras de Negócio e SSOT:
-    - Hub do Domínio de Usuários (BR-U01..08): docs/architecture/domains/users-domain.md
-    - Fluxo de Autenticação e Onboarding: docs/architecture/concepts/auth-jwt-flow.md
+    Regra de Negócio:
+        BR-U01 (docs/architecture/domains/users-domain.md)
     """
 
     @staticmethod
@@ -32,24 +31,13 @@ class RegistrationService:
         last_name: str = "",
         company_name: str = "",
     ) -> User:
-        """
-        Realiza o onboarding completo de um novo proprietário (Owner).
+        """Realiza o onboarding completo de um novo proprietário (Owner).
 
-        Cria a conta do usuário e a empresa correspondente em uma transação
-        atômica, realizando validações de senha e de unicidade do e-mail.
-
-        Args:
-            email: E-mail do novo usuário. Deve ser único.
-            password: Senha em formato texto puro a ser validada e criptografada.
-            first_name: Primeiro nome do usuário.
-            last_name: Sobrenome do usuário.
-            company_name: Nome opcional da empresa a ser criada.
-
-        Returns:
-            Instância do usuário (User) recém-criado e associado à empresa.
+        Regra de Negócio: [BR-U01](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Cria atomicamente a empresa e o usuário proprietário; agenda envio de verificação pós-commit.
 
         Raises:
-            ValidationError: Se a senha não atender aos requisitos de segurança.
+            ValidationError: Se a senha fornecida não atender aos critérios de segurança.
             DomainIntegrityError: Se o e-mail já estiver cadastrado no sistema.
         """
         logger.info(f"Iniciando registro de novo proprietário: {email}")
@@ -60,7 +48,7 @@ class RegistrationService:
         # Evita prosseguir com a criação da empresa se o e-mail já existir.
         if User.objects.filter(email=email).exists():
             raise DomainIntegrityError(
-                detail="Este e-mail já está cadastrado em outra conta.",
+                detail=f"Este e-mail já está cadastrado em outra conta: '{email}'.",
                 code="email_already_exists",
             )
 
@@ -91,7 +79,7 @@ class RegistrationService:
         except IntegrityError as e:
             logger.exception(f"Erro de integridade ao registrar usuário {email}")
             raise DomainIntegrityError(
-                detail="Este e-mail já está cadastrado em outra conta.",
+                detail=f"Este e-mail já está cadastrado em outra conta: '{email}'.",
                 code="email_already_exists",
             ) from e
 

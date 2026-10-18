@@ -20,30 +20,34 @@ Com o crescimento do repositório, identificamos inconsistências na documentaç
 
 ## 2. Decisão
 
-1. **Adoção do Padrão Google Style em Português (PT-BR):** Obrigatório em todos os métodos públicos de `services/`, `selectors/`, `managers.py` e `models/`.
-2. **Docstrings Curtas e Semânticas em Endpoints (`api.py`):** O Django Ninja extrai automaticamente a primeira linha da docstring da função para o campo `summary` do OpenAPI/Swagger.
-3. **Banimento Estrito de Menções a Ferramentas de IA:** Proibido qualquer referência a nomes de assistentes ou modelos em comentários, docstrings e mensagens de commit.
-4. **Foco no "Porquê" (Design Intent):** Comentários inline devem focar exclusivamente em decisões não óbvias, contornos de bugs upstream ou regras de domínio (ex: *tolerância zero financeira*).
+1. **Adoção do Padrão Google Style Pragmático em Português (PT-BR):** Obrigatório em todos os métodos públicos de `services/` e `interfaces.py`.
+2. **Proibição de Tipos em Docstrings (Anti-Type-Drift):** O sistema de tipos estrito (`python >= 3.12` + `mypy --strict`) é a Única Fonte da Verdade (SSOT). É estritamente proibido repetir tipos na docstring (ex: `Args: company (Company):` ou `Returns: list[Model]:`).
+3. **Escopo Semântico de `Args:`:** Documentar apenas parâmetros com invariantes de negócio, limites de faixa ou unidades de medida. Parâmetros de domínio autoexplicativos (`company`, `wedding`, `user`) não devem ter descrições tautológicas.
+4. **Prioridade Máxima para `Raises:` e Efeitos Colaterais:** Toda exceção de domínio disparável ou propagável pelo serviço deve estar explicitada em `Raises:`. Efeitos secundários (tarefas assíncronas, eventos de agenda) devem ser listados em `Efeitos Colaterais:`.
+5. **Docstrings Curtas e Semânticas em Endpoints (`api.py`):** O Django Ninja extrai automaticamente a primeira linha da docstring da função para o campo `summary` do OpenAPI/Swagger. Proibido blocos de `Args:` ou `Returns:` nas rotas.
+6. **Banimento Estrito de Menções a Ferramentas de IA:** Proibido qualquer referência a nomes de assistentes ou modelos em comentários, docstrings e mensagens de commit.
+7. **Foco no "Porquê" (Design Intent):** Comentários inline devem focar exclusivamente em decisões não óbvias, contornos de bugs upstream ou regras de domínio (ex: *tolerância zero financeira*).
 
 ```mermaid
 flowchart LR
-    SourceCode["Código Python (services / selectors / api)"] --> GoogleStyle["Docstring Google Style (PT-BR)"]
+    SourceCode["Código Python (services / selectors / api)"] --> GoogleStyle["Docstring Google Style Pragmático (PT-BR)"]
     GoogleStyle --> DevOnboarding["Onboarding & Manutenção Humana"]
     GoogleStyle --> NinjaOpenAPI["OpenAPI 3.1 & Swagger UI"]
-    GoogleStyle --> ASTAudit["Guard-Rail de Auditoria (pytest)"]
+    GoogleStyle --> ASTAudit["Guard-Rail de Auditoria AST (pytest)"]
 ```
 
 ---
 
 ## 3. Exemplos Reais de Implementação
 
-### 3.1 Método de Domínio na Service Layer (Google Style)
+### 3.1 Método de Domínio na Service Layer (Google Style Pragmático)
 
 ```python
 # apps/finances/services/installment_service.py
+from datetime import date
 from decimal import Decimal
 from django.db import transaction
-from apps.core.exceptions import ValidationError
+from apps.core.exceptions import ValidationError, ObjectNotFoundError
 from apps.finances.models import Installment
 from apps.logistics.models import Contract
 from apps.tenants.models import Company
@@ -64,19 +68,24 @@ class InstallmentService:
         Garante a validação de tolerância zero em relação ao valor global
         contratado e bloqueia a criação se ultrapassar o saldo remanescente.
 
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+
+        Efeitos Colaterais:
+            - Persiste a instância de Installment no banco de dados.
+            - Dispara a sincronização de eventos no calendário da agenda (BR-S01).
+
         Args:
-            company: Instância da empresa proprietária do registro.
-            contract: Contrato de logística ao qual a parcela pertence.
-            number: Número ordinal da parcela (ex: 1 para 1ª parcela).
-            value: Valor nominal da parcela em moeda corrente.
-            due_date: Data limite para o vencimento do pagamento.
+            number: Número ordinal da parcela (deve ser >= 1).
+            value: Valor nominal da parcela (deve ser positivo e > 0).
+            due_date: Data limite para vencimento (deve ser posterior à data do contrato).
+            # Nota: 'company' e 'contract' são omitidos de Args pois são autoexplicativos pela tipagem.
 
         Returns:
-            A instância recém-criada de Installment persistida no banco.
+            A instância recém-criada de Installment persistida e com saldo recalculado.
 
         Raises:
-            ValidationError: Se o valor da parcela for menor ou igual a zero,
-                ou se a data de vencimento for anterior à data do contrato.
+            ValidationError: Se o valor for <= 0 ou a data de vencimento for anterior ao contrato.
             ObjectNotFoundError: Se o contrato não pertencer ao tenant fornecido.
         """
         ...

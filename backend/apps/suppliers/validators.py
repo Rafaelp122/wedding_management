@@ -10,18 +10,15 @@ from django.core.exceptions import ValidationError
 def validate_cnpj_modulo11(value: str) -> None:
     """Valida um número de CNPJ utilizando a regra canônica do Módulo 11 da Receita Federal.
 
-    Regras aplicadas:
-    1. Limpa formatação mantendo apenas dígitos numéricos.
-    2. Exige exatamente 14 dígitos (quando preenchido).
-    3. Rejeita sequências homogêneas (dígitos idênticos repetidos).
-    4. Valida o primeiro dígito verificador (DV1) via pesos [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2].
-    5. Valida o segundo dígito verificador (DV2) via pesos [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2].
+    Regra de Negócio:
+        BR-SUP-CNPJ-01: Exige 14 dígitos numéricos e rejeita dígitos homogêneos repetidos.
+        BR-SUP-CNPJ-02: Validação dos dois dígitos verificadores via pesos do módulo 11.
 
     Args:
-        value: String contendo o CNPJ mascarado ou somente dígitos.
+        value: Número de CNPJ com ou sem máscara de pontuação.
 
     Raises:
-        ValidationError: Se o CNPJ for matematicamente inválido ou não seguir as especificações.
+        ValidationError: Se o CNPJ for matematicamente inválido ou possuir formato incompatível.
     """
     if not value:
         return
@@ -34,14 +31,20 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if len(digits) != 14:
         raise ValidationError(
-            "CNPJ deve conter exatamente 14 dígitos numéricos.",
+            (
+                f"CNPJ deve conter exatamente 14 dígitos numéricos. "
+                f"CNPJ informado: '{value}', dígitos encontrados: {len(digits)}."
+            ),
             code="invalid_cnpj_length",
         )
 
     # Rejeita sequências homogêneas (ex: 00000000000000, 11111111111111, etc.)
     if digits == digits[0] * 14:
         raise ValidationError(
-            "CNPJ não pode ser composto por dígitos repetidos.",
+            (
+                f"CNPJ não pode ser composto por dígitos repetidos. "
+                f"Sequência informada: '{value}'."
+            ),
             code="invalid_cnpj_homogeneous",
         )
 
@@ -56,7 +59,10 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if int(digits[12]) != expected_dv1:
         raise ValidationError(
-            "CNPJ inválido (primeiro dígito verificador não confere).",
+            (
+                "CNPJ inválido (primeiro dígito verificador não confere). "
+                f"Dígito recebido: '{digits[12]}', esperado: '{expected_dv1}', cnpj='{value}'."
+            ),
             code="invalid_cnpj_dv1",
         )
 
@@ -71,6 +77,9 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if int(digits[13]) != expected_dv2:
         raise ValidationError(
-            "CNPJ inválido (segundo dígito verificador não confere).",
+            (
+                "CNPJ inválido (segundo dígito verificador não confere). "
+                f"Dígito recebido: '{digits[13]}', esperado: '{expected_dv2}', cnpj='{value}'."
+            ),
             code="invalid_cnpj_dv2",
         )

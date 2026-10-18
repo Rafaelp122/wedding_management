@@ -23,15 +23,9 @@ def notification_list_selector(
     user: User,
     unread_only: bool = False,
 ) -> NotificationQuerySet:
-    """Retorna o queryset encadeável de notificações de um usuário no tenant.
+    """Retorna o queryset de notificações de um usuário no tenant.
 
-    Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário das notificações.
-        unread_only: Se True, filtra apenas notificações não lidas.
-
-    Returns:
-        NotificationQuerySet: QuerySet encadeável anotado com wedding_name.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
     """
     qs: NotificationQuerySet = (
         Notification.objects.for_tenant(company)
@@ -47,12 +41,7 @@ def notification_list_selector(
 def notification_unread_count_selector(*, company: Company, user: User) -> int:
     """Retorna a contagem de notificações não lidas de um usuário no tenant.
 
-    Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário das notificações.
-
-    Returns:
-        int: Quantidade de notificações não lidas (is_read=False).
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
     """
     return int(Notification.objects.for_tenant(company).for_user(user).unread().count())
 
@@ -65,16 +54,10 @@ def notification_get_selector(
 ) -> Notification:
     """Recupera uma notificação específica garantindo isolamento de tenant e usuário.
 
-    Args:
-        company: Empresa (tenant) para isolamento de dados.
-        user: Usuário destinatário da notificação.
-        uuid: Identificador único da notificação.
-
-    Returns:
-        Notification: Instância da notificação anotada com wedding_name.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
 
     Raises:
-        ObjectNotFoundError: Se a notificação não for encontrada.
+        ObjectNotFoundError: Se a notificação não for encontrada no tenant para o usuário.
     """
     notification = (
         Notification.objects.for_tenant(company)
@@ -84,5 +67,7 @@ def notification_get_selector(
         .first()
     )
     if not notification:
-        raise ObjectNotFoundError(detail="Notificação não encontrada.")
+        raise ObjectNotFoundError(
+            detail=f"Notificação com UUID '{uuid}' não encontrada."
+        )
     return notification

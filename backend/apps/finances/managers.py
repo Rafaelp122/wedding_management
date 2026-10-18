@@ -56,15 +56,7 @@ class BudgetQuerySet(TenantQuerySet["Budget"]):
     def for_wedding(
         self, wedding: Wedding | UUID | str | int | None = None
     ) -> BudgetQuerySet:
-        """
-        Filtra orçamentos associados a um casamento específico.
-
-        Args:
-            wedding: Instância de Wedding, UUID, string ou id numérico.
-
-        Returns:
-            BudgetQuerySet filtrado pelo casamento.
-        """
+        """Filtra orçamentos associados a um casamento específico."""
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
@@ -122,15 +114,7 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
     def for_budget(
         self, budget: Budget | UUID | str | int | None = None
     ) -> BudgetCategoryQuerySet:
-        """
-        Filtra categorias pertencentes a um orçamento específico.
-
-        Args:
-            budget: Instância de Budget, UUID, string ou id numérico.
-
-        Returns:
-            BudgetCategoryQuerySet filtrado pelo orçamento.
-        """
+        """Filtra categorias pertencentes a um orçamento específico."""
         if not budget:
             return self
         if hasattr(budget, "_meta"):
@@ -144,15 +128,7 @@ class BudgetCategoryQuerySet(TenantQuerySet["BudgetCategory"]):
     def for_wedding(
         self, wedding: Wedding | UUID | str | int | None = None
     ) -> BudgetCategoryQuerySet:
-        """
-        Filtra categorias pertencentes a um casamento específico.
-
-        Args:
-            wedding: Instância de Wedding, UUID, string ou id numérico.
-
-        Returns:
-            BudgetCategoryQuerySet filtrado pelo casamento.
-        """
+        """Filtra categorias pertencentes a um casamento específico."""
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
@@ -227,15 +203,7 @@ class ExpenseQuerySet(TenantQuerySet["Expense"]):
     def by_category(
         self, category: BudgetCategory | UUID | str | int | None = None
     ) -> ExpenseQuerySet:
-        """
-        Filtra despesas pertencentes a uma categoria específica.
-
-        Args:
-            category: Instância de BudgetCategory, UUID, string ou id numérico.
-
-        Returns:
-            ExpenseQuerySet filtrado pela categoria.
-        """
+        """Filtra despesas pertencentes a uma categoria específica."""
         if not category:
             return self
         if hasattr(category, "_meta"):
@@ -249,15 +217,7 @@ class ExpenseQuerySet(TenantQuerySet["Expense"]):
     def for_wedding(
         self, wedding: Wedding | UUID | str | int | None = None
     ) -> ExpenseQuerySet:
-        """
-        Filtra despesas associadas a um casamento específico.
-
-        Args:
-            wedding: Instância de Wedding, UUID, string ou id numérico.
-
-        Returns:
-            ExpenseQuerySet filtrado pelo casamento.
-        """
+        """Filtra despesas associadas a um casamento específico."""
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
@@ -277,11 +237,11 @@ class ExpenseQuerySet(TenantQuerySet["Expense"]):
         Filtra despesas dentro de um intervalo de datas de criação.
 
         Args:
-            start_date: Data ou datetime inicial (inclusive).
-            end_date: Data ou datetime final (inclusive).
+            start_date: Data ou datetime inicial para o intervalo (inclusive).
+            end_date: Data ou datetime final para o intervalo (inclusive).
 
         Returns:
-            ExpenseQuerySet filtrado pelo período.
+            QuerySet de despesas filtrado pelo período.
         """
         qs = self
         if start_date is not None:
@@ -337,34 +297,19 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
     """QuerySet customizado para Installment com métodos encadeáveis."""
 
     def pending(self) -> InstallmentQuerySet:
-        """
-        Filtra parcelas com status pendente (PENDING).
-
-        Returns:
-            InstallmentQuerySet com parcelas pendentes.
-        """
+        """Filtra parcelas com status pendente (PENDING)."""
         from apps.finances.models.installment import Installment
 
         return self.filter(status=Installment.StatusChoices.PENDING)
 
     def overdue(self) -> InstallmentQuerySet:
-        """
-        Filtra parcelas com status atrasado (OVERDUE).
-
-        Returns:
-            InstallmentQuerySet com parcelas atrasadas.
-        """
+        """Filtra parcelas com status atrasado (OVERDUE)."""
         from apps.finances.models.installment import Installment
 
         return self.filter(status=Installment.StatusChoices.OVERDUE)
 
     def paid(self) -> InstallmentQuerySet:
-        """
-        Filtra parcelas com status pago (PAID).
-
-        Returns:
-            InstallmentQuerySet com parcelas pagas.
-        """
+        """Filtra parcelas com status pago (PAID)."""
         from apps.finances.models.installment import Installment
 
         return self.filter(status=Installment.StatusChoices.PAID)
@@ -373,14 +318,14 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
         self, days: int = 7, today: date | None = None
     ) -> InstallmentQuerySet:
         """
-        Filtra parcelas com vencimento nos próximos N dias da data de referência.
+        Filtra parcelas com vencimento nos próximos dias da data de referência.
 
         Args:
             days: Quantidade de dias futuros para a janela de vencimento.
-            today: Data de referência (padrão: hoje).
+            today: Data de referência para início da contagem (padrão: hoje).
 
         Returns:
-            InstallmentQuerySet filtrado pela janela de vencimento.
+            QuerySet de parcelas filtrado pela janela de vencimento.
         """
         if today is None:
             today = date.today()
@@ -398,11 +343,11 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
         Filtra parcelas com vencimento dentro de um intervalo de datas.
 
         Args:
-            start_date: Data de vencimento inicial (inclusive).
-            end_date: Data de vencimento final (inclusive).
+            start_date: Data de vencimento inicial para o intervalo (inclusive).
+            end_date: Data de vencimento final para o intervalo (inclusive).
 
         Returns:
-            InstallmentQuerySet filtrado pelo intervalo de vencimento.
+            QuerySet de parcelas filtrado pelo intervalo de vencimento.
         """
         qs = self
         if start_date is not None:
@@ -414,15 +359,7 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
     def for_wedding(
         self, wedding: Wedding | UUID | str | int | None = None
     ) -> InstallmentQuerySet:
-        """
-        Filtra parcelas associadas a um casamento específico.
-
-        Args:
-            wedding: Instância de Wedding, UUID, string ou id numérico.
-
-        Returns:
-            InstallmentQuerySet filtrado pelo casamento.
-        """
+        """Filtra parcelas associadas a um casamento específico."""
         if not wedding:
             return self
         if hasattr(wedding, "_meta"):
@@ -436,15 +373,7 @@ class InstallmentQuerySet(TenantQuerySet["Installment"]):
     def for_expense(
         self, expense: Expense | UUID | str | int | None = None
     ) -> InstallmentQuerySet:
-        """
-        Filtra parcelas associadas a uma despesa específica.
-
-        Args:
-            expense: Instância de Expense, UUID, string ou id numérico.
-
-        Returns:
-            InstallmentQuerySet filtrado pela despesa.
-        """
+        """Filtra parcelas associadas a uma despesa específica."""
         if not expense:
             return self
         if hasattr(expense, "_meta"):

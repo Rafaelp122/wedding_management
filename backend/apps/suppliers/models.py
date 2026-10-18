@@ -105,7 +105,11 @@ class Supplier(TenantModel):
         return self.name
 
     def clean(self) -> None:
-        """Valida invariantes do modelo de fornecedor."""
+        """Valida invariantes do modelo de fornecedor.
+
+        Raises:
+            ValidationError: Se o CNPJ informado for matematicamente inválido.
+        """
         super().clean()
         if self.cnpj:
             try:

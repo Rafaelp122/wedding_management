@@ -27,18 +27,20 @@ class ExpenseService:
 
     Garante que gastos reais respeitem o contexto do casamento, os contratos
     e assegura a rastreabilidade estrita da operação.
+
+    Regras de Negócio:
+        BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+        BR-F02 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+        BR-F03 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
+        BR-F04 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
     """
 
     @staticmethod
     def _validate_contract_wedding(category: BudgetCategory, contract: Any) -> None:
         """Valida a fronteira cross-wedding entre categoria e contrato.
 
-        Args:
-            category: Categoria financeira que define o casamento da despesa.
-            contract: Contrato logístico opcional vinculado à despesa.
-
         Raises:
-            DomainIntegrityError: Se o contrato pertencer a outro casamento.
+            DomainIntegrityError: Se o contrato pertencer a outro casamento (BR-F03).
         """
         if contract and contract.wedding_id != category.wedding_id:
             raise DomainIntegrityError(
@@ -56,15 +58,11 @@ class ExpenseService:
         Garante o preenchimento de campos obrigatórios com base nos valores
         do contrato.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            contract_uuid: O UUID do contrato de origem.
-
         Returns:
-            dict[str, Any]: Dicionário formatado contendo os dados sugeridos.
+            Dicionário formatado contendo os dados sugeridos para a despesa.
 
         Raises:
-            ObjectNotFoundError: Se o contrato não for encontrado.
+            ObjectNotFoundError: Se o contrato não for encontrado ou não pertencer ao tenant.
         """
         contract = get_contract_for_company(
             company=company,
@@ -95,26 +93,16 @@ class ExpenseService:
     def create(company: Company, payload: ExpenseIn) -> Expense:
         """Cria uma nova despesa e gera suas parcelas correspondentes.
 
-        Valida se o valor total da despesa é idêntico ao total do contrato
-        associado (Regra BR-F02) e auto-gera pelo menos 1 parcela de pagamento.
-
         Regra de Negócio:
-            BR-F02:
-            docs/architecture/business-rules/finances/financial-integrity-rules.md
-        Decisão Arquitetural:
-            ADR-006 (docs/architecture/adr/006-service-layer.md)
-            ADR-030 (docs/architecture/adr/030-rich-domain-model-service-layer.md)
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            payload: Dados de entrada para criação da despesa.
-
-        Returns:
-            Expense: A instância da despesa criada.
+        Efeitos Colaterais:
+            - Persiste atomicamente a despesa e gera suas parcelas via InstallmentService.
 
         Raises:
-            BusinessRuleViolation: Se infringir a regra BR-F02 ou as parcelas
-                forem inválidas.
+            BusinessRuleViolation: Se infringir a regra BR-F02, se o número de parcelas for inválido (< 1) ou se violar validações do modelo.
+            DomainIntegrityError: Se o contrato pertencer a outro casamento (BR-F03).
+            ObjectNotFoundError: Se a categoria de orçamento não for encontrada.
         """
         logger.info(f"Iniciando criação de Despesa para company_id={company.id}")
 
@@ -149,7 +137,7 @@ class ExpenseService:
 
         if num_installments < 1:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser pelo menos 1.",
+                detail=f"O número de parcelas deve ser pelo menos 1; recebido: {num_installments}, esperado: >= 1.",
                 code="invalid_installment_number",
             )
 
@@ -205,12 +193,8 @@ class ExpenseService:
         Garante que o valor da despesa vinculada a um contrato seja exatamente
         igual ao total do contrato.
 
-        Args:
-            instance: A instância da despesa sendo validada.
-            data: Dicionário contendo os dados atualizados para validação.
-
         Raises:
-            BusinessRuleViolation: Se o valor da despesa diferir do valor do contrato.
+            BusinessRuleViolation: Se o valor da despesa diferir do valor do contrato (BR-F02).
         """
         effective_contract = instance.contract
         effective_amount = data.get("actual_amount", instance.actual_amount)
@@ -234,12 +218,8 @@ class ExpenseService:
     ) -> None:
         """Resolve e vincula um contrato a uma despesa no update.
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A despesa que receberá a vinculação do contrato.
-            contract_input: Instância, UUID ou ID do contrato a ser resolvido.
-
         Raises:
+            DomainIntegrityError: Se o contrato pertencer a outro casamento (BR-F03).
             ObjectNotFoundError: Se o contrato especificado não for encontrado.
         """
         resolved_contract = None
@@ -267,20 +247,16 @@ class ExpenseService:
     def update(company: Company, instance: Expense, payload: ExpensePatchIn) -> Expense:
         """Atualiza os dados de uma despesa existente.
 
-        Trata a re-distribuição de parcelas caso o valor total ou a quantidade de
-        parcelas sejam alterados, validando a regra BR-F02 quando aplicável.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da despesa a ser atualizada.
-            payload: Dados parciais de atualização da despesa.
-
-        Returns:
-            Expense: A instância da despesa atualizada.
+        Efeitos Colaterais:
+            - Atualiza a despesa e redistribui proporcionalmente as parcelas em caso de alteração no valor total (BR-F01).
 
         Raises:
-            BusinessRuleViolation: Se a alteração de valor for bloqueada por parcelas
-                já pagas ou se violar a consistência do model.
+            BusinessRuleViolation: Se a alteração de valor for bloqueada por parcelas já pagas, violar paridade ou modelo.
+            DomainIntegrityError: Se o novo contrato pertencer a outro casamento.
+            ObjectNotFoundError: Se a despesa ou novo contrato não forem encontrados.
         """
         validate_tenant_ownership(
             company,
@@ -313,17 +289,16 @@ class ExpenseService:
             setattr(instance, field, value)
             updated_fields.add(field)
 
+        if amount_changed and instance.has_paid_installments:
+            raise BusinessRuleViolation(
+                detail=(
+                    f"Não é possível alterar o valor total da despesa '{instance.name}' (uuid: '{instance.uuid}') "
+                    "pois existem parcelas marcadas como pagas. Crie uma nova despesa."
+                ),
+                code="amount_change_blocked_by_paid",
+            )
+
         if amount_changed:
-            # Auto-redistribute: ajusta o valor das parcelas existentes
-            # para o novo valor total (BR-F01)
-            if instance.has_paid_installments:
-                raise BusinessRuleViolation(
-                    detail=(
-                        "Não é possível alterar o valor total pois existem "
-                        "parcelas marcadas como pagas. Crie uma nova despesa."
-                    ),
-                    code="amount_change_blocked_by_paid",
-                )
             InstallmentService.redistribute(
                 company=company,
                 expense=instance,
@@ -354,12 +329,14 @@ class ExpenseService:
     def delete(company: Company, instance: Expense) -> None:
         """Exclui uma despesa existente.
 
-        Previamente valida a propriedade pelo tenant. Exclui a despesa e remove
-        todas as parcelas vinculadas em cascata.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            instance: A instância da despesa a ser excluída.
+        Efeitos Colaterais:
+            - Remove a despesa e suas parcelas associadas em cascata.
+
+        Raises:
+            ObjectNotFoundError: Se a despesa não for encontrada para o tenant.
         """
         validate_tenant_ownership(
             company,
@@ -387,27 +364,21 @@ class ExpenseService:
     ) -> Expense:
         """Renegocia e redistribui as parcelas de uma despesa.
 
-        Remove as parcelas anteriores e gera um novo cronograma com a quantidade
-        de parcelas informada e data de primeiro vencimento.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
-        Args:
-            company: O tenant atual para isolamento de dados.
-            expense: A despesa associada.
-            num_installments: Novo número total de parcelas.
-            first_due_date: Data de vencimento da primeira parcela (opcional).
-
-        Returns:
-            Expense: A despesa com parcelas renegociadas.
+        Efeitos Colaterais:
+            - Exclui as parcelas pendentes anteriores e gera um novo cronograma balanceado (BR-F01).
 
         Raises:
-            BusinessRuleViolation: Se o número de parcelas for menor que 1 ou
-                se houver parcelas já pagas.
+            BusinessRuleViolation: Se o número de parcelas for menor que 1 ou se houver parcelas já pagas (BR-F04).
+            ObjectNotFoundError: Se a despesa não pertencer ao tenant.
         """
         validate_tenant_ownership(company, expense)
 
         if num_installments < 1:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser pelo menos 1.",
+                detail=f"O número de parcelas deve ser pelo menos 1; recebido: {num_installments}, esperado: >= 1.",
                 code="invalid_installment_number",
             )
 

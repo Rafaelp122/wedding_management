@@ -32,8 +32,13 @@ def create_payment_events_for_installments(
     installments: list[Installment],
 ) -> None:
     """
-    Cria eventos PAYMENT no scheduler para cada parcela gerada.
-    Ref: BR-S01 — Eventos PAYMENT são read-only no calendário.
+    Cria eventos de pagamento no calendário da agenda para cada parcela gerada.
+
+    Regra de Negócio:
+        BR-S01 (docs/architecture/business-rules/scheduler/payment-event-readonly-guard.md)
+
+    Efeitos Colaterais:
+        - Persiste instâncias de Event com tipo 'pagamento' e salvaguarda read-only (BR-S01).
     """
     total_installments = len(installments)
     for inst in installments:
@@ -63,7 +68,10 @@ def delete_payment_events_for_expense(
     expense: Expense,
 ) -> None:
     """
-    Remove todos os eventos PAYMENT do scheduler vinculados a uma despesa.
+    Remove todos os eventos de pagamento do calendário vinculados a uma despesa.
+
+    Efeitos Colaterais:
+        - Exclui em lote os eventos do tipo pagamento relacionados às parcelas da despesa.
     """
     Event.objects.for_tenant(company).filter(
         wedding=expense.wedding,
@@ -79,7 +87,10 @@ def delete_payment_event_for_installment(
     installment: Installment,
 ) -> None:
     """
-    Remove o evento PAYMENT vinculado a uma parcela específica.
+    Remove o evento de pagamento do calendário vinculado a uma parcela específica.
+
+    Efeitos Colaterais:
+        - Exclui o evento correspondente à parcela informada.
     """
     Event.objects.for_tenant(company).filter(
         wedding=installment.expense.wedding,
@@ -96,8 +107,21 @@ def apply_wedding_schedule_template(
     template_name: str,
 ) -> None:
     """
-    Aplica um template de cronograma criando eventos para o casamento.
-    Calcula o offset em dias em relação à data do casamento.
+    Aplica template canônico de cronograma gerando eventos baseados na data do casamento.
+
+    Calcula o deslocamento em dias a partir da data da cerimônia.
+
+    Regra de Negócio:
+        BR-W07 (docs/architecture/business-rules/weddings/wedding-schedule-templates.md)
+
+    Efeitos Colaterais:
+        - Persiste eventos na agenda com permissão de marcos históricos (_allow_historical_start=True).
+
+    Args:
+        template_name: Identificador canônico do template registrado.
+
+    Raises:
+        BusinessRuleViolation: Se o template informado não existir no registro do sistema.
     """
     template_events = get_template_events(template_name)
 
@@ -129,7 +153,15 @@ def enqueue_wedding_checklist_generation(
     wedding_uuid: UUID | str,
     template: str | None = None,
 ) -> None:
-    """Enfileira a geração assíncrona do checklist operacional inicial (RFC-001 / ADR-017)."""
+    """
+    Enfileira a geração assíncrona do checklist operacional inicial do casamento.
+
+    Efeitos Colaterais:
+        - Enfileira a tarefa assíncrona generate_checklist_from_template_task (ADR-017 / RFC-001).
+
+    Args:
+        template: Nome opcional do template de cronograma para instanciar tarefas padrão.
+    """
     from apps.scheduler.tasks import generate_checklist_from_template_task
 
     generate_checklist_from_template_task.enqueue(

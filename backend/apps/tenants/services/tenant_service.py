@@ -12,31 +12,21 @@ logger = logging.getLogger(__name__)
 
 class TenantService:
     """
-    Serviço responsável pela gestão de tenants (Workspaces/Empresas).
+    Camada de serviço responsável pelo ciclo de vida de tenants e workspaces.
 
-    Centraliza a lógica de criação de workspaces e a inicialização de
-    tenants para isolamento de dados no sistema.
-
-    Regras de Negócio e SSOT:
-    - Hub do Domínio de Tenants: docs/architecture/domains/tenants-domain.md
-    - Estratégia de Multi-Tenancy: docs/architecture/concepts/multi-tenancy-strategy.md
+    Regra de Negócio:
+        BR-T01 (docs/architecture/domains/tenants-domain.md)
+    Decisão Arquitetural:
+        ADR-019 (docs/architecture/adr/019-tenant-validation-service-layer.md)
     """
 
     @staticmethod
     @transaction.atomic
     def create_company(display_name: str, company_name: str = "") -> Company:
-        """
-        Cria uma Company com base no nome do usuário ou email.
+        """Cria e inicializa uma nova empresa (tenant) no banco de dados.
 
-        Gera um slug único e curto para evitar colisões e cria o tenant no
-        banco de dados em uma transação atômica.
-
-        Args:
-            display_name: Nome de exibição do usuário proprietário.
-            company_name: Nome opcional da empresa a ser criada.
-
-        Returns:
-            A instância de Company criada e persistida.
+        Regra de Negócio: [BR-T01](docs/architecture/domains/tenants-domain.md)
+        Efeitos Colaterais: Persiste uma nova instância de Company no banco de dados.
         """
         name = company_name.strip() if company_name else f"Workspace de {display_name}"
 
@@ -51,15 +41,10 @@ class TenantService:
     @staticmethod
     @transaction.atomic
     def get_or_create_admin_workspace() -> Company:
-        """
-        Gera ou recupera o workspace de administração padrão do sistema.
+        """Recupera ou provisiona o workspace administrativo global do sistema.
 
-        Utilizado para associar superusuários a um tenant administrativo do
-        sistema, prevenindo erros de validação de tenant em ferramentas de
-        gerenciamento global.
-
-        Returns:
-            A instância de Company representativa do workspace administrativo.
+        Decisão Arquitetural: [ADR-019](docs/architecture/adr/019-tenant-validation-service-layer.md)
+        Efeitos Colaterais: Persiste a Company com slug 'admin-workspace' caso ainda não exista.
         """
         company, created = Company.objects.get_or_create(
             slug="admin-workspace", defaults={"name": "Workspace Administrativo"}

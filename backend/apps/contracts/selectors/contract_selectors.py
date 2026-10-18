@@ -31,18 +31,14 @@ def contract_list_selector(
     client_id: UUID | str | None = None,
     parent_id: UUID | str | None = None,
 ) -> ContractQuerySet:
-    """Lista os contratos pertencentes ao tenant com filtros aplicados.
+    """Lista contratos do tenant aplicando filtros e otimizações de agregação.
 
-    Retorna o QuerySet anotado com totais e dados consolidados evitando N+1.
+    Aplica anotações de totais e pré-carregamento de termos aditivos (with_totals
+    e prefetch_related), prevenindo problemas de performance N+1.
 
     Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador do casamento para filtragem.
-        status: Status do contrato (ex: DRAFT, SIGNED, PENDING, CANCELED).
-        contract_type: Tipo do contrato (PLANNER ou SUPPLIER).
-        supplier_id: Identificador do fornecedor associado.
-        client_id: Identificador do cliente contratante associado.
-        parent_id: Parâmetro legado mantido para compatibilidade de rotas.
+        status: Status de contrato para filtragem (ex: DRAFT, SIGNED, PENDING, CANCELED).
+        contract_type: Tipo de contrato para filtragem (PLANNER ou SUPPLIER).
 
     Returns:
         ContractQuerySet filtrado e anotado com totais e dados relacionados.
@@ -68,9 +64,8 @@ def contract_list_selector(
 def contract_get_selector(company: Company, uuid: UUID | str) -> Contract:
     """Busca um contrato específico pertencente ao tenant com totais anotados.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        uuid: Identificador único (UUID ou string) do contrato.
+    Executa consulta com cálculo de totais via subquery e pré-carregamento de aditivos
+    (with_totals e prefetch_related), garantindo eficiência de I/O.
 
     Returns:
         A instância do Contract correspondente com dados e totais anotados.
@@ -95,12 +90,8 @@ def contract_pending_count_selector(
 ) -> int:
     """Retorna a contagem de contratos pendentes de assinatura para o tenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        wedding_id: Identificador opcional do casamento para restringir a contagem.
-
     Returns:
-        Número inteiro de contratos com status PENDING.
+        Número total de contratos com status PENDING.
     """
     qs = Contract.objects.for_tenant(company).by_status(Contract.StatusChoices.PENDING)
     if wedding_id:
@@ -112,18 +103,16 @@ def contract_consolidated_total_selector(
     company: Company,
     contract: Contract,
 ) -> Decimal:
-    """Calcula o valor efetivo do contrato (face + aditivos SIGNED).
+    """Calcula o valor efetivo consolidado do contrato (face + aditivos SIGNED).
 
-    SSOT de valor formalizado: somente aditivos SIGNED compõem o total.
-    Aditivos PENDING são expectativa futura (ver `addendums_pending_total`
-    em `with_totals()`) e CANCELED nunca compõem.
+    Regra de Negócio:
+        BR-L02-E (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        contract: Instância do contrato a ser calculado.
+    Executa agregação pontual filtrando exclusivamente aditivos assinados. Aditivos
+    PENDING e CANCELED não compõem o montante liquidável.
 
     Returns:
-        Decimal com a soma do valor de face mais aditivos assinados.
+        Montante consolidado somando o valor de face aos aditivos assinados.
     """
     validate_tenant_ownership(
         company,
@@ -148,9 +137,8 @@ def contract_detail_aggregate_selector(
 ) -> dict[str, Any]:
     """Busca o contrato com totais anotados, seus itens associados e termos aditivos.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        contract_uuid: Identificador único do contrato.
+    Aplica select_related para entidades principais (wedding, supplier, client)
+    e prefetch_related para coleções filhas (addendums, items) para otimização de queries.
 
     Returns:
         Dicionário agregando o contrato com totais, itens e aditivos.
@@ -184,9 +172,7 @@ def contract_addendum_list_selector(
 ) -> ContractAddendumQuerySet:
     """Lista todos os termos aditivos pertencentes a um contrato.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        contract_uuid: Identificador do contrato principal.
+    Aplica select_related para o contrato principal e ordena por criação decrescente.
 
     Returns:
         ContractAddendumQuerySet com os termos aditivos do contrato.
@@ -206,13 +192,10 @@ def contract_addendum_get_selector(
 ) -> ContractAddendum:
     """Busca um termo aditivo específico validando posse e pertinência ao contrato.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        contract_uuid: Identificador do contrato principal.
-        addendum_uuid: Identificador único do aditivo.
+    Carrega a relação do contrato principal via select_related.
 
     Returns:
-        Instância do aditivo correspondente.
+        A instância do aditivo correspondente.
 
     Raises:
         ObjectNotFoundError: Se o aditivo não existir ou pertencer a outro tenant/contrato.

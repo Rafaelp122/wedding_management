@@ -59,22 +59,13 @@ class NotificationService:
         wedding_id: UUID | str | None = None,
         wedding_name: str | None = None,
     ) -> Notification:
-        """Cria e persiste uma nova notificação no banco de dados.
+        """Cria e persiste uma nova notificação in-app no banco de dados.
 
-        Args:
-            company: Instância da empresa ou identificador (ID/UUID).
-            user: Instância do usuário ou identificador (ID/UUID).
-            title: Título resumido da notificação.
-            message: Conteúdo textual detalhado da notificação.
-            notification_type: Tipo da notificação (NotificationType).
-            link: URL ou rota de atalho opcional.
-            target_type: Tipo da entidade ERP de destino.
-            target_id: UUID do recurso de destino.
-            wedding_id: UUID do casamento associado.
-            wedding_name: Nome formatado do casamento associado.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Persiste a notificação no banco de dados.
 
-        Returns:
-            Notification: A notificação criada.
+        Raises:
+            BusinessRuleViolation: Se o usuário não pertencer à empresa informada.
         """
         if not isinstance(company, Company):
             company = (
@@ -90,7 +81,11 @@ class NotificationService:
             )
 
         if user.company_id != company.id:
-            raise BusinessRuleViolation("Usuário não pertence à empresa informada.")
+            raise BusinessRuleViolation(
+                "Usuário não pertence à empresa informada; "
+                f"recebido user.company_id='{user.company_id}', "
+                f"esperado company.id='{company.id}'."
+            )
 
         if wedding_id and wedding_name is None:
             from apps.weddings.interfaces import get_wedding_display_name
@@ -133,17 +128,8 @@ class NotificationService:
     ) -> None:
         """Enfileira a criação assíncrona de uma notificação in-app via django.tasks.
 
-        Args:
-            company: Instância da empresa ou identificador.
-            user: Instância do usuário ou identificador.
-            title: Título da notificação.
-            message: Conteúdo detalhado.
-            notification_type: Tipo da notificação.
-            link: Link opcional.
-            target_type: Tipo da entidade ERP de destino.
-            target_id: UUID do recurso de destino.
-            wedding_id: UUID do casamento associado.
-            wedding_name: Nome do casamento associado.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Enfileira a tarefa assíncrona dispatch_async_notification_task pós-chamada.
         """
         company_id: int | str = (
             company.id
@@ -178,17 +164,11 @@ class NotificationService:
     ) -> AnnotatedNotification:
         """Marca notificação como lida se ela pertencer ao usuário e empresa.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário autenticado solicitante.
-            notification_id: UUID público da notificação.
-
-        Returns:
-            Notification: Notificação atualizada.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Atualiza os campos is_read, read_at e updated_at no banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro
-                usuário/tenant.
+            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro usuário/tenant.
         """
         notification = (
             Notification.objects.for_tenant(company)
@@ -198,7 +178,9 @@ class NotificationService:
             .first()
         )
         if not notification:
-            raise ObjectNotFoundError(detail="Notificação não encontrada.")
+            raise ObjectNotFoundError(
+                detail=f"Notificação com ID '{notification_id}' não encontrada."
+            )
 
         if not notification.is_read:
             notification.mark_as_read()
@@ -214,14 +196,10 @@ class NotificationService:
     @staticmethod
     @transaction.atomic
     def mark_all_as_read(company: Company, user: User) -> int:
-        """Marca todas as notificações pendentes do usuário como lidas.
+        """Marca todas as notificações pendentes do usuário como lidas no tenant.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão atualizadas.
-
-        Returns:
-            int: Quantidade de notificações que mudaram para lidas.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Atualiza em lote os campos is_read, read_at e updated_at das notificações.
         """
         qs = Notification.objects.for_tenant(company).for_user(user)
         count = qs.mark_as_read()
@@ -239,16 +217,13 @@ class NotificationService:
         user: User,
         notification_id: UUID | str,
     ) -> None:
-        """Exclui uma notificação individual do usuário.
+        """Exclui uma notificação individual do usuário no tenant.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário autenticado solicitante.
-            notification_id: UUID público da notificação.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Remove o registro da notificação do banco de dados.
 
         Raises:
-            ObjectNotFoundError: Se a notificação não existir ou pertencer
-                a outro usuário.
+            ObjectNotFoundError: Se a notificação não existir ou pertencer a outro usuário/tenant.
         """
         notification = (
             Notification.objects.for_tenant(company)
@@ -257,7 +232,9 @@ class NotificationService:
             .first()
         )
         if not notification:
-            raise ObjectNotFoundError(detail="Notificação não encontrada.")
+            raise ObjectNotFoundError(
+                detail=f"Notificação com ID '{notification_id}' não encontrada."
+            )
 
         notification.delete()
         logger.info(
@@ -273,15 +250,10 @@ class NotificationService:
         user: User,
         notification_ids: Sequence[UUID | str],
     ) -> int:
-        """Marca uma lista de notificações selecionadas como lidas.
+        """Marca uma lista de notificações selecionadas como lidas no tenant.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão atualizadas.
-            notification_ids: Sequência de UUIDs das notificações.
-
-        Returns:
-            int: Quantidade de notificações atualizadas.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Atualiza em lote is_read, read_at e updated_at dos registros selecionados.
         """
         qs = (
             Notification.objects.for_tenant(company)
@@ -303,15 +275,10 @@ class NotificationService:
         user: User,
         notification_ids: Sequence[UUID | str],
     ) -> int:
-        """Exclui uma lista de notificações selecionadas.
+        """Exclui uma lista de notificações selecionadas no tenant.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão excluídas.
-            notification_ids: Sequência de UUIDs das notificações.
-
-        Returns:
-            int: Quantidade de notificações excluídas.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Remove em lote os registros de notificações selecionadas do banco de dados.
         """
         qs = (
             Notification.objects.for_tenant(company)
@@ -331,12 +298,8 @@ class NotificationService:
     def clear_all(company: Company, user: User) -> int:
         """Exclui todas as notificações do usuário no tenant atual.
 
-        Args:
-            company: O tenant atual para isolamento multitenancy.
-            user: O usuário cujas notificações serão limpas.
-
-        Returns:
-            int: Quantidade total de notificações excluídas.
+        Regra de Negócio: [BR-N01](docs/architecture/business-rules/notifications/in-app-notifications-rules.md)
+        Efeitos Colaterais: Remove todas as notificações do usuário no tenant do banco de dados.
         """
         qs = Notification.objects.for_tenant(company).for_user(user)
         count, _ = qs.delete()

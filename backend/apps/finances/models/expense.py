@@ -20,8 +20,9 @@ from apps.tenants.models import TenantModel
 
 class Expense(TenantModel, WeddingOwnedMixin):
     """
-    Compromisso financeiro real (RF03/RF04).
-    Liga o financeiro à logística (Contract).
+    Compromisso financeiro real vinculado a uma categoria e contrato (RF03 e RF04).
+
+    Encapsula o valor efetivo, regras de tolerância zero e divisão de parcelas.
     """
 
     objects = ExpenseManager()  # type: ignore[misc]
@@ -57,17 +58,7 @@ class Expense(TenantModel, WeddingOwnedMixin):
         return self.name or f"Despesa #{self.pk}"
 
     def clean(self) -> None:
-        """
-        Valida a regra de Tolerância Zero (BR-F01 / ADR-010).
-
-        A verificação só roda para instâncias já persistidas (self.pk existe)
-        porque durante a criação as parcelas ainda não existem — elas são
-        geradas posteriormente por InstallmentService.auto_generate_installments()
-        no service layer (ExpenseService.create).
-
-        O guard self.pk previne um falso positivo no primeiro save, onde
-        a soma das parcelas seria 0 e actual_amount > 0.
-        """
+        """Valida tolerância zero (BR-F01), paridade contratual (BR-F02) e fronteira cross-wedding (BR-F03)."""
         super().clean()
 
         if self.pk and self.actual_amount:
@@ -99,7 +90,8 @@ class Expense(TenantModel, WeddingOwnedMixin):
             and self.contract.wedding_id != self.wedding_id
         ):
             raise ValidationError(
-                "O contrato vinculado deve pertencer ao mesmo casamento da despesa."
+                f"O contrato vinculado ({self.contract.wedding_id}) deve pertencer ao "
+                f"mesmo casamento da despesa ({self.wedding_id})."
             )
 
     # ── Operações de Domínio e Divisão Financeira ───────────────────────
@@ -108,28 +100,28 @@ class Expense(TenantModel, WeddingOwnedMixin):
         self, num_installments: int, first_due_date: dt.date
     ) -> list[tuple[int, Decimal, dt.date]]:
         """
-        Calcula a divisão centesimal das parcelas com ajuste na última parcela.
+        Calcula a divisão centesimal das parcelas com ajuste residual na última (BR-F01).
 
         Args:
-            num_installments: Quantidade de parcelas (> 0).
-            first_due_date: Data de vencimento da primeira parcela.
+            num_installments: Quantidade total de parcelas (deve ser > 0).
+            first_due_date: Data base de vencimento da primeira parcela.
 
         Returns:
-            list[tuple[int, Decimal, dt.date]]: Lista com (número, valor, vencimento).
+            Lista de tuplas contendo número da parcela, valor monetário e data de vencimento.
 
         Raises:
-            BusinessRuleViolation: Se as parcelas forem <= 0 ou o valor for inválido.
+            BusinessRuleViolation: Se o número de parcelas for <= 0 ou o valor da despesa for inválido.
         """
         from datetime import timedelta
 
         if num_installments <= 0:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser maior que zero.",
+                detail=f"O número de parcelas deve ser maior que zero; recebido: {num_installments}, esperado: > 0.",
                 code="invalid_installment_number",
             )
         if not self.actual_amount or self.actual_amount <= Decimal("0.00"):
             raise BusinessRuleViolation(
-                detail="A despesa precisa ter valor maior que zero para parcelamento.",
+                detail=f"A despesa precisa ter valor maior que zero para parcelamento; recebido: R$ {self.actual_amount}, esperado: > R$ 0,00.",
                 code="invalid_expense_amount",
             )
 

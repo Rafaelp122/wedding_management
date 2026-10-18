@@ -24,12 +24,11 @@ def get_supplier_for_company(
 ) -> Supplier:
     """Recupera um fornecedor validando o isolamento multitenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-        supplier_uuid_or_id: UUID, identificador numérico ou instância de Supplier.
+    Decisão Arquitetural:
+        ADR-031 (docs/architecture/adr/031-inter-module-communication.md)
 
-    Returns:
-        Instância de Supplier pertencente à organização tenant.
+    Raises:
+        ObjectNotFoundError: Se o fornecedor não for encontrado ou não pertencer ao tenant.
     """
     return resolve_tenant_resource(
         Supplier,
@@ -46,11 +45,8 @@ def list_active_suppliers_for_company(
 ) -> list[Supplier]:
     """Lista todos os fornecedores ativos da organização tenant.
 
-    Args:
-        company: O tenant atual para isolamento de dados.
-
-    Returns:
-        Lista de instâncias ativas de Supplier.
+    Decisão Arquitetural:
+        ADR-031 (docs/architecture/adr/031-inter-module-communication.md)
     """
     return list(Supplier.objects.for_tenant(company).active().order_by("name"))
 

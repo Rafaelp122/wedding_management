@@ -76,8 +76,8 @@ class TestNotificationClean:
 
         assert "user" in exc_info.value.message_dict
         assert (
-            exc_info.value.message_dict["user"][0]
-            == "O usuário destinatário deve pertencer à empresa informada."
+            "O usuário destinatário deve pertencer à empresa informada"
+            in exc_info.value.message_dict["user"][0]
         )
 
     def test_clean_synchronizes_read_at_when_is_read_is_true(self, user: Any) -> None:

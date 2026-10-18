@@ -24,8 +24,7 @@ from apps.tenants.models import TenantModel
 
 
 class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
-    """
-    Entidade unificada de Contratos (ADR-030 / ADR-031).
+    """Entidade unificada de Contratos (ADR-030 / ADR-031).
 
     Representa tanto instrumentos jurídicos de honorários da assessoria (PLANNER)
     quanto contratos com prestadores logísticos externos (SUPPLIER).
@@ -202,6 +201,18 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         contract_name = self.name or "Contrato"
         return f"{contract_name} - {supplier_name} ({self.wedding}) - R$ {self.total_amount}"
 
+    @staticmethod
+    def _merge_validation_error(
+        errors: dict[str, list[str]], exc: ValidationError
+    ) -> None:
+        if hasattr(exc, "message_dict"):
+            for k, v in exc.message_dict.items():
+                errors.setdefault(k, []).extend(v if isinstance(v, list) else [v])
+        elif hasattr(exc, "messages"):
+            errors.setdefault("__all__", []).extend(exc.messages)
+        else:
+            errors.setdefault("__all__", []).append(str(exc))
+
     def clean(self) -> None:
         """Valida invariantes de integridade e regras de negócio do contrato."""
         super().clean()
@@ -217,71 +228,83 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
             try:
                 cleaner()
             except ValidationError as exc:
-                if hasattr(exc, "message_dict"):
-                    for k, v in exc.message_dict.items():
-                        errors.setdefault(k, []).extend(
-                            v if isinstance(v, list) else [v]
-                        )
-                elif hasattr(exc, "messages"):
-                    errors.setdefault("__all__", []).extend(exc.messages)
-                else:
-                    errors.setdefault("__all__", []).append(str(exc))
+                self._merge_validation_error(errors, exc)
 
         if errors:
             raise ValidationError(errors)
 
     def _clean_status_transition(self) -> None:
-        if self.pk:
-            orig_qs = Contract.objects.filter(pk=self.pk)
-            if getattr(self, "company_id", None):
-                orig_qs = orig_qs.filter(company_id=self.company_id)
-            orig = orig_qs.values("status").first()
-            if orig and orig["status"] != self.status:
-                allowed_dict = (
-                    self.PLANNER_ALLOWED_TRANSITIONS
-                    if self.contract_type == self.ContractTypeChoices.PLANNER
-                    else self.ALLOWED_TRANSITIONS
-                )
-                allowed = allowed_dict.get(orig["status"], [])
-                if self.status not in allowed:
-                    raise ValidationError(
-                        f"Não é permitido transitar de '{orig['status']}' para '{self.status}'."
-                    )
+        if not self.pk:
+            return
+
+        orig_qs = Contract.objects.filter(pk=self.pk)
+        if getattr(self, "company_id", None):
+            orig_qs = orig_qs.filter(company_id=self.company_id)
+        orig = orig_qs.values("status").first()
+        if not orig or orig["status"] == self.status:
+            return
+
+        allowed_dict = (
+            self.PLANNER_ALLOWED_TRANSITIONS
+            if self.contract_type == self.ContractTypeChoices.PLANNER
+            else self.ALLOWED_TRANSITIONS
+        )
+        allowed = allowed_dict.get(orig["status"], [])
+        if self.status not in allowed:
+            raise ValidationError(
+                f"Transição inválida: Não é permitido transitar de '{orig['status']}' para '{self.status}'; "
+                f"opções válidas: {sorted(allowed)}."
+            )
 
     def _clean_type_invariants(self) -> None:
         if self.contract_type == self.ContractTypeChoices.SUPPLIER:
             if not self.supplier_id:
                 raise ValidationError(
                     {
-                        "supplier": "Contratos de fornecedores exigem um fornecedor vinculado."
+                        "supplier": (
+                            f"Contratos de fornecedores ({self.contract_type}) exigem um fornecedor vinculado; "
+                            f"recebido supplier_id: {self.supplier_id}."
+                        )
                     }
                 )
         elif self.contract_type == self.ContractTypeChoices.PLANNER:
             if self.supplier_id:
                 raise ValidationError(
                     {
-                        "supplier": "Contratos de assessoria não devem ter fornecedor vinculado."
+                        "supplier": (
+                            f"Contratos de assessoria ({self.contract_type}) não devem ter fornecedor vinculado; "
+                            f"recebido supplier_id: {self.supplier_id}."
+                        )
                     }
                 )
             if not self.service_tier:
+                valid_tiers = sorted(self.ServiceTierChoices.values)
                 raise ValidationError(
                     {
-                        "service_tier": "Contratos de assessoria exigem o nível de serviço (service_tier)."
+                        "service_tier": (
+                            f"Contratos de assessoria ({self.contract_type}) exigem o nível de serviço (service_tier); "
+                            f"recebido: '{self.service_tier}', opções válidas: {valid_tiers}."
+                        )
                     }
                 )
 
     def _clean_value_invariants(self) -> None:
         if self.total_amount is not None and self.total_amount < Decimal("0.00"):
             msg = (
-                "O valor dos honorários não pode ser negativo."
+                f"O valor dos honorários não pode ser negativo; recebido: R$ {self.total_amount}, esperado: >= R$ 0,00."
                 if self.contract_type == self.ContractTypeChoices.PLANNER
-                else "O valor total do contrato não pode ser negativo."
+                else f"O valor total do contrato não pode ser negativo; recebido: R$ {self.total_amount}, esperado: >= R$ 0,00."
             )
             raise ValidationError({"total_amount": msg, "effective_amount": msg})
 
         if self.installments_count is not None and self.installments_count < 1:
             raise ValidationError(
-                {"installments_count": "O número de parcelas deve ser de no mínimo 1."}
+                {
+                    "installments_count": (
+                        f"O número de parcelas deve ser de no mínimo 1; "
+                        f"recebido: {self.installments_count}, esperado: >= 1."
+                    )
+                }
             )
 
     def _clean_signed_requirements(self) -> None:
@@ -302,7 +325,8 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
                 )
             if not self.total_amount or self.total_amount <= 0:
                 errors["total_amount"] = (
-                    "Um contrato marcado como ASSINADO deve ter um valor total positivo."
+                    f"Um contrato marcado como {self.status} deve ter um valor total positivo; "
+                    f"recebido: R$ {self.total_amount}, esperado: > R$ 0,00."
                 )
             if errors:
                 raise ValidationError(errors)
@@ -311,17 +335,32 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         if self.supplier_id and hasattr(self, "company_id") and self.company_id:
             if self.supplier and self.supplier.company_id != self.company_id:
                 raise ValidationError(
-                    {"supplier": "Fornecedor pertence a outra organização."}
+                    {
+                        "supplier": (
+                            f"Fornecedor pertence a outra organização; "
+                            f"tenant do fornecedor: {self.supplier.company_id}, tenant do contrato: {self.company_id}."
+                        )
+                    }
                 )
         if self.client_id and hasattr(self, "company_id") and self.company_id:
             if self.client and self.client.company_id != self.company_id:
                 raise ValidationError(
-                    {"client": "Cliente pertence a outra organização."}
+                    {
+                        "client": (
+                            f"Cliente pertence a outra organização; "
+                            f"tenant do cliente: {self.client.company_id}, tenant do contrato: {self.company_id}."
+                        )
+                    }
                 )
         if self.wedding_id and hasattr(self, "company_id") and self.company_id:
             if self.wedding and self.wedding.company_id != self.company_id:
                 raise ValidationError(
-                    {"wedding": "Casamento pertence a outra organização."}
+                    {
+                        "wedding": (
+                            f"Casamento pertence a outra organização; "
+                            f"tenant do casamento: {self.wedding.company_id}, tenant do contrato: {self.company_id}."
+                        )
+                    }
                 )
 
     # ── Métodos de Ciclo de Vida e Operações de Domínio ─────────────────
@@ -338,7 +377,9 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         """
         if self.status == self.StatusChoices.SIGNED:
             raise BusinessRuleViolation(
-                detail="Não é possível remover o arquivo de um contrato já assinado.",
+                detail=(
+                    f"Não é possível remover o arquivo de um contrato já assinado (status: '{self.status}')."
+                ),
                 code="signed_contract_file_required",
             )
         if self.pdf_file:
@@ -346,11 +387,11 @@ class Contract(TenantModel, WeddingOwnedMixin, SignableDocumentMixin):
         self.pdf_file = None
 
     def send_to_pending(self) -> None:
-        """Transita o contrato para aguardando assinaturas externas."""
+        """Transita o contrato de DRAFT para PENDING aguardando assinaturas externas."""
         self.transition_to(self.StatusChoices.PENDING)
 
     def revert_to_draft(self) -> None:
-        """Reverte o contrato para rascunho de trabalho."""
+        """Reverte o contrato para DRAFT a partir dos estados PENDING ou CANCELED."""
         self.transition_to(self.StatusChoices.DRAFT)
 
     # ── Propriedades de Domínio e Compatibilidade ───────────────────────
