@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -14,7 +14,11 @@ if TYPE_CHECKING:
     from apps.tenants.models import Company
 
 
-def _get_not_found_detail(model_cls: type[models.Model], detail: str | None) -> str:
+def _get_not_found_detail(
+    model_cls: type[models.Model],
+    detail: str | None,
+    identifier: Any = None,
+) -> str:
     if detail:
         return detail
 
@@ -26,6 +30,9 @@ def _get_not_found_detail(model_cls: type[models.Model], detail: str | None) -> 
         if name_str.endswith("a") or name_str.endswith("ão")
         else "encontrado"
     )
+
+    if identifier is not None:
+        return f"{model_name} com identificador '{identifier}' não {suffix} ou acesso negado."
 
     return f"{model_name} não {suffix} ou acesso negado."
 
@@ -81,7 +88,7 @@ def get_object_or_404_for_tenant[ModelT: models.Model](
         return queryset.get(uuid=uuid)
     except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(
-            detail=_get_not_found_detail(model_cls, detail),
+            detail=_get_not_found_detail(model_cls, detail, identifier=uuid),
             code=code,
         ) from e
 
@@ -121,14 +128,16 @@ def resolve_tenant_resource[ModelT: models.Model](
         validate_tenant_ownership(
             company,
             resource_input,
-            detail=_get_not_found_detail(model_cls, detail),
+            detail=_get_not_found_detail(
+                model_cls, detail, identifier=getattr(resource_input, "uuid", None)
+            ),
             code=code,
         )
         return resource_input
 
     if not isinstance(resource_input, UUID | str):
         raise ObjectNotFoundError(
-            detail=_get_not_found_detail(model_cls, detail),
+            detail=_get_not_found_detail(model_cls, detail, identifier=resource_input),
             code=code,
         )
 
@@ -154,6 +163,6 @@ def resolve_tenant_resource[ModelT: models.Model](
         return queryset.get(**{lookup_field: resource_input})
     except (ObjectDoesNotExist, ValueError, ValidationError) as e:
         raise ObjectNotFoundError(
-            detail=_get_not_found_detail(model_cls, detail),
+            detail=_get_not_found_detail(model_cls, detail, identifier=resource_input),
             code=code,
         ) from e

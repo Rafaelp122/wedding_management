@@ -38,4 +38,6 @@ class MockOIDCVerifier:
                 "email": "scheduler-dev@local.iam.gserviceaccount.com",
             }
         logger.warning("MockOIDCVerifier rejeitou o token OIDC inválido.")
-        raise ValueError("Token OIDC inválido.")
+        raise ValueError(
+            f"Token OIDC inválido: recebido '{token}', esperado '{dev_token}'."
+        )

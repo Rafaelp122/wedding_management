@@ -17,8 +17,11 @@ from apps.weddings.managers import WeddingQuerySet
 
 def validate_future_date(value: date) -> None:
     """Validador auxiliar mantido para compatibilidade com migration 0001."""
-    if value < timezone.now().date():
-        raise ValidationError("A data do casamento não pode ser no passado.")
+    today = timezone.now().date()
+    if value < today:
+        raise ValidationError(
+            f"A data do casamento não pode ser no passado. Data informada: '{value}', referência: '{today}'."
+        )
 
 
 class Wedding(TenantModel):
@@ -140,7 +143,12 @@ class Wedding(TenantModel):
         ):
             if self._state.adding:
                 raise ValidationError(
-                    {"date": "A data do casamento não pode ser no passado."}
+                    {
+                        "date": (
+                            f"A data do casamento não pode ser no passado. "
+                            f"Data informada: '{self.date}', referência: '{today}'."
+                        )
+                    }
                 )
             elif self.pk:
                 orig = (
@@ -150,7 +158,12 @@ class Wedding(TenantModel):
                     orig["date"] != self.date or orig["status"] != self.status
                 ):
                     raise ValidationError(
-                        {"date": "A nova data do casamento não pode ser no passado."}
+                        {
+                            "date": (
+                                f"A nova data do casamento não pode ser no passado. "
+                                f"Data informada: '{self.date}', referência: '{today}'."
+                            )
+                        }
                     )
 
         if (
@@ -159,7 +172,8 @@ class Wedding(TenantModel):
             and self.date > today
         ):
             raise ValidationError(
-                "Não pode marcar como CONCLUÍDO antes da data do casamento"
+                f"Não pode marcar como CONCLUÍDO antes da data do casamento; "
+                f"data do evento: '{self.date}', data atual: '{today}'."
             )
 
         if self.pk:
@@ -168,8 +182,8 @@ class Wedding(TenantModel):
                 allowed = self.ALLOWED_TRANSITIONS.get(orig_status["status"], [])
                 if self.status not in allowed:
                     raise ValidationError(
-                        f"Não é permitido transitar de "
-                        f"'{orig_status['status']}' para '{self.status}'."
+                        f"Não é permitido transitar de '{orig_status['status']}' para '{self.status}'; "
+                        f"transições permitidas: {sorted(allowed)}."
                     )
 
     # ── Métodos de Ciclo de Vida e Operações de Domínio ─────────────────
@@ -187,12 +201,13 @@ class Wedding(TenantModel):
         """
         if self.is_completed:
             raise BusinessRuleViolation(
-                detail="Não é possível reagendar um casamento já concluído.",
+                detail=f"Não é possível reagendar um casamento já concluído. Status atual: '{self.status}'.",
                 code="wedding_already_completed",
             )
-        if new_date < timezone.now().date():
+        today = timezone.now().date()
+        if new_date < today:
             raise BusinessRuleViolation(
-                detail="A nova data do casamento não pode ser no passado.",
+                detail=f"A nova data do casamento não pode ser no passado. Data informada: '{new_date}', referência: '{today}'.",
                 code="wedding_reschedule_in_past",
             )
         self.date = new_date
@@ -259,25 +274,33 @@ class Wedding(TenantModel):
             return
 
         if not self.can_transition_to(target):
-            if (
-                target == self.StatusChoices.COMPLETED
-                and self.date > timezone.now().date()
-            ):
+            today = timezone.now().date()
+            if target == self.StatusChoices.COMPLETED and self.date > today:
                 raise BusinessRuleViolation(
-                    detail="Não pode marcar como CONCLUÍDO antes da data do casamento",
+                    detail=(
+                        f"Não pode marcar como CONCLUÍDO antes da data do casamento; "
+                        f"data do evento: '{self.date}', data atual: '{today}'."
+                    ),
                     code="wedding_premature_completion",
                 )
             if (
                 target in (self.StatusChoices.IN_PROGRESS, self.StatusChoices.PLANNING)
                 and self.date
-                and self.date < timezone.now().date()
+                and self.date < today
             ):
                 raise BusinessRuleViolation(
-                    detail="A data do casamento não pode ser no passado para iniciar o planejamento.",
+                    detail=(
+                        f"A data do casamento '{self.date}' não pode ser no passado para iniciar o planejamento; "
+                        f"data atual de referência: '{today}'."
+                    ),
                     code="wedding_date_in_past",
                 )
+            allowed = self.ALLOWED_TRANSITIONS.get(self.status, [])
             raise BusinessRuleViolation(
-                detail=f"Não é permitido transitar de '{self.status}' para '{target}'.",
+                detail=(
+                    f"Não é permitido transitar de '{self.status}' para '{target}'; "
+                    f"transições permitidas a partir de '{self.status}': {sorted(allowed)}."
+                ),
                 code="wedding_invalid_status_transition",
             )
 
@@ -294,13 +317,24 @@ class Wedding(TenantModel):
             self.StatusChoices.PROPOSAL,
             self.StatusChoices.PLANNING,
         ):
+            allowed_convert = [
+                self.StatusChoices.PROPOSAL.value,
+                self.StatusChoices.PLANNING.value,
+            ]
             raise BusinessRuleViolation(
-                detail=f"Não é permitido transitar de '{self.status}' para '{self.StatusChoices.PLANNING}'.",
+                detail=(
+                    f"Não é permitido transitar de '{self.status}' para '{self.StatusChoices.PLANNING}'; "
+                    f"status permitidos para conversão: {sorted(allowed_convert)}."
+                ),
                 code="wedding_invalid_status_transition",
             )
-        if self.date and self.date < timezone.now().date():
+        today = timezone.now().date()
+        if self.date and self.date < today:
             raise BusinessRuleViolation(
-                detail="A data do casamento não pode ser no passado para iniciar o planejamento.",
+                detail=(
+                    f"A data do casamento '{self.date}' não pode ser no passado para iniciar o planejamento; "
+                    f"data atual de referência: '{today}'."
+                ),
                 code="wedding_date_in_past",
             )
         self.transition_to(self.StatusChoices.PLANNING)
@@ -442,7 +476,12 @@ class WeddingClient(TenantModel, WeddingOwnedMixin):
         if hasattr(self, "company_id") and self.client_id:
             if self.company_id != self.client.company_id:
                 raise ValidationError(
-                    {"client": "Este cliente pertence a outra organização."}
+                    {
+                        "client": (
+                            f"Este cliente pertence a outra organização: organização do cliente "
+                            f"'{self.client.company_id}' diverge da organização do casamento '{self.company_id}'."
+                        )
+                    }
                 )
 
     def mark_as_primary_signatory(self, is_signatory: bool = True) -> None:

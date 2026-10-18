@@ -72,34 +72,58 @@ class Installment(TenantModel, WeddingOwnedMixin):
 
         if self.amount is not None and self.amount < 0:
             raise ValidationError(
-                {"amount": "O valor da parcela não pode ser negativo."}
+                {
+                    "amount": (
+                        f"O valor da parcela não pode ser negativo; recebido: R$ {self.amount}, "
+                        "esperado: >= R$ 0,00."
+                    )
+                }
             )
 
         if self.paid_date and self.status != self.StatusChoices.PAID:
-            raise ValidationError("Parcela com data de pagamento deve ter status PAGO")
+            raise ValidationError(
+                f"Parcela com data de pagamento ({self.paid_date}) deve ter status PAGO; "
+                f"status atual: '{self.status}'."
+            )
 
         if self.status == self.StatusChoices.PAID and not self.paid_date:
             raise ValidationError(
-                "Parcela PAGA precisa ter data de pagamento preenchida"
+                f"Parcela PAGA precisa ter data de pagamento preenchida; "
+                f"recebido: {self.paid_date} para status '{self.status}'."
             )
 
         # BR-F06: Imutabilidade de parcelas pagas
-        if self.pk:
-            orig = (
-                Installment.objects.filter(pk=self.pk)
-                .values("status", "amount", "due_date", "installment_number")
-                .first()
+        if not self.pk:
+            return
+
+        orig = (
+            Installment.objects.filter(pk=self.pk)
+            .values("status", "amount", "due_date", "installment_number")
+            .first()
+        )
+        if not orig or orig["status"] != self.StatusChoices.PAID:
+            return
+
+        changed_fields = []
+        if self.amount != orig["amount"]:
+            changed_fields.append(
+                f"amount (atual: {orig['amount']}, novo: {self.amount})"
             )
-            if orig and orig["status"] == self.StatusChoices.PAID:
-                if (
-                    self.amount != orig["amount"]
-                    or self.due_date != orig["due_date"]
-                    or self.installment_number != orig["installment_number"]
-                ):
-                    raise ValidationError(
-                        "Parcelas pagas não podem ter valor, vencimento ou número "
-                        "alterados. Faça a reversão antes de ajustar."
-                    )
+        if self.due_date != orig["due_date"]:
+            changed_fields.append(
+                f"due_date (atual: {orig['due_date']}, novo: {self.due_date})"
+            )
+        if self.installment_number != orig["installment_number"]:
+            changed_fields.append(
+                f"installment_number (atual: {orig['installment_number']}, novo: {self.installment_number})"
+            )
+
+        if changed_fields:
+            raise ValidationError(
+                "Parcelas pagas não podem ter valor, vencimento ou número "
+                f"alterados. Campos modificados: [{', '.join(changed_fields)}]. "
+                "Faça a reversão antes de ajustar."
+            )
 
     # ── Métodos de Domínio e Ciclo de Vida da Entidade ──────────────────
 
@@ -128,8 +152,8 @@ class Installment(TenantModel, WeddingOwnedMixin):
         if prev and new_due_date < prev.due_date:
             raise BusinessRuleViolation(
                 detail=(
-                    "A data de vencimento não pode ser anterior à "
-                    f"parcela #{prev.installment_number} ({prev.due_date})."
+                    f"A data de vencimento ({new_due_date}) não pode ser anterior à "
+                    f"parcela #{prev.installment_number} ({prev.due_date}); esperado: >= {prev.due_date}."
                 ),
                 code="due_date_before_previous_installment",
             )
@@ -146,8 +170,8 @@ class Installment(TenantModel, WeddingOwnedMixin):
         if nxt and new_due_date > nxt.due_date:
             raise BusinessRuleViolation(
                 detail=(
-                    "A data de vencimento não pode ser posterior à "
-                    f"parcela #{nxt.installment_number} ({nxt.due_date})."
+                    f"A data de vencimento ({new_due_date}) não pode ser posterior à "
+                    f"parcela #{nxt.installment_number} ({nxt.due_date}); esperado: <= {nxt.due_date}."
                 ),
                 code="due_date_after_next_installment",
             )
@@ -180,8 +204,14 @@ class Installment(TenantModel, WeddingOwnedMixin):
             return
 
         if not self.can_transition_to(target):
+            allowed = sorted(
+                str(s) for s in self.ALLOWED_TRANSITIONS.get(self.status, set())
+            )
             raise BusinessRuleViolation(
-                detail=f"Não é permitido transitar de '{self.status}' para '{target}'.",
+                detail=(
+                    f"Transição inválida: Não é permitido transitar de '{self.status}' para '{target}'; "
+                    f"opções válidas: {allowed}."
+                ),
                 code="installment_invalid_status_transition",
             )
 
@@ -198,8 +228,12 @@ class Installment(TenantModel, WeddingOwnedMixin):
             BusinessRuleViolation: Se a parcela já estiver marcada como paga.
         """
         if self.status == self.StatusChoices.PAID:
+            allowed = [self.StatusChoices.PENDING, self.StatusChoices.OVERDUE]
             raise BusinessRuleViolation(
-                detail="Esta parcela já foi marcada como paga.",
+                detail=(
+                    f"Esta parcela já foi marcada como paga; status atual: '{self.status}', "
+                    f"esperados para pagamento: {allowed}."
+                ),
                 code="installment_already_paid",
             )
         self.paid_date = paid_date or date.today()
@@ -214,7 +248,10 @@ class Installment(TenantModel, WeddingOwnedMixin):
         """
         if self.status != self.StatusChoices.PAID:
             raise BusinessRuleViolation(
-                detail="Apenas parcelas marcadas como pagas podem ser desmarcadas.",
+                detail=(
+                    "Apenas parcelas marcadas como pagas podem ser desmarcadas; "
+                    f"status atual: '{self.status}', esperado: '{self.StatusChoices.PAID}'."
+                ),
                 code="installment_not_paid",
             )
         self.paid_date = None
@@ -230,10 +267,12 @@ class Installment(TenantModel, WeddingOwnedMixin):
         Raises:
             BusinessRuleViolation: Se a data de vencimento for igual ou posterior à data corrente.
         """
-        if self.due_date >= date.today():
+        today = date.today()
+        if self.due_date >= today:
             raise BusinessRuleViolation(
                 detail=(
-                    "Apenas parcelas vencidas podem ter status alterado para atrasado."
+                    "Apenas parcelas vencidas podem ter status alterado para atrasado; "
+                    f"vencimento recebido: {self.due_date}, data de referência: {today} (esperado: < {today})."
                 ),
                 code="installment_not_overdue",
             )

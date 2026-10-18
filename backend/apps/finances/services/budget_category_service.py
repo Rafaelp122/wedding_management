@@ -38,15 +38,11 @@ class BudgetCategoryService:
     ) -> BudgetCategory:
         """Cria uma nova categoria orçamentária vinculada a um orçamento mestre.
 
-        Obtém lock pessimista no orçamento mestre para evitar condição de corrida
-        (TOCTOU) e delega a validação de conservação do teto ao BudgetCategory.clean()
-        via BaseModel.save().
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
         Efeitos Colaterais:
             - Persiste atomicamente a nova categoria orçamentária sob lock pessimista no orçamento mestre.
-
-        Returns:
-            A instância de categoria orçamentária persistida.
 
         Raises:
             ObjectNotFoundError: Se o orçamento mestre não for encontrado ou não pertencer ao tenant.
@@ -97,14 +93,11 @@ class BudgetCategoryService:
     ) -> BudgetCategory:
         """Atualiza uma categoria de orçamento existente.
 
-        Garante o isolamento do tenant e re-valida o teto do orçamento mestre
-        sob lock (select_for_update) através do BaseModel.save().
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
         Efeitos Colaterais:
             - Atualiza e persiste os dados da categoria sob lock pessimista no orçamento mestre.
-
-        Returns:
-            A instância da categoria de orçamento atualizada.
 
         Raises:
             BusinessRuleViolation: Se a nova alocação exceder o teto do orçamento mestre (BR-F04).
@@ -149,8 +142,8 @@ class BudgetCategoryService:
     def delete(company: Company, instance: BudgetCategory) -> None:
         """Exclui uma categoria de orçamento existente.
 
-        Verifica se a categoria pertence ao tenant e se não possui despesas
-        ativas vinculadas, prevenindo quebras de integridade.
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
         Efeitos Colaterais:
             - Remove fisicamente a categoria de orçamento do banco de dados.
@@ -169,15 +162,16 @@ class BudgetCategoryService:
             f"por company_id={company.id}"
         )
 
-        if instance.expenses.exists():
+        expense_count = instance.expenses.count()
+        if expense_count > 0:
             logger.warning(
                 f"Falha de integridade ao deletar Categoria uuid={instance.uuid}: "
-                "Possui despesas ativas."
+                f"Possui {expense_count} despesas ativas."
             )
             raise DomainIntegrityError(
                 detail=(
-                    "Não é possível apagar esta categoria pois já existem "
-                    "despesas vinculadas a ela. Remova as despesas primeiro."
+                    f"Não é possível apagar a categoria '{instance.name}' pois já existem "
+                    f"{expense_count} despesas vinculadas a ela. Remova as despesas primeiro."
                 ),
                 code="category_protected_error",
             )
@@ -190,10 +184,10 @@ class BudgetCategoryService:
     @staticmethod
     @transaction.atomic
     def setup_defaults(company: Company, wedding: Wedding, budget: Budget) -> None:
-        """Cria as categorias iniciais canônicas para um novo casamento (BR-F04-C).
+        """Cria as categorias iniciais canônicas para um novo casamento.
 
-        Método idempotente. Espera-se que o budget esteja protegido por
-        select_for_update() no chamador para evitar condições de corrida.
+        Regra de Negócio:
+            BR-F04 (docs/architecture/business-rules/finances/budget-category-distribution.md)
 
         Efeitos Colaterais:
             - Persiste em lote (bulk_create) as categorias padrão que ainda não existirem para o orçamento.

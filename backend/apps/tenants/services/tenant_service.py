@@ -23,21 +23,10 @@ class TenantService:
     @staticmethod
     @transaction.atomic
     def create_company(display_name: str, company_name: str = "") -> Company:
-        """
-        Cria e inicializa uma nova empresa (tenant) no banco de dados.
+        """Cria e inicializa uma nova empresa (tenant) no banco de dados.
 
-        Gera um slug único a partir do nome de exibição e persiste a empresa
-        em uma transação atômica.
-
-        Efeitos Colaterais:
-            - Persiste uma nova instância de Company no banco de dados.
-
-        Args:
-            display_name: Nome de exibição base para compor o título e slug do workspace.
-            company_name: Nome customizado opcional da empresa a ser criada.
-
-        Returns:
-            Instância de Company criada e persistida.
+        Regra de Negócio: [BR-T01](docs/architecture/domains/tenants-domain.md)
+        Efeitos Colaterais: Persiste uma nova instância de Company no banco de dados.
         """
         name = company_name.strip() if company_name else f"Workspace de {display_name}"
 
@@ -52,14 +41,10 @@ class TenantService:
     @staticmethod
     @transaction.atomic
     def get_or_create_admin_workspace() -> Company:
-        """
-        Recupera ou provisiona o workspace administrativo global do sistema.
+        """Recupera ou provisiona o workspace administrativo global do sistema.
 
-        Efeitos Colaterais:
-            - Persiste a Company com slug 'admin-workspace' caso ainda não exista.
-
-        Returns:
-            Instância de Company correspondente ao workspace administrativo.
+        Decisão Arquitetural: [ADR-019](docs/architecture/adr/019-tenant-validation-service-layer.md)
+        Efeitos Colaterais: Persiste a Company com slug 'admin-workspace' caso ainda não exista.
         """
         company, created = Company.objects.get_or_create(
             slug="admin-workspace", defaults={"name": "Workspace Administrativo"}

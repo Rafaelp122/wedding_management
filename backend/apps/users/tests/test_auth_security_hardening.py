@@ -49,8 +49,8 @@ class TestAuthSecurityHardening:
         assert resp_blocked.status_code == 429
         data = resp_blocked.json()
         assert data.get("code") == "account_locked"
-        expected_detail = "Muitas tentativas com erro. Tente novamente mais tarde."
-        assert data.get("detail") == expected_detail
+        assert "Muitas tentativas com erro" in data.get("detail", "")
+        assert "lockout" in data.get("detail", "").lower()
 
         # Tentativa subsequente mesmo com a senha correta -> permanece 429
         resp_correct = auth_client.post(

@@ -31,14 +31,20 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if len(digits) != 14:
         raise ValidationError(
-            "CNPJ deve conter exatamente 14 dígitos numéricos.",
+            (
+                f"CNPJ deve conter exatamente 14 dígitos numéricos. "
+                f"CNPJ informado: '{value}', dígitos encontrados: {len(digits)}."
+            ),
             code="invalid_cnpj_length",
         )
 
     # Rejeita sequências homogêneas (ex: 00000000000000, 11111111111111, etc.)
     if digits == digits[0] * 14:
         raise ValidationError(
-            "CNPJ não pode ser composto por dígitos repetidos.",
+            (
+                f"CNPJ não pode ser composto por dígitos repetidos. "
+                f"Sequência informada: '{value}'."
+            ),
             code="invalid_cnpj_homogeneous",
         )
 
@@ -53,7 +59,10 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if int(digits[12]) != expected_dv1:
         raise ValidationError(
-            "CNPJ inválido (primeiro dígito verificador não confere).",
+            (
+                "CNPJ inválido (primeiro dígito verificador não confere). "
+                f"Dígito recebido: '{digits[12]}', esperado: '{expected_dv1}', cnpj='{value}'."
+            ),
             code="invalid_cnpj_dv1",
         )
 
@@ -68,6 +77,9 @@ def validate_cnpj_modulo11(value: str) -> None:
 
     if int(digits[13]) != expected_dv2:
         raise ValidationError(
-            "CNPJ inválido (segundo dígito verificador não confere).",
+            (
+                "CNPJ inválido (segundo dígito verificador não confere). "
+                f"Dígito recebido: '{digits[13]}', esperado: '{expected_dv2}', cnpj='{value}'."
+            ),
             code="invalid_cnpj_dv2",
         )

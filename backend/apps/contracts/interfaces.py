@@ -31,10 +31,9 @@ def get_contract_for_company(
     contract_uuid_or_id: UUID | str | Contract,
     select_related: list[str] | None = None,
 ) -> Contract:
-    """Recupera uma instância de Contract validando a posse pelo tenant (ADR-031).
+    """Recupera contrato validando a posse pelo tenant.
 
-    Returns:
-        Instância de Contract pertencente à empresa tenant.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
     """
     return resolve_tenant_resource(
         Contract,
@@ -52,13 +51,9 @@ def list_contracts_for_wedding(
     wedding_uuid: UUID | str,
     contract_type: str | None = None,
 ) -> list[Contract]:
-    """Lista todos os contratos vinculados a um casamento para o tenant informado.
+    """Lista contratos vinculados a um casamento para o tenant informado.
 
-    Args:
-        contract_type: Filtro opcional por tipo de contrato (ex: PLANNER, SUPPLIER).
-
-    Returns:
-        Lista de contratos ordenados por nome.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
     """
     qs = Contract.objects.for_tenant(company).filter(wedding__uuid=wedding_uuid)
     if contract_type:
@@ -73,8 +68,7 @@ def get_planner_contract_for_wedding(
 ) -> Contract | None:
     """Retorna o contrato de honorários da assessoria (PLANNER) do casamento.
 
-    Returns:
-        Instância de Contract do tipo PLANNER ou None se ainda não cadastrado.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
     """
     return (
         Contract.objects.for_tenant(company)
@@ -95,12 +89,8 @@ def save_planner_contract_for_wedding(
 ) -> tuple[Contract, bool]:
     """Cria ou atualiza o contrato de honorários da assessoria para o casamento.
 
-    Efeitos Colaterais:
-        - Persiste o contrato de assessoria cerimonial no banco de dados.
-
-    Returns:
-        Tupla contendo a instância de Contract e um booleano indicando criação (True) ou atualização (False).
-
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Persiste o contrato de assessoria cerimonial no banco de dados.
     Raises:
         BusinessRuleViolation: Se houver violação de validação nos dados contratuais.
     """
@@ -177,22 +167,16 @@ def sign_planner_contract_for_wedding(
 ) -> Contract:
     """Assina formalmente o contrato de assessoria cerimonial do casamento.
 
-    Regra de Negócio:
-        BR-L01 (docs/architecture/business-rules/logistics/contract-state-machine.md)
-
-    Efeitos Colaterais:
-        - Transita o status do contrato para SIGNED e persiste a data de assinatura.
-
-    Returns:
-        Instância de Contract assinada e salva.
-
+    Regra de Negócio: [BR-L01](docs/architecture/business-rules/logistics/contract-state-machine.md)
+    Efeitos Colaterais: Transita status para SIGNED e persiste a data de assinatura.
     Raises:
         BusinessRuleViolation: Se o contrato não for encontrado ou violar regras de assinatura.
     """
     contract = get_planner_contract_for_wedding(company=company, wedding=wedding)
     if not contract:
+        wedding_ref = getattr(wedding, "uuid", wedding)
         raise BusinessRuleViolation(
-            detail="O casamento deve possuir um contrato de assessoria para iniciar o planejamento.",
+            detail=f"O casamento deve possuir um contrato de assessoria para iniciar o planejamento (casamento: '{wedding_ref}').",
             code="planner_contract_required",
         )
 
@@ -220,10 +204,10 @@ def enqueue_guest_count_evaluation(
     old_count: int,
     new_count: int,
 ) -> None:
-    """Enfileira a avaliação de impacto da alteração de convidados pós-commit (RFC-001 / ADR-017).
+    """Enfileira a avaliação de impacto da alteração de convidados pós-commit.
 
-    Efeitos Colaterais:
-        - Registra a tarefa assíncrona pós-commit evaluate_guest_count_impact_task.
+    Decisão Arquitetural: [ADR-017](docs/architecture/adr/017-async-task-infrastructure.md)
+    Efeitos Colaterais: Registra a tarefa assíncrona pós-commit evaluate_guest_count_impact_task.
     """
     from django.db import transaction
 

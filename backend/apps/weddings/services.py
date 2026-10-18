@@ -272,7 +272,10 @@ class WeddingService:
         contract = get_planner_contract_for_wedding(company=company, wedding=wedding)
         if not contract:
             raise BusinessRuleViolation(
-                detail="O casamento deve possuir um contrato de assessoria para iniciar o planejamento.",
+                detail=(
+                    f"O casamento deve possuir um contrato de assessoria para iniciar o planejamento; "
+                    f"wedding_id='{wedding_id}', company_id='{company.id}'."
+                ),
                 code="planner_contract_required",
             )
 
@@ -576,8 +579,10 @@ class WeddingService:
                 f"Falha de integridade: Casamento uuid={instance.uuid} protegido por contratos/despesas."
             )
             raise DomainIntegrityError(
-                detail="Não é possível apagar este casamento pois existem contratos ou "
-                "despesas vinculadas a ele.",
+                detail=(
+                    f"Não é possível apagar este casamento '{instance.uuid}' pois existem contratos ou "
+                    f"despesas vinculadas a ele; motivo: {e}."
+                ),
                 code="wedding_protected_error",
             ) from e
 
@@ -671,7 +676,10 @@ def add_wedding_participant(
         company=company, wedding=wedding, client=client, role=role
     ).exists():
         raise BusinessRuleViolation(
-            detail=f"O cliente já está cadastrado como '{role}' neste casamento.",
+            detail=(
+                f"O cliente '{client.name}' (id: '{client.uuid}') já está cadastrado "
+                f"como '{role}' neste casamento '{wedding.uuid}'."
+            ),
             code="wedding_participant_already_exists",
         )
 
@@ -718,7 +726,10 @@ def remove_wedding_participant(
 
     if participant.wedding_id != wedding.id:
         raise BusinessRuleViolation(
-            detail="O participante não pertence ao casamento especificado.",
+            detail=(
+                f"O participante não pertence ao casamento especificado; "
+                f"casamento do participante: '{participant.wedding_id}', esperado: '{wedding.id}'."
+            ),
             code="wedding_participant_mismatch",
         )
 

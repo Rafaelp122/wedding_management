@@ -113,24 +113,24 @@ class ItemService:
 
         wedding_input = data.pop("wedding", None)
 
-        # 2. Tratamento de contrato
+        # 2. Tratamento de contrato e casamento
         contract_input = data.pop("contract", None)
         contract = ItemService._resolve_contract(company, contract_input)
 
-        wedding: Wedding | None = None
-        if contract:
-            wedding = contract.wedding
-            if wedding_input:
-                resolved_wedding = ItemService._resolve_wedding(company, wedding_input)
-                if resolved_wedding:
-                    wedding = resolved_wedding
-        else:
-            wedding = ItemService._resolve_wedding(company, wedding_input)
+        resolved_wedding = (
+            ItemService._resolve_wedding(company, wedding_input)
+            if wedding_input
+            else None
+        )
+        wedding = resolved_wedding or (contract.wedding if contract else None)
 
         # 3. Instanciação
         if wedding is None:
             raise BusinessRuleViolation(
-                detail="É necessário informar um casamento ou um contrato vinculado.",
+                detail=(
+                    f"É necessário informar um casamento ou um contrato vinculado; "
+                    f"wedding_input='{wedding_input}', contract_input='{contract_input}'."
+                ),
                 code="item_missing_wedding",
             )
 
@@ -139,9 +139,16 @@ class ItemService:
             item.save()
         except ValidationError as exc:
             if "contract" in getattr(exc, "message_dict", {}):
+                wedding_id = getattr(wedding, "uuid", getattr(wedding, "id", wedding))
+                contract_wedding_id = getattr(
+                    getattr(contract, "wedding", None),
+                    "uuid",
+                    getattr(contract, "wedding_id", None),
+                )
                 raise DomainIntegrityError(
                     detail=(
-                        "O wedding informado não corresponde ao wedding do contrato."
+                        f"O wedding informado não corresponde ao wedding do contrato; "
+                        f"wedding='{wedding_id}', contract_wedding='{contract_wedding_id}'."
                     ),
                     code="item_contract_wedding_mismatch",
                 ) from exc

@@ -93,23 +93,14 @@ class ExpenseService:
     def create(company: Company, payload: ExpenseIn) -> Expense:
         """Cria uma nova despesa e gera suas parcelas correspondentes.
 
-        Valida se o valor total da despesa é idêntico ao total do contrato
-        associado (Regra BR-F02) e auto-gera pelo menos 1 parcela de pagamento.
-
-        Regras de Negócio:
+        Regra de Negócio:
             BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
-            BR-F02 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
-            BR-F03 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Persiste atomicamente a despesa e gera suas parcelas via InstallmentService.
 
-        Returns:
-            A instância de despesa criada.
-
         Raises:
-            BusinessRuleViolation: Se infringir a regra BR-F02, se o número de parcelas
-                for inválido (< 1) ou se violar validações do modelo.
+            BusinessRuleViolation: Se infringir a regra BR-F02, se o número de parcelas for inválido (< 1) ou se violar validações do modelo.
             DomainIntegrityError: Se o contrato pertencer a outro casamento (BR-F03).
             ObjectNotFoundError: Se a categoria de orçamento não for encontrada.
         """
@@ -146,7 +137,7 @@ class ExpenseService:
 
         if num_installments < 1:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser pelo menos 1.",
+                detail=f"O número de parcelas deve ser pelo menos 1; recebido: {num_installments}, esperado: >= 1.",
                 code="invalid_installment_number",
             )
 
@@ -256,20 +247,16 @@ class ExpenseService:
     def update(company: Company, instance: Expense, payload: ExpensePatchIn) -> Expense:
         """Atualiza os dados de uma despesa existente.
 
-        Trata a redistribuição de parcelas caso o valor total seja alterado,
-        validando a regra BR-F02 quando aplicável.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Atualiza a despesa e redistribui proporcionalmente as parcelas em caso de alteração no valor total (BR-F01).
 
-        Returns:
-            A instância de despesa atualizada.
-
         Raises:
-            BusinessRuleViolation: Se a alteração de valor for bloqueada por parcelas
-                já pagas (BR-F04), violar a paridade contratual (BR-F02) ou quebrar consistência do modelo.
-            DomainIntegrityError: Se o novo contrato pertencer a outro casamento (BR-F03).
-            ObjectNotFoundError: Se o novo contrato especificado não for encontrado.
+            BusinessRuleViolation: Se a alteração de valor for bloqueada por parcelas já pagas, violar paridade ou modelo.
+            DomainIntegrityError: Se o novo contrato pertencer a outro casamento.
+            ObjectNotFoundError: Se a despesa ou novo contrato não forem encontrados.
         """
         validate_tenant_ownership(
             company,
@@ -302,17 +289,16 @@ class ExpenseService:
             setattr(instance, field, value)
             updated_fields.add(field)
 
+        if amount_changed and instance.has_paid_installments:
+            raise BusinessRuleViolation(
+                detail=(
+                    f"Não é possível alterar o valor total da despesa '{instance.name}' (uuid: '{instance.uuid}') "
+                    "pois existem parcelas marcadas como pagas. Crie uma nova despesa."
+                ),
+                code="amount_change_blocked_by_paid",
+            )
+
         if amount_changed:
-            # Auto-redistribute: ajusta o valor das parcelas existentes
-            # para o novo valor total (BR-F01)
-            if instance.has_paid_installments:
-                raise BusinessRuleViolation(
-                    detail=(
-                        "Não é possível alterar o valor total pois existem "
-                        "parcelas marcadas como pagas. Crie uma nova despesa."
-                    ),
-                    code="amount_change_blocked_by_paid",
-                )
             InstallmentService.redistribute(
                 company=company,
                 expense=instance,
@@ -343,11 +329,14 @@ class ExpenseService:
     def delete(company: Company, instance: Expense) -> None:
         """Exclui uma despesa existente.
 
-        Previamente valida a propriedade pelo tenant. Exclui a despesa e remove
-        todas as parcelas vinculadas em cascata.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Remove a despesa e suas parcelas associadas em cascata.
+
+        Raises:
+            ObjectNotFoundError: Se a despesa não for encontrada para o tenant.
         """
         validate_tenant_ownership(
             company,
@@ -375,28 +364,21 @@ class ExpenseService:
     ) -> Expense:
         """Renegocia e redistribui as parcelas de uma despesa.
 
-        Remove as parcelas anteriores e gera um novo cronograma com a quantidade
-        de parcelas informada e data de primeiro vencimento.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Exclui as parcelas pendentes anteriores e gera um novo cronograma balanceado (BR-F01).
 
-        Args:
-            num_installments: Novo número total de parcelas (deve ser >= 1).
-            first_due_date: Data base para vencimento da primeira parcela (opcional).
-
-        Returns:
-            A despesa com as parcelas renegociadas.
-
         Raises:
-            BusinessRuleViolation: Se o número de parcelas for menor que 1 ou
-                se houver parcelas já pagas (BR-F04).
+            BusinessRuleViolation: Se o número de parcelas for menor que 1 ou se houver parcelas já pagas (BR-F04).
+            ObjectNotFoundError: Se a despesa não pertencer ao tenant.
         """
         validate_tenant_ownership(company, expense)
 
         if num_installments < 1:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser pelo menos 1.",
+                detail=f"O número de parcelas deve ser pelo menos 1; recebido: {num_installments}, esperado: >= 1.",
                 code="invalid_installment_number",
             )
 

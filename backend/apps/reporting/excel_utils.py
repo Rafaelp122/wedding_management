@@ -235,6 +235,19 @@ def _build_excel_tasks_sheet(wb: Workbook, tasks: list[Task]) -> None:
         ws_tasks.append([status_sym, title_safe, due_str, desc_safe])
 
 
+def _format_cell_monetary(
+    cell: Any,
+    header_val: str,
+    monetary_keys: list[str],
+    currency_format: str,
+) -> None:
+    """Aplica formatação monetária se o cabeçalho e tipo da célula corresponderem."""
+    if isinstance(cell.value, (int, float, Decimal)) and any(
+        k in header_val for k in monetary_keys
+    ):
+        cell.number_format = currency_format
+
+
 def _format_columns_and_borders(sheet: Worksheet) -> None:
     """Aplica bordas finas, formatação monetária e auto-ajuste de colunas."""
     thin_border = Border(
@@ -253,13 +266,9 @@ def _format_columns_and_borders(sheet: Worksheet) -> None:
             cell.border = thin_border
             col_idx = cast(int, cell.column)
             header_val = str(sheet.cell(row=1, column=col_idx).value).lower()
-            if isinstance(cell.value, (int, float, Decimal)) and any(
-                k in header_val for k in monetary_keys
-            ):
-                cell.number_format = currency_format
+            _format_cell_monetary(cell, header_val, monetary_keys, currency_format)
             val_str = str(cell.value or "")
-            if len(val_str) > max_len:
-                max_len = len(val_str)
+            max_len = max(max_len, len(val_str))
         sheet.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
 

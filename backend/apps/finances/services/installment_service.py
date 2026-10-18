@@ -47,35 +47,22 @@ class InstallmentService:
     ) -> list[Installment]:
         """Gera parcelas de despesa com ajuste na última (Tolerância Zero).
 
-        Para cada parcela gerada, cria um evento PAYMENT no scheduler (BR-S01-SYNC)
-        para visualização dos compromissos de pagamento no calendário.
-
-        Regras de Negócio:
+        Regra de Negócio:
             BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
-            BR-S01-SYNC (docs/architecture/business-rules/finances/payment-schedule-integration.md)
 
         Efeitos Colaterais:
             - Persiste as instâncias de Installment atomicamente.
             - Dispara a criação de eventos PAYMENT no calendário da agenda (BR-S01-SYNC).
 
-        Args:
-            num_installments: Número total de parcelas (deve ser >= 1).
-            first_due_date: Data base para vencimento da primeira parcela.
-
-        Returns:
-            Lista com as instâncias de parcelas salvas e balanceadas.
-
         Raises:
-            BusinessRuleViolation: Se a despesa já possuir parcelas, se o
-                número de parcelas for <= 0, ou se o valor total da despesa for
-                inválido.
+            BusinessRuleViolation: Se a despesa já possuir parcelas, se o número de parcelas for <= 0, ou se o valor for inválido.
         """
-
         # Bloqueio preventivo contra reentrada e duplicação de parcelas na despesa.
-        if expense.installments.exists():
+        existing_count = expense.installments.count()
+        if existing_count > 0:
             raise BusinessRuleViolation(
                 detail=(
-                    "Esta despesa já possui parcelas geradas. Remova-as "
+                    f"Esta despesa já possui {existing_count} parcelas geradas. Remova-as "
                     "antes de gerar novas."
                 ),
                 code="installments_already_exist",
@@ -117,23 +104,15 @@ class InstallmentService:
     ) -> list[Installment]:
         """Redistribui as parcelas de uma despesa.
 
-        Remove as parcelas anteriores (e seus respectivos eventos de pagamento)
-        e gera novas parcelas com novos valores e datas.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Remove os eventos de pagamento anteriores na agenda (BR-S01-SYNC).
             - Remove fisicamente as parcelas anteriores e recria o cronograma via auto_generate_installments.
 
-        Args:
-            num_installments: Novo número total de parcelas (deve ser >= 1).
-            first_due_date: Data base para vencimento da primeira parcela.
-
-        Returns:
-            Lista com as novas parcelas geradas e balanceadas.
-
         Raises:
-            BusinessRuleViolation: Se existirem parcelas já pagas (status PAID)
-                na despesa (BR-F04).
+            BusinessRuleViolation: Se existirem parcelas já pagas (status PAID) na despesa (BR-F04).
         """
         if expense.has_paid_installments:
             raise BusinessRuleViolation(
@@ -158,14 +137,11 @@ class InstallmentService:
     def create(company: Company, payload: InstallmentIn) -> Installment:
         """Cria uma parcela individual avulsa.
 
-        Valida se a adição da nova parcela respeita a integridade matemática
-        da despesa (Tolerância Zero / ADR-010).
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Persiste a parcela avulsa e revalida a consistência matemática da despesa pai.
-
-        Returns:
-            A instância de parcela criada.
 
         Raises:
             ObjectNotFoundError: Se a despesa correspondente não for encontrada.
@@ -200,10 +176,11 @@ class InstallmentService:
                 f"Criação de parcela violou Tolerância Zero da despesa "
                 f"uuid={expense.uuid}"
             )
+            err_detail = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
             raise BusinessRuleViolation(
                 detail=(
                     "A criação desta parcela gera uma inconsistência matemática "
-                    "na despesa total (ADR-010). O valor das parcelas deve bater "
+                    f"na despesa total (ADR-010): {err_detail}. O valor das parcelas deve bater "
                     "exatamente com o total."
                 ),
                 code="expense_math_violation",
@@ -221,18 +198,15 @@ class InstallmentService:
     ) -> Installment:
         """Atualiza os dados de uma parcela.
 
-        Revalida se as alterações mantêm a consistência matemática da despesa
-        pai.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Atualiza a parcela e revalida a consistência matemática da despesa pai.
 
-        Returns:
-            A instância de parcela atualizada.
-
         Raises:
-            BusinessRuleViolation: Se a parcela estiver paga e houver tentativa de alterar campos protegidos (BR-F04),
-                ou se a alteração quebrar a Tolerância Zero da despesa pai (BR-F01 / ADR-010).
+            BusinessRuleViolation: Se tentar alterar campos de parcela paga ou violar Tolerância Zero da despesa pai.
+            ObjectNotFoundError: Se a parcela não for encontrada.
         """
         validate_tenant_ownership(
             company,
@@ -256,10 +230,12 @@ class InstallmentService:
             instance.status == Installment.StatusChoices.PAID
             and changed_protected_fields
         ):
+            sorted_fields = sorted(changed_protected_fields)
             raise BusinessRuleViolation(
                 detail=(
                     "Parcelas pagas não podem ter valor, vencimento ou número "
-                    "alterados. Faça a reversão antes de ajustar."
+                    f"alterados; campos protegidos modificados: {sorted_fields}. "
+                    "Faça a reversão antes de ajustar."
                 ),
                 code="paid_installment_immutable",
             )
@@ -280,9 +256,11 @@ class InstallmentService:
                 f"Atualização de parcela quebrou Tolerância Zero na despesa "
                 f"uuid={instance.expense.uuid}"
             )
+            err_detail = "; ".join(e.messages) if hasattr(e, "messages") else str(e)
             raise BusinessRuleViolation(
-                detail="A atualização desta parcela viola as regras matemáticas da "
-                "despesa (ADR-010).",
+                detail=(
+                    f"A atualização desta parcela viola as regras matemáticas da despesa (ADR-010): {err_detail}."
+                ),
                 code="expense_math_violation",
             ) from e
 
@@ -294,18 +272,15 @@ class InstallmentService:
     def mark_as_paid(company: Company, instance: Installment) -> Installment:
         """Marca uma parcela como paga.
 
-        Garante a atualização de status para PAID e define a data de pagamento
-        como o dia corrente, revalidando a despesa pai.
+        Regra de Negócio:
+            BR-F03 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Altera o status da parcela para PAID, registra a data de pagamento corrente e revalida a despesa pai.
 
-        Returns:
-            A instância de parcela marcada como paga.
-
         Raises:
-            BusinessRuleViolation: Se a parcela já estiver paga ou se a
-                transação violar a consistência matemática da despesa.
+            BusinessRuleViolation: Se a parcela já estiver paga ou se a transação violar a consistência matemática.
+            ObjectNotFoundError: Se a parcela não for encontrada.
         """
         validate_tenant_ownership(
             company,
@@ -337,18 +312,15 @@ class InstallmentService:
     def unmark_as_paid(company: Company, instance: Installment) -> Installment:
         """Desmarca uma parcela que foi definida como paga.
 
-        Remove a data de pagamento e redefine o status apropriado dependendo
-        da data de vencimento (PENDING ou OVERDUE).
+        Regra de Negócio:
+            BR-F11 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Restaura o status da parcela para PENDING ou OVERDUE, limpa a data de pagamento e revalida a despesa pai.
 
-        Returns:
-            A instância de parcela com o pagamento revertido.
-
         Raises:
-            BusinessRuleViolation: Se a parcela não estiver paga ou violar as
-                regras matemáticas da despesa pai.
+            BusinessRuleViolation: Se a parcela não estiver paga ou violar as regras matemáticas da despesa pai.
+            ObjectNotFoundError: Se a parcela não for encontrada.
         """
         validate_tenant_ownership(
             company,
@@ -382,18 +354,15 @@ class InstallmentService:
     ) -> Installment:
         """Ajusta o valor ou data de vencimento de uma parcela.
 
-        Garante que a nova data de vencimento respeite a sequência cronológica
-        das parcelas anterior e posterior, além de revalidar a despesa pai.
+        Regra de Negócio:
+            BR-F05 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Modifica valor ou data da parcela e revalida a consistência matemática da despesa pai.
 
-        Returns:
-            A instância de parcela ajustada.
-
         Raises:
-            BusinessRuleViolation: Se a parcela estiver paga, se a data estiver
-                fora da cronologia sequencial (BR-F05) ou se violar a soma da despesa pai (BR-F01 / ADR-010).
+            BusinessRuleViolation: Se a parcela estiver paga, violar cronologia sequencial ou a soma da despesa pai.
+            ObjectNotFoundError: Se a parcela não for encontrada.
         """
         validate_tenant_ownership(
             company,
@@ -402,9 +371,15 @@ class InstallmentService:
             code="installment_not_found_or_denied",
         )
         if instance.status == Installment.StatusChoices.PAID:
+            expected_statuses = [
+                Installment.StatusChoices.PENDING,
+                Installment.StatusChoices.OVERDUE,
+            ]
             raise BusinessRuleViolation(
-                detail="Não é possível ajustar uma parcela já marcada como paga. "
-                "Reversão não suportada.",
+                detail=(
+                    f"Não é possível ajustar uma parcela já marcada como paga (status: '{instance.status}', "
+                    f"esperados: {expected_statuses}). Reversão não suportada."
+                ),
                 code="adjustment_on_paid_installment",
             )
 
@@ -443,16 +418,16 @@ class InstallmentService:
     def delete(company: Company, instance: Installment) -> None:
         """Exclui uma parcela individual.
 
-        Remove o evento de pagamento associado no scheduler e revalida a
-        despesa pai.
+        Regra de Negócio:
+            BR-F01 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Remove o evento de pagamento associado no scheduler (BR-S01-SYNC).
             - Remove fisicamente a parcela e revalida a integridade da despesa pai.
 
         Raises:
-            DomainIntegrityError: Se a exclusão violar a integridade
-                matemática da despesa pai (BR-F01 / ADR-010).
+            DomainIntegrityError: Se a exclusão violar a integridade matemática da despesa pai (BR-F01 / ADR-010).
+            ObjectNotFoundError: Se a parcela não for encontrada.
         """
         validate_tenant_ownership(
             company,
@@ -484,7 +459,8 @@ class InstallmentService:
             )
             raise DomainIntegrityError(
                 detail=(
-                    "Não é possível apagar esta parcela isoladamente pois isso "
+                    f"Não é possível apagar a parcela #{instance.installment_number} (R$ {instance.amount}) "
+                    f"isoladamente da despesa '{expense.name}' (uuid: {expense.uuid}) pois isso "
                     "quebra a soma exata da despesa (ADR-010). Ajuste as "
                     "outras parcelas ou a despesa simultaneamente."
                 ),
@@ -499,17 +475,12 @@ class InstallmentService:
     ) -> int:
         """Marca como atrasadas parcelas pendentes com vencimento expirado.
 
-        Dispara a criação de Notificações In-App para os usuários da empresa.
+        Regra de Negócio:
+            BR-F05 (docs/architecture/business-rules/finances/financial-integrity-rules.md)
 
         Efeitos Colaterais:
             - Transiciona o status das parcelas vencidas para OVERDUE.
             - Dispara notificações in-app de atraso para os usuários da assessoria.
-
-        Args:
-            today: Data de referência para checagem de vencimento (se omitida, utiliza a data corrente).
-
-        Returns:
-            Quantidade de parcelas atualizadas para o status atrasado.
         """
         if today is None:
             today = date.today()

@@ -42,19 +42,10 @@ class GoogleAuthService:
     def authenticate_with_google(
         cls, id_token: str, provider: OAuthProvider | None = None
     ) -> TokenOut:
-        """
-        Autentica usuário existente ou cadastra um novo via ID Token do Google.
+        """Autentica usuário existente ou provisiona nova conta via ID Token do Google OAuth.
 
-        Efeitos Colaterais:
-            - Provisiona novo usuário e respectiva empresa em caso de primeiro login.
-            - Atualiza o status de e-mail verificado se ainda pendente.
-
-        Args:
-            id_token: Token JWT de identidade emitido pelo Google OAuth.
-            provider: Provedor OAuth customizado para injeção de dependência.
-
-        Returns:
-            Tokens de acesso, atualização e dados do usuário autenticado.
+        Decisão Arquitetural: [Users Domain](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Cria empresa e usuário no primeiro login; atualiza status de e-mail.
 
         Raises:
             AuthenticationFailedError: Se a conta estiver inativa no sistema.
@@ -91,15 +82,9 @@ class GoogleAuthService:
     @staticmethod
     @transaction.atomic
     def _get_or_create_user(user_info: OAuthUserInfo) -> User:
-        """
-        Recupera usuário existente ou provisiona nova conta e tenant atomicamente.
+        """Recupera usuário existente ou provisiona nova conta e tenant atomicamente.
 
-        Efeitos Colaterais:
-            - Cria empresa e usuário proprietário quando inexistente.
-            - Atualiza status de verificação de e-mail se aplicável.
-
-        Returns:
-            Instância do usuário recuperado ou recém-criado.
+        Efeitos Colaterais: Cria empresa e usuário proprietário quando inexistente.
 
         Raises:
             AuthenticationFailedError: Se a conta existente estiver inativa.
@@ -114,32 +99,28 @@ class GoogleAuthService:
                     f"Tentativa de login via Google em conta inativa: {masked_email}"
                 )
                 raise AuthenticationFailedError(
-                    "Credenciais inválidas ou conta desativada.",
+                    f"Credenciais inválidas ou conta desativada. Conta: '{masked_email}'.",
                     code="invalid_credentials",
                 )
             if not user.is_email_verified and user_info.email_verified:
                 user.verify_email()
                 user.save(update_fields=["is_email_verified", "email_verified_at"])
-        else:
-            logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")
-            random_password = User.objects.make_random_password()
-            display_name = (
-                f"{user_info.first_name} {user_info.last_name}".strip()
-                or user_info.email
-            )
-            company = TenantService.create_company(display_name=display_name)
+            return user
 
-            user = User.objects.create_user(
-                email=user_info.email,
-                password=random_password,
-                company=company,
-                first_name=user_info.first_name,
-                last_name=user_info.last_name,
-                is_active=True,
-                is_email_verified=user_info.email_verified,
-                email_verified_at=(
-                    timezone.now() if user_info.email_verified else None
-                ),
-            )
+        logger.info(f"Provisionando novo usuário via Google OAuth: {masked_email}")
+        random_password = User.objects.make_random_password()
+        display_name = (
+            f"{user_info.first_name} {user_info.last_name}".strip() or user_info.email
+        )
+        company = TenantService.create_company(display_name=display_name)
 
-        return user
+        return User.objects.create_user(
+            email=user_info.email,
+            password=random_password,
+            company=company,
+            first_name=user_info.first_name,
+            last_name=user_info.last_name,
+            is_active=True,
+            is_email_verified=user_info.email_verified,
+            email_verified_at=(timezone.now() if user_info.email_verified else None),
+        )

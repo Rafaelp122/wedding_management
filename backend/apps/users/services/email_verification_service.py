@@ -22,14 +22,10 @@ class EmailVerificationService:
     def send_verification_email(
         cls, user: User, frontend_url: str | None = None
     ) -> None:
-        """
-        Gera o token e envia o e-mail transacional de confirmação para o usuário.
+        """Gera token seguro e envia e-mail transacional de confirmação para o usuário.
 
-        Efeitos Colaterais:
-            - Envia mensagem de e-mail via EmailMultiAlternatives.
-
-        Args:
-            frontend_url: URL base customizada do frontend. Se omitido, utiliza o FRONTEND_URL configurado.
+        Decisão Arquitetural: [Users Domain](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Envia mensagem de e-mail via EmailMultiAlternatives.
         """
         uidb64 = urlsafe_base64_encode(force_bytes(str(user.uuid)))
         token = default_token_generator.make_token(user)
@@ -59,21 +55,13 @@ class EmailVerificationService:
 
     @classmethod
     def verify_email(cls, uid: str, token: str) -> User:
-        """
-        Valida o token de verificação e ativa o cadastro do usuário.
+        """Valida o token de verificação e ativa o cadastro do usuário.
 
-        Efeitos Colaterais:
-            - Atualiza os campos is_email_verified, email_verified_at e is_active no banco de dados.
-
-        Args:
-            uid: Identificador UUID do usuário codificado em base64.
-            token: Token criptográfico de verificação de e-mail.
-
-        Returns:
-            Instância do usuário verificado e ativado.
+        Decisão Arquitetural: [Users Domain](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Atualiza is_email_verified, email_verified_at e is_active no banco.
 
         Raises:
-            ApplicationError: Se o token for inválido, expirado ou se o usuário não for encontrado.
+            ApplicationError: Se o token for inválido, expirado ou usuário inexistente.
         """
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode()
@@ -82,8 +70,9 @@ class EmailVerificationService:
             user = None
 
         if not user or not default_token_generator.check_token(user, token):
+            user_desc = f"usuário '{user.email}'" if user else f"uid '{uid}'"
             raise ApplicationError(
-                "Link de verificação de e-mail inválido ou expirado.",
+                f"Link de verificação de e-mail inválido ou expirado para {user_desc}.",
                 code="invalid_token",
             )
 
@@ -104,14 +93,10 @@ class EmailVerificationService:
     def resend_verification_email(
         cls, email: str, frontend_url: str | None = None
     ) -> None:
-        """
-        Reenvia o e-mail de confirmação caso o usuário exista e não esteja verificado.
+        """Reenvia o e-mail de confirmação caso o usuário exista e não esteja verificado.
 
-        Efeitos Colaterais:
-            - Dispara o envio de novo e-mail de verificação se o usuário for elegível.
-
-        Args:
-            frontend_url: URL base customizada do frontend. Se omitido, utiliza o FRONTEND_URL configurado.
+        Decisão Arquitetural: [Users Domain](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Dispara o envio de novo e-mail transacional de verificação.
         """
         email = User.objects.normalize_email(email)
         user = User.objects.filter(email=email).first()

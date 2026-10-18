@@ -11,16 +11,14 @@ from apps.tenants.models import Company
 
 
 def company_get_selector(*, uuid: UUID | str) -> Company:
-    """
-    Recupera uma empresa (tenant) pelo seu identificador público UUID.
+    """Recupera uma empresa (tenant) pelo seu identificador público UUID.
 
-    Returns:
-        Instância da empresa encontrada.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
 
     Raises:
         ObjectNotFoundError: Se nenhuma empresa for encontrada com o UUID fornecido.
     """
     company = Company.objects.filter(uuid=uuid).first()
     if not company:
-        raise ObjectNotFoundError(detail="Empresa não encontrada.")
+        raise ObjectNotFoundError(detail=f"Empresa com UUID '{uuid}' não encontrada.")
     return company

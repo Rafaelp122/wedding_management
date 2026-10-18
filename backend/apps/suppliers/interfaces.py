@@ -24,8 +24,8 @@ def get_supplier_for_company(
 ) -> Supplier:
     """Recupera um fornecedor validando o isolamento multitenant.
 
-    Returns:
-        Instância do fornecedor pertencente ao tenant.
+    Decisão Arquitetural:
+        ADR-031 (docs/architecture/adr/031-inter-module-communication.md)
 
     Raises:
         ObjectNotFoundError: Se o fornecedor não for encontrado ou não pertencer ao tenant.
@@ -45,8 +45,8 @@ def list_active_suppliers_for_company(
 ) -> list[Supplier]:
     """Lista todos os fornecedores ativos da organização tenant.
 
-    Returns:
-        Lista de fornecedores ativos ordenados por nome.
+    Decisão Arquitetural:
+        ADR-031 (docs/architecture/adr/031-inter-module-communication.md)
     """
     return list(Supplier.objects.for_tenant(company).active().order_by("name"))
 

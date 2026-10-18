@@ -50,18 +50,10 @@ class PasswordResetService:
     def request_password_reset(
         cls, email: str, frontend_url: str | None = None
     ) -> None:
-        """
-        Inicia o fluxo de redefinição de senha para o e-mail fornecido.
+        """Inicia o fluxo de recuperação e redefinição de senha para o e-mail.
 
-        Gera token seguro via PasswordResetTokenGenerator e envia o e-mail
-        transacional contendo o link de recuperação. Retorna silenciosamente
-        caso o usuário não exista para mitigar ataques de enumeração de e-mails.
-
-        Efeitos Colaterais:
-            - Envia e-mail transacional contendo o link de recuperação.
-
-        Args:
-            frontend_url: URL base opcional do frontend para construção do link.
+        Regra de Negócio: [BR-U05](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Envia e-mail transacional com link e token criptográfico.
         """
         email_normalized = email.strip().lower()
         masked = mask_email(email_normalized)
@@ -88,34 +80,26 @@ class PasswordResetService:
 
     @staticmethod
     def confirm_password_reset(uid: str, token: str, new_password: str) -> None:
-        """
-        Confirma a redefinição de senha validando o identificador e o token.
+        """Confirma a redefinição de senha validando o identificador e o token.
 
-        Efeitos Colaterais:
-            - Atualiza o hash da nova senha do usuário no banco de dados.
-
-        Args:
-            uid: Identificador UUID do usuário codificado em base64.
-            token: Token criptográfico de redefinição de senha.
-            new_password: Nova senha em texto puro sujeita às regras de complexidade.
+        Regra de Negócio: [BR-U05](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Atualiza o hash da nova senha do usuário no banco de dados.
 
         Raises:
-            ApplicationError: Se o token for inválido ou expirado, ou se a nova
-                senha não atender aos critérios de validação.
+            ApplicationError: Se o token for inválido/expirado ou se a nova senha for inválida.
         """
-
         try:
             uid_decoded = urlsafe_base64_decode(uid).decode("utf-8")
             user = User.objects.get(uuid=uid_decoded)
         except (ValueError, TypeError, User.DoesNotExist, UnicodeDecodeError) as err:
             raise ApplicationError(
-                detail="Link de redefinição de senha inválido ou expirado.",
+                detail=f"Link de redefinição de senha inválido ou expirado para uid='{uid}'.",
                 code="invalid_token",
             ) from err
 
         if not default_token_generator.check_token(user, token):
             raise ApplicationError(
-                detail="Link de redefinição de senha inválido ou expirado.",
+                detail=f"Link de redefinição de senha inválido ou expirado para o usuário '{user.email}'.",
                 code="invalid_token",
             )
 

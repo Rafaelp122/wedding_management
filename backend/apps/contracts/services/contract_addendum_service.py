@@ -42,15 +42,8 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Cria um novo termo aditivo vinculado ao contrato especificado.
 
-        Regra de Negócio:
-            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
-
-        Efeitos Colaterais:
-            - Persiste a instância de ContractAddendum com status PENDING no banco de dados.
-
-        Returns:
-            Instância persistida de ContractAddendum.
-
+        Regra de Negócio: [BR-L02-A](docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+        Efeitos Colaterais: Persiste a instância de ContractAddendum com status PENDING no banco de dados.
         Raises:
             BusinessRuleViolation: Se ocorrer falha de validação de modelo ao salvar.
         """
@@ -100,17 +93,8 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Formaliza a assinatura de um termo aditivo e atualiza finanças.
 
-        Regra de Negócio:
-            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
-
-        Efeitos Colaterais:
-            - Altera o status do termo aditivo para SIGNED e registra a data de assinatura.
-            - Registra o ajuste financeiro síncrono no domínio de Finanças (ADR-031).
-            - Enfileira tarefa assíncrona pós-commit on_contract_addendum_signed_task (ADR-017).
-
-        Returns:
-            Instância de ContractAddendum com status SIGNED.
-
+        Regra de Negócio: [BR-L02-A](docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+        Efeitos Colaterais: Altera status para SIGNED, registra ajuste financeiro e agenda task pós-commit.
         Raises:
             DomainIntegrityError: Se o aditivo não pertencer ao contrato especificado.
             BusinessRuleViolation: Se ocorrer falha ao validar ou salvar o aditivo.
@@ -133,7 +117,11 @@ class ContractAddendumService:
 
         if addendum.contract_id != contract.id:
             raise DomainIntegrityError(
-                detail="O termo aditivo informado não pertence ao contrato especificado.",
+                detail=(
+                    f"O termo aditivo informado não pertence ao contrato especificado; "
+                    f"aditivo '{addendum.uuid}' vinculado ao contrato '{addendum.contract_id}' "
+                    f"vs contrato informado '{contract.id}'."
+                ),
                 code="addendum_contract_mismatch",
             )
 
@@ -185,15 +173,8 @@ class ContractAddendumService:
     ) -> ContractAddendum:
         """Cancela um termo aditivo previamente registrado.
 
-        Regra de Negócio:
-            BR-L02-A (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
-
-        Efeitos Colaterais:
-            - Altera e persiste o status do termo aditivo para CANCELED.
-
-        Returns:
-            Instância de ContractAddendum com status CANCELED.
-
+        Regra de Negócio: [BR-L02-A](docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+        Efeitos Colaterais: Altera e persiste o status do termo aditivo para CANCELED.
         Raises:
             DomainIntegrityError: Se o aditivo não pertencer ao contrato especificado.
             BusinessRuleViolation: Se ocorrer falha de validação de modelo ao cancelar.
@@ -214,7 +195,11 @@ class ContractAddendumService:
         )
         if addendum.contract_id != contract.id:
             raise DomainIntegrityError(
-                detail="O termo aditivo informado não pertence ao contrato especificado.",
+                detail=(
+                    f"O termo aditivo informado não pertence ao contrato especificado; "
+                    f"aditivo '{addendum.uuid}' vinculado ao contrato '{addendum.contract_id}' "
+                    f"vs contrato informado '{contract.id}'."
+                ),
                 code="addendum_contract_mismatch",
             )
         addendum.cancel()
@@ -237,12 +222,8 @@ class ContractAddendumService:
     ) -> None:
         """Exclui um termo aditivo pendente do banco de dados.
 
-        Regra de Negócio:
-            BR-L02-D (docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
-
-        Efeitos Colaterais:
-            - Remove permanentemente o termo aditivo do banco de dados.
-
+        Regra de Negócio: [BR-L02-D](docs/architecture/business-rules/logistics/contract-parent-child-hierarchy.md)
+        Efeitos Colaterais: Remove permanentemente o termo aditivo do banco de dados.
         Raises:
             DomainIntegrityError: Se o aditivo não pertencer ao contrato informado.
             BusinessRuleViolation: Se tentar excluir um aditivo já assinado.
@@ -263,12 +244,16 @@ class ContractAddendumService:
         )
         if addendum.contract_id != contract.id:
             raise DomainIntegrityError(
-                detail="O termo aditivo informado não pertence ao contrato especificado.",
+                detail=(
+                    f"O termo aditivo informado não pertence ao contrato especificado; "
+                    f"aditivo '{addendum.uuid}' vinculado ao contrato '{addendum.contract_id}' "
+                    f"vs contrato informado '{contract.id}'."
+                ),
                 code="addendum_contract_mismatch",
             )
         if addendum.status == ContractAddendum.StatusChoices.SIGNED:
             raise BusinessRuleViolation(
-                detail="Não é possível excluir um termo aditivo já assinado.",
+                detail=f"Não é possível excluir um termo aditivo já assinado (status atual: '{addendum.status}').",
                 code="cannot_delete_signed_addendum",
             )
         addendum.delete()

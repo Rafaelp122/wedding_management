@@ -66,7 +66,9 @@ class Client(TenantModel):
         if self.name:
             self.name = self.name.strip()
         if not self.name:
-            raise ValidationError({"name": "O nome do cliente é obrigatório."})
+            raise ValidationError(
+                {"name": f"O nome do cliente é obrigatório; recebido '{self.name}'."}
+            )
 
         if self.email:
             self.email = self.email.strip().lower()
@@ -78,7 +80,12 @@ class Client(TenantModel):
             self.cpf = self.cpf.strip()
             if len(self.cpf) > 14:
                 raise ValidationError(
-                    {"cpf": "O CPF não pode ter mais de 14 caracteres."}
+                    {
+                        "cpf": (
+                            f"O CPF não pode ter mais de 14 caracteres; "
+                            f"recebido '{self.cpf}' ({len(self.cpf)} caracteres)."
+                        )
+                    }
                 )
 
     def update_contact_info(

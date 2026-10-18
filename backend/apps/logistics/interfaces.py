@@ -22,11 +22,11 @@ def create_item_for_contract(
 ) -> Any:
     """Cria um item de suprimento vinculado a um contrato.
 
+    Regra de Negócio:
+        BR-L04 (docs/architecture/domains/logistics-domain.md)
+
     Efeitos Colaterais:
         Persiste o novo item de logística associado ao contrato e casamento informados.
-
-    Returns:
-        Instância do item de suprimento criado.
 
     Raises:
         DomainIntegrityError: Se o casamento do item não coincidir com o do contrato.

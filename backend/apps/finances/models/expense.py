@@ -90,7 +90,8 @@ class Expense(TenantModel, WeddingOwnedMixin):
             and self.contract.wedding_id != self.wedding_id
         ):
             raise ValidationError(
-                "O contrato vinculado deve pertencer ao mesmo casamento da despesa."
+                f"O contrato vinculado ({self.contract.wedding_id}) deve pertencer ao "
+                f"mesmo casamento da despesa ({self.wedding_id})."
             )
 
     # ── Operações de Domínio e Divisão Financeira ───────────────────────
@@ -115,12 +116,12 @@ class Expense(TenantModel, WeddingOwnedMixin):
 
         if num_installments <= 0:
             raise BusinessRuleViolation(
-                detail="O número de parcelas deve ser maior que zero.",
+                detail=f"O número de parcelas deve ser maior que zero; recebido: {num_installments}, esperado: > 0.",
                 code="invalid_installment_number",
             )
         if not self.actual_amount or self.actual_amount <= Decimal("0.00"):
             raise BusinessRuleViolation(
-                detail="A despesa precisa ter valor maior que zero para parcelamento.",
+                detail=f"A despesa precisa ter valor maior que zero para parcelamento; recebido: R$ {self.actual_amount}, esperado: > R$ 0,00.",
                 code="invalid_expense_amount",
             )
 

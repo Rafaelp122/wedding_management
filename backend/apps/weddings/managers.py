@@ -55,9 +55,10 @@ class WeddingQuerySet(TenantQuerySet["Wedding"]):
             return self
         from apps.weddings.models import Wedding
 
-        if status not in Wedding.StatusChoices.values:
+        valid_choices = sorted(Wedding.StatusChoices.values)
+        if status not in valid_choices:
             raise BusinessRuleViolation(
-                detail=f"Status inválido: '{status}'.",
+                detail=f"Status inválido: '{status}'; opções válidas: {valid_choices}.",
                 code="wedding_invalid_status_filter",
             )
         return self.filter(status=status)

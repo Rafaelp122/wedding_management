@@ -35,7 +35,7 @@ class SupplierIn(Schema):
         if v:
             if not re.match(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$", v):
                 raise ValueError(
-                    "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+                    f"CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX. Valor recebido: '{v}'."
                 )
             try:
                 validate_cnpj_modulo11(v)
@@ -50,7 +50,9 @@ class SupplierIn(Schema):
     def validate_website_format(cls, v: str) -> str:
         """Valida se o website segue o formato de URL HTTP/HTTPS."""
         if v and not re.match(r"^(?:https?://\S+)?$", v):
-            raise ValueError("Website deve ser uma URL válida (http:// ou https://).")
+            raise ValueError(
+                f"Website deve ser uma URL válida (http:// ou https://). Valor recebido: '{v}'."
+            )
         return v
 
 
@@ -77,7 +79,7 @@ class SupplierPatchIn(Schema):
         if v is not None and v != "":
             if not re.match(r"^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$", v):
                 raise ValueError(
-                    "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX.",
+                    f"CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX. Valor recebido: '{v}'."
                 )
             try:
                 validate_cnpj_modulo11(v)
@@ -92,7 +94,9 @@ class SupplierPatchIn(Schema):
     def validate_website_format(cls, v: str | None) -> str | None:
         """Valida se o website segue o formato de URL HTTP/HTTPS quando fornecido."""
         if v is not None and not re.match(r"^(?:https?://\S+)?$", v):
-            raise ValueError("Website deve ser uma URL válida (http:// ou https://).")
+            raise ValueError(
+                f"Website deve ser uma URL válida (http:// ou https://). Valor recebido: '{v}'."
+            )
         return v
 
 

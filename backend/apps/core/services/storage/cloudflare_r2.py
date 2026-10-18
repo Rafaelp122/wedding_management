@@ -83,11 +83,22 @@ class CloudflareR2StorageService:
         Raises:
             BusinessRuleViolation: Se a configuração do storage estiver incompleta.
         """
-        if not all(
-            [self.endpoint_url, self.access_key_id, self.secret_access_key, bucket]
-        ):
+        missing = [
+            param
+            for param, val in [
+                ("endpoint_url", self.endpoint_url),
+                ("access_key_id", self.access_key_id),
+                ("secret_access_key", self.secret_access_key),
+                ("bucket", bucket),
+            ]
+            if not val
+        ]
+        if missing:
             raise BusinessRuleViolation(
-                detail="Configuração de storage R2/S3 incompleta no servidor.",
+                detail=(
+                    "Configuração de storage R2/S3 incompleta no servidor; "
+                    f"parâmetros ausentes: {sorted(missing)}."
+                ),
                 code="storage_configuration_incomplete",
             )
 

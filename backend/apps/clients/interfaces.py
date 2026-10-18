@@ -18,8 +18,7 @@ if TYPE_CHECKING:
 def get_client_for_tenant(company: Company, client_id: UUID | str) -> Client:
     """Recupera um cliente validando o isolamento do tenant para outros contextos.
 
-    Returns:
-        Instância do cliente pertencente à empresa.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
 
     Raises:
         ObjectNotFoundError: Se o cliente não existir ou pertencer a outra empresa.
@@ -38,17 +37,8 @@ def get_or_create_client_for_proposal(
 ) -> Client:
     """Obtém cliente existente por CPF, e-mail ou nome para o tenant, ou cria um novo.
 
-    Efeitos Colaterais:
-        Cria novo registro ou atualiza campos vazios do cliente na base de dados.
-
-    Args:
-        name: Nome completo do cliente ou contratante.
-        cpf: CPF do cliente para busca ou vinculação.
-        email: E-mail de contato para busca ou vinculação.
-        phone: Telefone de contato para busca ou vinculação.
-
-    Returns:
-        Instância do cliente localizada ou criada.
+    Decisão Arquitetural: [ADR-031](docs/architecture/adr/031-inter-module-communication.md)
+    Efeitos Colaterais: Cria novo registro ou atualiza campos vazios do cliente na base.
     """
     from apps.clients.models import Client
 

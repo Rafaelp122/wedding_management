@@ -70,12 +70,13 @@ class Budget(TenantModel, WeddingOwnedMixin):
     def clean(self) -> None:
         """Valida se o teto estimado do orçamento não é inferior ao total já alocado."""
         super().clean()
-        if self.pk and self.total_estimated is not None:
-            if self.total_estimated < self.total_allocated:
-                raise ValidationError(
-                    f"O orçamento total estimado (R${self.total_estimated}) não pode "
-                    f"ser inferior ao total já alocado (R${self.total_allocated})."
-                )
+        if not (self.pk and self.total_estimated is not None):
+            return
+        if self.total_estimated < self.total_allocated:
+            raise ValidationError(
+                f"O orçamento total estimado (R${self.total_estimated}) não pode "
+                f"ser inferior ao total já alocado (R${self.total_allocated})."
+            )
 
     @property
     def total_allocated(self) -> Decimal:

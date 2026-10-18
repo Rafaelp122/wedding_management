@@ -124,7 +124,7 @@ class TestNotificationServiceCreate:
     def test_create_notification_failure_user_company_mismatch(self, user: Any) -> None:
         other_company = CompanyFactory()
         with pytest.raises(
-            BusinessRuleViolation, match=r"Usuário não pertence à empresa informada\."
+            BusinessRuleViolation, match=r"Usuário não pertence à empresa informada"
         ):
             NotificationService.create_notification(
                 company=other_company,

@@ -108,6 +108,16 @@ seed-e2e:
 reqs:
     cd backend && uv lock
 
+# Cria a estrutura completa de um novo Bounded Context (ADR-031)
+[group('Backend')]
+scaffold-module name:
+    uv run --project backend python scripts/scaffold_module.py {{name}}
+
+# Alias para scaffold-module
+[group('Backend')]
+scaffold-app name:
+    just scaffold-module {{name}}
+
 # ==============================================================================
 # ⚛️ FRONTEND & LANDING PAGE
 # ==============================================================================

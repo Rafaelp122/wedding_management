@@ -43,7 +43,7 @@ class CustomUserManager(BaseUserManager["User"]):
             ValueError: Se o e-mail não for informado.
         """
         if not email:
-            raise ValueError("O e-mail é obrigatório.")
+            raise ValueError(f"O e-mail é obrigatório; recebido '{email}'.")
         email = self.normalize_email(email)
 
         # Se a empresa não foi fornecida (ex: em testes ou criação inicial),

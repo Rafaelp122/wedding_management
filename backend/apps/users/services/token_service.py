@@ -32,19 +32,13 @@ class TokenService:
 
     @staticmethod
     def obtain(email: str, password: str) -> TokenOut:
-        """
-        Autentica o usuário por e-mail e senha, gerando os tokens JWT correspondentes.
+        """Autentica o usuário por e-mail e senha, gerando os tokens JWT correspondentes.
 
-        Efeitos Colaterais:
-            - Registra falhas de autenticação no cache em caso de erro.
-            - Limpa contadores de falhas após autenticação bem-sucedida.
-
-        Returns:
-            Tokens de acesso, atualização e dados básicos do usuário autenticado.
+        Regra de Negócio: [BR-U02](docs/architecture/domains/users-domain.md)
+        Efeitos Colaterais: Registra falhas no cache ou limpa contadores após sucesso.
 
         Raises:
-            AuthenticationFailedError: Se as credenciais forem inválidas, se o e-mail não estiver
-                verificado ou se a conta estiver inativa.
+            AuthenticationFailedError: Se as credenciais forem inválidas, conta inativa ou e-mail não verificado.
             AccountLockedError: Se a conta estiver temporariamente bloqueada por excesso de falhas.
         """
         masked = mask_email(email)
@@ -57,43 +51,14 @@ class TokenService:
                 f"Bloqueio ativo para email={masked}. Restante: {remaining}s"
             )
             raise AccountLockedError(
-                "Muitas tentativas com erro. Tente novamente mais tarde.",
+                f"Muitas tentativas com erro para a conta '{masked}'. Bloqueio ativo (lockout): tente novamente em {remaining} segundos.",
                 code="account_locked",
             )
 
         user = authenticate(request=None, username=email, password=password)
-
         if user is None:
-            from apps.users.models import User
-
-            potential_user = User.objects.filter(email=email).first()
-
-            if potential_user is not None:
-                password_valid = potential_user.check_password(password)
-            else:
-                # Mitigação de Timing Attack: executa hash dummy em tempo constante
-                dummy_user = User()
-                dummy_user.set_password("dummy_password_timing_defense")
-                dummy_user.check_password(password)
-                password_valid = False
-
-            if (
-                potential_user
-                and password_valid
-                and not potential_user.is_email_verified
-            ):
-                raise AuthenticationFailedError(
-                    "Sua conta ainda não foi ativada. "
-                    "Verifique sua caixa de entrada para confirmar seu e-mail.",
-                    code="email_not_verified",
-                )
-
-            # Registra falha para controle de força bruta (ativa lockout)
-            LockoutService.record_failure(email)
-            logger.warning(f"Falha de autenticação para email={masked}")
-            raise AuthenticationFailedError(
-                "Credenciais inválidas ou conta desativada.",
-                code="invalid_credentials",
+            TokenService._handle_auth_failure(
+                email=email, password=password, masked=masked
             )
 
         # Sucesso: limpa contador de falhas acumuladas
@@ -118,15 +83,40 @@ class TokenService:
         return token_out
 
     @staticmethod
+    def _handle_auth_failure(email: str, password: str, masked: str) -> None:
+        """Trata falha de autenticação com timing attack mitigation e lockout."""
+        from apps.users.models import User
+
+        potential_user = User.objects.filter(email=email).first()
+        if potential_user is None:
+            # Mitigação de Timing Attack: executa hash dummy em tempo constante
+            dummy_user = User()
+            dummy_user.set_password("dummy_password_timing_defense")
+            dummy_user.check_password(password)
+            password_valid = False
+        else:
+            password_valid = potential_user.check_password(password)
+
+        if potential_user and password_valid and not potential_user.is_email_verified:
+            raise AuthenticationFailedError(
+                f"Sua conta para '{masked}' ainda não foi ativada. "
+                "Verifique sua caixa de entrada para confirmar seu e-mail.",
+                code="email_not_verified",
+            )
+
+        LockoutService.record_failure(email)
+        logger.warning(f"Falha de autenticação para email={masked}")
+        raise AuthenticationFailedError(
+            f"Credenciais inválidas ou conta desativada. Conta: '{masked}'.",
+            code="invalid_credentials",
+        )
+
+    @staticmethod
     def logout(refresh_token: str) -> None:
-        """
-        Invalida o refresh token no servidor adicionando-o à blacklist do ninja_jwt.
+        """Invalida o refresh token no servidor adicionando-o à blacklist do ninja_jwt.
 
-        Efeitos Colaterais:
-            - Adiciona o refresh token à blacklist se válido.
-
-        Args:
-            refresh_token: Token de atualização JWT a ser revogado.
+        Decisão Arquitetural: [Fluxo JWT](docs/architecture/concepts/auth-jwt-flow.md)
+        Efeitos Colaterais: Adiciona o refresh token à blacklist se válido.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de revogação/logout de token (fp={token_fp})")
@@ -139,23 +129,13 @@ class TokenService:
 
     @staticmethod
     def refresh(refresh_token: str) -> TokenRefreshOutputSchema:
-        """
-        Gera um novo par de tokens a partir de um token de atualização (refresh token).
+        """Gera um novo par de tokens a partir de um refresh token com rotação ativa.
 
-        Se a rotação de tokens estiver ativa (padrão do ninja_jwt), o token antigo
-        será invalidado e adicionado à blacklist, emitindo-se um novo refresh.
-
-        Efeitos Colaterais:
-            - Invalida o refresh token anterior na blacklist se a rotação estiver ativa.
-
-        Args:
-            refresh_token: Token de atualização JWT recebido na requisição.
-
-        Returns:
-            Par de tokens renovados com novo access token e eventual novo refresh token.
+        Decisão Arquitetural: [Fluxo JWT](docs/architecture/concepts/auth-jwt-flow.md)
+        Efeitos Colaterais: Invalida o refresh token anterior na blacklist.
 
         Raises:
-            HttpError: Se o refresh token for inválido, estiver expirado ou constar na blacklist.
+            HttpError: Se o refresh token for inválido, expirado ou estiver na blacklist.
         """
         token_fp = hashlib.sha256(refresh_token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de refresh de token (fp={token_fp})")
@@ -166,17 +146,12 @@ class TokenService:
 
     @staticmethod
     def verify(token: str) -> VerifyTokenOut:
-        """
-        Verifica a integridade e a validade temporal de um token JWT.
+        """Verifica a integridade e a validade temporal de um token JWT.
 
-        Args:
-            token: Token JWT a ser validado.
-
-        Returns:
-            Confirmação de validação positiva do token.
+        Decisão Arquitetural: [Fluxo JWT](docs/architecture/concepts/auth-jwt-flow.md)
 
         Raises:
-            HttpError: Se o token for inválido, estiver corrompido ou expirado.
+            HttpError: Se o token for inválido, corrompido ou expirado.
         """
         token_fp = hashlib.sha256(token.encode()).hexdigest()[:12]
         logger.info(f"Tentativa de verificação de token (fp={token_fp})")

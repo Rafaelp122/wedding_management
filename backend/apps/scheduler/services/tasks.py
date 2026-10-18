@@ -208,29 +208,53 @@ class TaskService:
         )
 
     @staticmethod
+    def _dispatch_task_notifications(
+        task: Task,
+        title: str,
+        message: str,
+        notification_type: str,
+    ) -> bool:
+        """Enfileira notificações para os usuários ativos da empresa da tarefa."""
+        active_users = [u for u in task.company.users.all() if u.is_active]
+        if not active_users:
+            return False
+
+        wedding_id = task.wedding.uuid if task.wedding else None
+        wedding_name = task.wedding.display_name if task.wedding else ""
+        link = (
+            f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
+            if task.wedding
+            else ""
+        )
+
+        for user in active_users:
+            send_notification_async(
+                company_id=task.company.id,
+                user_id=user.id,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                link=link,
+                target_type="task",
+                target_id=task.uuid,
+                wedding_id=wedding_id,
+                wedding_name=wedding_name,
+            )
+        return True
+
+    @staticmethod
     def notify_due_tasks(
         company: Company | None = None,
         days_threshold: int = 3,
         today: date | None = None,
     ) -> int:
-        """
-        Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
+        """Notifica usuários ativos sobre tarefas atrasadas ou próximas do prazo.
 
-        Busca tarefas não concluídas com data de vencimento definida e enfileira
-        notificações para os usuários ativos da empresa proprietária. Tarefas
-        já vencidas geram notificações de checklist atrasado (CHECKLIST_ITEM_OVERDUE),
-        enquanto tarefas com prazo dentro da janela de antecedência geram alertas
-        de prazo próximo (TASK_DEADLINE).
+        Regra de Negócio:
+            BR-S02 (docs/architecture/domains/scheduler-domain.md)
 
         Efeitos Colaterais:
             - Enfileira disparos assíncronos de notificação via send_notification_async.
-
-        Args:
-            days_threshold: Quantidade de dias futuros para alertar sobre prazos próximos (padrão: 3).
-            today: Data base de referência para cálculo de vencimento (padrão: data atual).
-
-        Returns:
-            Quantidade de tarefas que geraram notificações aos usuários.
         """
         if today is None:
             today = timezone.localdate()
@@ -272,32 +296,9 @@ class TaskService:
             else:
                 continue
 
-            active_users = [u for u in task.company.users.all() if u.is_active]
-            if not active_users:
-                continue
-
-            wedding_id = task.wedding.uuid if task.wedding else None
-            wedding_name = task.wedding.display_name if task.wedding else ""
-            link = (
-                f"/weddings/{task.wedding.uuid}?tab=planning&subtab=checklist"
-                if task.wedding
-                else ""
-            )
-
-            for user in active_users:
-                send_notification_async(
-                    company_id=task.company.id,
-                    user_id=user.id,
-                    title=title,
-                    message=message,
-                    notification_type=notification_type,
-                    link=link,
-                    target_type="task",
-                    target_id=task.uuid,
-                    wedding_id=wedding_id,
-                    wedding_name=wedding_name,
-                )
-
-            notified_tasks_count += 1
+            if TaskService._dispatch_task_notifications(
+                task, title, message, notification_type
+            ):
+                notified_tasks_count += 1
 
         return notified_tasks_count

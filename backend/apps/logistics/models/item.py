@@ -130,7 +130,12 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         super().clean()
         if self.quantity is not None and self.quantity < 1:
             raise ValidationError(
-                {"quantity": "A quantidade deve ser de no mínimo 1 unidade."}
+                {
+                    "quantity": (
+                        f"A quantidade deve ser de no mínimo 1 unidade; "
+                        f"valor recebido: '{self.quantity}'."
+                    )
+                }
             )
         if (
             self.contract
@@ -140,7 +145,8 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {
                     "contract": (
-                        "O contrato informado não pertence ao casamento deste item."
+                        f"O contrato informado não pertence ao casamento deste item; "
+                        f"casamento do contrato: '{self.contract.wedding_id}', casamento do item: '{self.wedding_id}'."
                     )
                 }
             )
@@ -150,24 +156,28 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
             raise ValidationError(
                 {
                     "rejection_reason": (
-                        "O motivo do descarte é obrigatório ao marcar o item como descartado."
+                        f"O motivo do descarte é obrigatório ao marcar o item como descartado; "
+                        f"valor recebido: '{self.rejection_reason}'."
                     )
                 }
             )
-        if self.pk:
-            orig = (
-                SupplyItem.objects.filter(pk=self.pk)
-                .values("acquisition_status")
-                .first()
+
+        if not self.pk:
+            return
+
+        orig = (
+            SupplyItem.objects.filter(pk=self.pk).values("acquisition_status").first()
+        )
+        if not orig or orig["acquisition_status"] == self.acquisition_status:
+            return
+
+        allowed = self.ALLOWED_TRANSITIONS.get(orig["acquisition_status"], [])
+        if self.acquisition_status not in allowed:
+            raise ValidationError(
+                f"Não é permitido transitar de "
+                f"'{orig['acquisition_status']}' para "
+                f"'{self.acquisition_status}'; transições permitidas: {sorted(allowed)}."
             )
-            if orig and orig["acquisition_status"] != self.acquisition_status:
-                allowed = self.ALLOWED_TRANSITIONS.get(orig["acquisition_status"], [])
-                if self.acquisition_status not in allowed:
-                    raise ValidationError(
-                        f"Não é permitido transitar de "
-                        f"'{orig['acquisition_status']}' para "
-                        f"'{self.acquisition_status}'."
-                    )
 
     # ── Métodos de Domínio e Ciclo de Vida da Entidade ──────────────────
 
@@ -185,7 +195,10 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         """
         if not reason or not reason.strip():
             raise BusinessRuleViolation(
-                detail="O motivo do descarte é obrigatório ao marcar o item como descartado.",
+                detail=(
+                    f"O motivo do descarte é obrigatório ao marcar o item como descartado; "
+                    f"valor recebido: '{reason}'."
+                ),
                 code="supply_item_rejection_reason_required",
             )
         self.scope_status = self.ScopeStatus.DISCARDED
@@ -212,7 +225,10 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
         """
         if self.wedding_id and contract.wedding_id != self.wedding_id:
             raise DomainIntegrityError(
-                detail="O contrato informado não pertence ao casamento deste item.",
+                detail=(
+                    f"O contrato informado não pertence ao casamento deste item; "
+                    f"casamento do contrato: '{contract.wedding_id}', casamento do item: '{self.wedding_id}'."
+                ),
                 code="item_contract_wedding_mismatch",
             )
         self.contract = contract
@@ -250,10 +266,11 @@ class SupplyItem(TenantModel, WeddingOwnedMixin):
             return
 
         if not self.can_transition_to(target):
+            allowed = self.ALLOWED_TRANSITIONS.get(self.acquisition_status, [])
             raise BusinessRuleViolation(
                 detail=(
                     f"Não é permitido transitar de '{self.acquisition_status}' "
-                    f"para '{target}'."
+                    f"para '{target}'; transições permitidas a partir de '{self.acquisition_status}': {sorted(allowed)}."
                 ),
                 code="item_invalid_status_transition",
             )

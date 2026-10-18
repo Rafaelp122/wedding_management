@@ -18,11 +18,9 @@ if TYPE_CHECKING:
 
 
 def user_get_by_email_selector(*, email: str) -> User:
-    """
-    Recupera um usuário pelo endereço de e-mail normalizado.
+    """Recupera um usuário pelo endereço de e-mail normalizado.
 
-    Returns:
-        Instância do usuário encontrado.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
 
     Raises:
         ObjectNotFoundError: Se nenhum usuário for encontrado com o e-mail fornecido.
@@ -30,32 +28,30 @@ def user_get_by_email_selector(*, email: str) -> User:
     normalized_email = User.objects.normalize_email(email.strip().lower())
     user = User.objects.filter(email__iexact=normalized_email).first()
     if not user:
-        raise ObjectNotFoundError(detail="Usuário não encontrado.")
+        raise ObjectNotFoundError(
+            detail=f"Usuário não encontrado com e-mail '{email}'."
+        )
     return user
 
 
 def user_get_by_uuid_selector(*, uuid: UUID | str) -> User:
-    """
-    Recupera um usuário pelo seu identificador público UUID.
+    """Recupera um usuário pelo seu identificador público UUID.
 
-    Returns:
-        Instância do usuário encontrado.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
 
     Raises:
         ObjectNotFoundError: Se nenhum usuário for encontrado com o UUID fornecido.
     """
     user = User.objects.filter(uuid=uuid).first()
     if not user:
-        raise ObjectNotFoundError(detail="Usuário não encontrado.")
+        raise ObjectNotFoundError(detail=f"Usuário não encontrado com UUID '{uuid}'.")
     return user
 
 
 def user_list_selector(*, company: Company | None = None) -> QuerySet[User]:
-    """
-    Lista usuários do sistema com filtro opcional por empresa (tenant).
+    """Lista usuários do sistema com filtro opcional por empresa (tenant).
 
-    Returns:
-        QuerySet contendo os usuários correspondentes.
+    Decisão Arquitetural: [ADR-016](docs/architecture/adr/016-pragmatic-multi-tenancy.md)
     """
     qs = User.objects.all()
     if company is not None:

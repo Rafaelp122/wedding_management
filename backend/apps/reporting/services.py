@@ -30,14 +30,8 @@ class ReportGenerationService:
     ) -> bytes:
         """Gera um relatório diagramado completo do casamento em formato PDF.
 
-        Efeitos Colaterais:
-            - Renderiza binário PDF em memória via ReportLab sem persistência em disco.
-
-        Args:
-            wedding_uuid: Identificador único do casamento a ser consolidado.
-
-        Returns:
-            Conteúdo binário do documento PDF gerado.
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Renderiza binário PDF em memória via ReportLab.
         """
         from apps.reporting.pdf_utils import render_wedding_pdf
 
@@ -62,14 +56,8 @@ class ReportGenerationService:
     ) -> bytes:
         """Gera um relatório operacional completo do casamento em planilha Excel (.xlsx).
 
-        Efeitos Colaterais:
-            - Renderiza binário Excel (.xlsx) em memória via openpyxl sem persistência em disco.
-
-        Args:
-            wedding_uuid: Identificador único do casamento a ser consolidado.
-
-        Returns:
-            Conteúdo binário da pasta de trabalho Excel (.xlsx) gerada.
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Renderiza binário Excel em memória via openpyxl.
         """
         from apps.reporting.excel_utils import render_wedding_excel
 
@@ -95,15 +83,8 @@ class ReportGenerationService:
     ) -> tuple[bytes, str, str]:
         """Exporta o relatório consolidado do casamento com metadados de transporte HTTP.
 
-        Efeitos Colaterais:
-            - Gera o binário do relatório em memória (PDF ou Excel) delegando aos renderizadores especializados.
-
-        Args:
-            wedding_uuid: Identificador único do casamento a ser consolidado.
-            report_format: Formato de exportação desejado ('pdf' ou 'excel').
-
-        Returns:
-            Tupla contendo o binário do arquivo, o MIME content-type HTTP e o nome sugerido para download.
+        Regra de Negócio: [BR-R01](docs/architecture/domains/reporting-domain.md)
+        Efeitos Colaterais: Delega a geração do binário aos renderizadores em memória.
         """
         uuid_str = str(wedding_uuid)
         if report_format == "excel":

@@ -31,11 +31,8 @@ class ClientService:
     def create(company: Company, payload: ClientIn) -> Client:
         """Cria e persiste um novo cliente associado ao tenant.
 
-        Efeitos Colaterais:
-            Persiste o novo registro de cliente na base de dados.
-
-        Returns:
-            Instância do cliente criada e persistida.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Persiste o novo registro de cliente na base de dados.
 
         Raises:
             BusinessRuleViolation: Se houver violação de validação nos dados informados.
@@ -70,11 +67,8 @@ class ClientService:
     def update(company: Company, instance: Client, payload: ClientPatchIn) -> Client:
         """Atualiza os dados cadastrais de um cliente existente do tenant.
 
-        Efeitos Colaterais:
-            Persiste as alterações cadastrais do cliente no banco de dados.
-
-        Returns:
-            Instância do cliente atualizada.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Persiste as alterações cadastrais do cliente no banco de dados.
 
         Raises:
             BusinessRuleViolation: Se os dados violarem regras de validação ou o tenant for incompatível.
@@ -107,8 +101,8 @@ class ClientService:
     def delete(company: Company, instance: Client) -> None:
         """Remove com segurança um cliente pertencente ao tenant.
 
-        Efeitos Colaterais:
-            Exclui o registro de cliente da base de dados.
+        Decisão Arquitetural: [ADR-030](docs/architecture/adr/030-rich-domain-model-service-layer.md)
+        Efeitos Colaterais: Exclui o registro de cliente da base de dados.
 
         Raises:
             DomainIntegrityError: Se o cliente estiver protegido por vínculos ativos com casamentos.
@@ -129,7 +123,9 @@ class ClientService:
                 instance.uuid,
             )
             raise DomainIntegrityError(
-                detail="Não é possível excluir este cliente pois ele está vinculado "
-                "como participante em casamentos.",
+                detail=(
+                    f"Não é possível excluir o cliente '{instance.name}' (UUID '{instance.uuid}') "
+                    "pois ele está vinculado como participante em casamentos."
+                ),
                 code="client_protected_error",
             ) from exc
