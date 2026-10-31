@@ -94,7 +94,7 @@ class SignableDocumentMixin(models.Model):
         if signed_date is not None:
             self.signed_date = signed_date
         elif not getattr(self, "signed_date", None):
-            self.signed_date = timezone.now().date()
+            self.signed_date = timezone.localdate()
 
         if pdf_file is not None and hasattr(self, "pdf_file"):
             self.pdf_file = pdf_file

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, cast
 from uuid import uuid4
@@ -31,6 +31,7 @@ def UserFactory(*args: Any, **kwargs: Any) -> User:
 
 @pytest.fixture
 def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
+    wedding_date = date.today() + timedelta(days=30)
     # Planner alvo
     my_wedding = WeddingService.create(
         user.company,
@@ -38,7 +39,7 @@ def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
             bride_name="Minha",
             groom_name="Noz",
             location="A",
-            date=date(2026, 10, 11),
+            date=wedding_date,
             template="civil_buffet_3m",
             expected_guests=100,
         ),
@@ -68,7 +69,7 @@ def seed_data(user: Any, django_user_model: Any) -> dict[str, Any]:
             bride_name="Alheia",
             groom_name="Alheio",
             location="B",
-            date=date(2026, 10, 11),
+            date=wedding_date,
             template="civil_buffet_3m",
             expected_guests=100,
         ),
@@ -501,7 +502,7 @@ class TestFinancesNinjaAPI:
                 bride_name="Noiva 2",
                 groom_name="Noivo 2",
                 location="Local",
-                date=date(2026, 12, 1),
+                date=date.today() + timedelta(days=60),
                 template="civil_buffet_3m",
                 expected_guests=50,
             ),

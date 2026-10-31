@@ -26,6 +26,18 @@ const pageTitle = title
 	</head>
 	<body>
 		<slot />
+		<script is:inline>
+			window.addEventListener("load", () => {
+				const warmup = () => {
+					fetch("https://api.simaceito.site/api/v1/health", { mode: "no-cors" }).catch(() => {});
+				};
+				if ("requestIdleCallback" in window) {
+					window.requestIdleCallback(warmup, { timeout: 2000 });
+				} else {
+					setTimeout(warmup, 1000);
+				}
+			});
+		</script>
 	</body>
 </html>
 

@@ -25,12 +25,20 @@ STORAGE_PROVIDER = env("STORAGE_PROVIDER", default="R2")
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 
+ENABLE_DJANGO_ADMIN = env.bool("ENABLE_DJANGO_ADMIN", default=False)
+
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    *(
+        [
+            "django.contrib.admin",
+            "django.contrib.messages",
+        ]
+        if ENABLE_DJANGO_ADMIN
+        else []
+    ),
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
-    "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
     "ninja",
@@ -62,7 +70,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
+    *(
+        ["django.contrib.messages.middleware.MessageMiddleware"]
+        if ENABLE_DJANGO_ADMIN
+        else []
+    ),
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

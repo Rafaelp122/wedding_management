@@ -1,5 +1,5 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, cast
 
@@ -54,6 +54,7 @@ def WeddingFactory(*args: Any, **kwargs: Any) -> Wedding:
 
 @pytest.fixture
 def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
+    wedding_date = date.today() + timedelta(days=30)
     # Planner alvo
     my_wedding = WeddingService.create(
         user.company,
@@ -61,7 +62,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
             bride_name="Minha",
             groom_name="Noz",
             location="Local",
-            date=date(2026, 10, 10),
+            date=wedding_date,
             template=None,
             expected_guests=None,
         ),
@@ -108,7 +109,7 @@ def seed_data(user: User, django_user_model: Any) -> dict[str, Any]:
             bride_name="Outra",
             groom_name="Noz",
             location="Local",
-            date=date(2026, 10, 10),
+            date=wedding_date,
             template=None,
             expected_guests=None,
         ),

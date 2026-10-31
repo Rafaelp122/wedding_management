@@ -8,6 +8,13 @@ from urllib.parse import urlparse
 from .base import *
 
 
+ENABLE_DJANGO_ADMIN = env.bool("ENABLE_DJANGO_ADMIN", default=True)
+if ENABLE_DJANGO_ADMIN and "django.contrib.admin" not in INSTALLED_APPS:
+    INSTALLED_APPS.insert(0, "django.contrib.messages")
+    INSTALLED_APPS.insert(0, "django.contrib.admin")
+    if "django.contrib.messages.middleware.MessageMiddleware" not in MIDDLEWARE:
+        MIDDLEWARE.insert(-1, "django.contrib.messages.middleware.MessageMiddleware")
+
 INSTALLED_APPS += ["django_extensions"]
 
 
@@ -23,7 +30,7 @@ if ENABLE_ZEAL:
     # incompatível com Django 6.1+
     if hasattr(GenericForeignKey, "__get__"):
         INSTALLED_APPS += ["zeal"]
-        MIDDLEWARE = ["zeal.middleware.zeal_middleware", *MIDDLEWARE]
+        MIDDLEWARE.insert(0, "zeal.middleware.zeal_middleware")
         ZEAL_FAIL = env.bool("ZEAL_FAIL", default=False)
         ZEAL_LOG = True
 
