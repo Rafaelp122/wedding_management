@@ -9,6 +9,7 @@ from decimal import Decimal
 from typing import Any, cast
 
 import pytest
+from django.utils import timezone
 
 from apps.clients.tests.factories import ClientFactory as _ClientFactory
 from apps.contracts.models import Contract, ContractAddendum
@@ -203,10 +204,10 @@ class TestContractService:
         contract = ContractFactory(company=user.company, wedding=wedding)
 
         signed = ContractService.sign(company=user.company, instance=contract)
-        assert signed.signed_date == dt.date.today()
+        assert signed.signed_date == timezone.localdate()
 
         signed.refresh_from_db()
-        assert signed.signed_date == dt.date.today()
+        assert signed.signed_date == timezone.localdate()
         assert signed.status == Contract.StatusChoices.SIGNED
 
     def test_cannot_delete_signed_contract(self, user: Any) -> None:
