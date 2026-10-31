@@ -11,6 +11,14 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from .base import *
 
 
+ENABLE_DJANGO_ADMIN = env.bool("ENABLE_DJANGO_ADMIN", default=False)
+if ENABLE_DJANGO_ADMIN and "django.contrib.admin" not in INSTALLED_APPS:
+    INSTALLED_APPS.insert(0, "django.contrib.messages")
+    INSTALLED_APPS.insert(0, "django.contrib.admin")
+    if "django.contrib.messages.middleware.MessageMiddleware" not in MIDDLEWARE:
+        MIDDLEWARE.insert(-1, "django.contrib.messages.middleware.MessageMiddleware")
+
+
 SENTRY_DSN = env("SENTRY_DSN", default="")
 if SENTRY_DSN:
     sentry_sdk.init(

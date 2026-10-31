@@ -8,7 +8,7 @@ Estes testes cobrem as áreas de maior risco identificadas na análise:
 4. Atomicidade de transações
 """
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any, cast, no_type_check
 from unittest.mock import patch
@@ -279,7 +279,7 @@ class TestBudgetServiceIntegration:
             WeddingIn(
                 bride_name="Maria",
                 groom_name="João",
-                date=date(2026, 12, 31),
+                date=date.today() + timedelta(days=60),
                 location="São Paulo",
                 expected_guests=150,
                 template=None,

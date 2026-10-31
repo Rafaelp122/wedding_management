@@ -75,4 +75,4 @@ USER appuser
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec granian config.wsgi:application --interface wsgi --host 0.0.0.0 --port ${PORT:-8080} --workers ${GRANIAN_WORKERS:-1} --blocking-threads ${GRANIAN_BLOCKING_THREADS:-15} --backlog 1024 --http auto --no-access-log --log-level warn"]
+CMD ["sh", "-c", "exec granian config.wsgi:application --interface wsgi --host 0.0.0.0 --port ${PORT:-8080} --workers ${GRANIAN_WORKERS:-1} --blocking-threads ${GRANIAN_BLOCKING_THREADS:-4} --backlog 1024 --http auto --no-access-log --log-level warn"]

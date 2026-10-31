@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 
 import gc
 import os
+import threading
 
 from django.core.wsgi import get_wsgi_application
 
@@ -25,18 +26,21 @@ finally:
     gc.enable()
     gc.freeze()
 
-# Pré-aquecimento de conexão e DNS/TLS: Garante que o driver psycopg,
-# contextos SSL e DNS estejam aquecidos durante o boot. Em seguida, fecha
-# o socket para evitar que uma conexão ociosa (thread-local da thread principal)
-# permaneça aberta sem uso pelas worker threads do Granian.
-try:
-    from django.db import connection
 
-    connection.ensure_connection()
-    connection.close()
-except Exception:
-    import logging
+# Pré-aquecimento assíncrono de conexão: Permite que o servidor web
+# abra a porta imediatamente sem bloquear a inicialização principal do container.
+def _async_prewarm_db() -> None:
+    try:
+        from django.db import connection
 
-    logging.getLogger("config.wsgi").debug(
-        "Banco de dados não conectado durante o boot (ignorado em etapas de build ou offline)."
-    )
+        connection.ensure_connection()
+        connection.close()
+    except Exception:
+        import logging
+
+        logging.getLogger("config.wsgi").debug(
+            "Banco de dados não conectado no aquecimento em segundo plano (ignorado em build/offline)."
+        )
+
+
+threading.Thread(target=_async_prewarm_db, daemon=True, name="db-prewarm").start()
