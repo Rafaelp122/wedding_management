@@ -12,7 +12,7 @@ class WeddingOwnedMixin(models.Model):
     class Meta:
         abstract = True
 
-    def clean(self) -> None:
+    def clean(self) -> None:  # noqa: C901
         """
         Valida a integridade do isolamento de dados (Multitenancy).
         Garante que chaves estrangeiras pertençam ao mesmo casamento E à mesma empresa.
@@ -44,8 +44,19 @@ class WeddingOwnedMixin(models.Model):
             ):
                 continue
 
-            related_obj = getattr(self, field.name)
-            if related_obj and related_obj.wedding_id != self.wedding_id:
-                raise ValidationError(
-                    {field.name: "Este recurso pertence a outro casamento."}
+            if field.is_cached(self):
+                related_obj = getattr(self, field.name)
+                if related_obj and related_obj.wedding_id != self.wedding_id:
+                    raise ValidationError(
+                        {field.name: "Este recurso pertence a outro casamento."}
+                    )
+            else:
+                related_wedding_id = (
+                    field.related_model.objects.filter(pk=fk_id)
+                    .values_list("wedding_id", flat=True)
+                    .first()
                 )
+                if related_wedding_id and related_wedding_id != self.wedding_id:
+                    raise ValidationError(
+                        {field.name: "Este recurso pertence a outro casamento."}
+                    )

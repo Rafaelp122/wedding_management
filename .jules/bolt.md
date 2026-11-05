@@ -1,0 +1,3 @@
+## 2025-02-18 - Implicit N+1 Query in Validation Mixins
+**Learning:** Using `getattr(self, field.name)` on a related field (ForeignKey) that is not cached triggers a query that instantiates the entire related model object, leading to severe implicit N+1 queries during validation loops (like in `clean()` methods) if only a single field (like `wedding_id`) is needed. The code review tool got confused about variable definitions due to the context window of git diff chunks.
+**Action:** Always check `field.is_cached(self)` before accessing related model objects. If the object is not cached, execute a targeted query using `.values_list('field_name', flat=True)` to fetch only the required data and avoid unneeded model instantiations.
