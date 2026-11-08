@@ -9,7 +9,7 @@
   <a href="https://github.com/Rafaelp122/wedding_management/actions/workflows/ci-pr-validation.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rafaelp122/wedding_management/ci-pr-validation.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
   <a href="https://github.com/Rafaelp122/wedding_management/actions/workflows/docs-ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Rafaelp122/wedding_management/docs-ci.yml?branch=main&label=Docs%20CI&style=flat-square" alt="Docs CI"></a>
   <a href="https://codecov.io/gh/Rafaelp122/wedding_management"><img src="https://img.shields.io/codecov/c/github/Rafaelp122/wedding_management?flag=backend&label=backend&style=flat-square" alt="Backend Coverage"></a>
-  <a href="https://simaceito.site"><img src="https://img.shields.io/badge/website-simaceito.site-0ea5e9?style=flat-square" alt="Website"></a>
+  <a href="https://simaceito.rafaelpdev.com.br"><img src="https://img.shields.io/badge/website-simaceito.rafaelpdev.com.br-0ea5e9?style=flat-square" alt="Website"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License"></a>
 </p>
 

@@ -46,7 +46,7 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="contato@simaceito.site")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="contato@rafaelpdev.com.br")
 ADMIN_EMAIL = "admin@weddingmanagement.com"
 
 LOGGING = {

@@ -34,7 +34,7 @@ describe("AuthLayout", () => {
 
     const logoLink = screen.getByRole("link");
     expect(logoLink).toBeInTheDocument();
-    expect(logoLink).toHaveAttribute("href", "https://simaceito.site/");
+    expect(logoLink).toHaveAttribute("href", "https://simaceito.rafaelpdev.com.br/");
   });
 
   it("renders hero quote and badge", () => {
