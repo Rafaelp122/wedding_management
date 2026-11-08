@@ -4,6 +4,7 @@ from typing import Any, cast
 from uuid import uuid4
 
 import pytest
+from django.utils import timezone
 
 from apps.contracts.models import Contract, Supplier
 from apps.contracts.tests.factories import SupplierFactory as _SupplierFactory
@@ -381,9 +382,10 @@ class TestFinancesNinjaAPI:
     ) -> None:
         """Renegociar parcelas de despesa redistribui parcelas e retorna 200."""
         expense = seed_data["my_expense"]
+        first_due = (timezone.localdate() + timedelta(days=30)).isoformat()
         response = auth_client.post(
             f"/api/v1/finances/expenses/{expense.uuid}/renegotiate/",
-            data={"num_installments": 3, "first_due_date": "2026-11-01"},
+            data={"num_installments": 3, "first_due_date": first_due},
             content_type="application/json",
         )
         assert response.status_code == 200
