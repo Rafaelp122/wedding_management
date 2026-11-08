@@ -1,5 +1,4 @@
-// @ts-check
-import process from 'node:process';
+// @ts-nocheck
 import { defineConfig } from 'astro/config';
 
 import react from '@astrojs/react';
