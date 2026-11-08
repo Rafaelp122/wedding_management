@@ -17,22 +17,22 @@ class TestEmailConfiguration:
     transacional (DEFAULT_FROM_EMAIL).
     """
 
-    @override_settings(DEFAULT_FROM_EMAIL="contato@simaceito.site")
+    @override_settings(DEFAULT_FROM_EMAIL="contato@rafaelpdev.com.br")
     def test_email_verification_uses_custom_default_from_email(self) -> None:
         user = cast(User, UserFactory(is_active=False, is_email_verified=False))
         EmailVerificationService.send_verification_email(user)
 
         assert len(mail.outbox) == 1
         sent_email = mail.outbox[0]
-        assert sent_email.from_email == "contato@simaceito.site"
+        assert sent_email.from_email == "contato@rafaelpdev.com.br"
         assert user.email in sent_email.to
 
-    @override_settings(DEFAULT_FROM_EMAIL="contato@simaceito.site")
+    @override_settings(DEFAULT_FROM_EMAIL="contato@rafaelpdev.com.br")
     def test_password_reset_uses_custom_default_from_email(self) -> None:
-        user = cast(User, UserFactory(email="recuperar@simaceito.site"))
+        user = cast(User, UserFactory(email="recuperar@rafaelpdev.com.br"))
         PasswordResetService.request_password_reset(email=user.email)
 
         assert len(mail.outbox) == 1
         sent_email = mail.outbox[0]
-        assert sent_email.from_email == "contato@simaceito.site"
+        assert sent_email.from_email == "contato@rafaelpdev.com.br"
         assert sent_email.to == [user.email]

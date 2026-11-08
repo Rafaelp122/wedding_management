@@ -14,6 +14,9 @@ const navItems = [
   { label: "Dúvidas", href: "#faq", id: "faq" },
 ];
 
+const APP_URL =
+  import.meta.env.PUBLIC_APP_URL || "https://app.simaceito.rafaelpdev.com.br";
+
 export function Header({ activeSection }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -111,13 +114,13 @@ export function Header({ activeSection }: HeaderProps) {
           </button>
 
           <a
-            href="https://app.simaceito.site/login"
+            href={`${APP_URL}/login`}
             className="text-muted-foreground hover:text-primary font-semibold text-base px-4 py-2 hover:bg-primary/5 rounded-full transition-colors"
           >
             Login
           </a>
           <a
-            href="https://app.simaceito.site/register"
+            href={`${APP_URL}/register`}
             className="bg-primary hover:bg-primary-hover text-white font-semibold text-sm tracking-wide px-6 py-2.5 rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all flex items-center gap-2 active:scale-95 duration-150"
           >
             <span>Criar Conta</span>
@@ -183,14 +186,14 @@ export function Header({ activeSection }: HeaderProps) {
 
           <div className="flex flex-col gap-3">
             <a
-              href="https://app.simaceito.site/login"
+              href={`${APP_URL}/login`}
               onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center py-3 rounded-full text-muted-foreground hover:bg-primary/5 border border-border font-medium transition-colors"
             >
               Login
             </a>
             <a
-              href="https://app.simaceito.site/register"
+              href={`${APP_URL}/register`}
               onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center bg-primary text-white py-3 rounded-full font-semibold shadow-lg shadow-primary/10 hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
             >

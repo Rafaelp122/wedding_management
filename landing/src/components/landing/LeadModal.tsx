@@ -51,7 +51,7 @@ export function LeadModal({ open, onOpenChange, initialEmail = "" }: LeadModalPr
               </DialogDescription>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm mx-auto">
-              Enviamos as credenciais de acesso provisórias e o link do seu subdomínio exclusivo de testes (ex: <strong>{leadName.trim() ? `${leadName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9-]/g, "")}.simaceito.com.br` : "sua-assessoria.simaceito.com.br"}</strong>) para o e-mail: <strong>{leadEmail}</strong>. Aproveite!
+              Enviamos as credenciais de acesso provisórias e o link do seu subdomínio exclusivo de testes (ex: <strong>{leadName.trim() ? `${leadName.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9-]/g, "")}.simaceito.rafaelpdev.com.br` : "sua-assessoria.simaceito.rafaelpdev.com.br"}</strong>) para o e-mail: <strong>{leadEmail}</strong>. Aproveite!
             </p>
             <div className="pt-4 flex flex-col items-center gap-3">
               <button

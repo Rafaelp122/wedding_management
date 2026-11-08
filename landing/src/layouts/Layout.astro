@@ -9,6 +9,10 @@ const { title } = Astro.props;
 const pageTitle = title
 	? `${title} | Sim, Aceito!`
 	: "Sim, Aceito! | Gestão e Faturamento para Assessoras de Casamento";
+
+const apiUrl =
+	import.meta.env.PUBLIC_API_URL ||
+	"https://wedding-backend-597398840710.us-central1.run.app";
 ---
 <!doctype html>
 <html lang="pt" class="antialiased">
@@ -26,10 +30,10 @@ const pageTitle = title
 	</head>
 	<body>
 		<slot />
-		<script is:inline>
+		<script is:inline define:vars={{ apiUrl }}>
 			window.addEventListener("load", () => {
 				const warmup = () => {
-					fetch("https://api.simaceito.site/api/v1/health", { mode: "no-cors" }).catch(() => {});
+					fetch(`${apiUrl}/api/v1/health`, { mode: "no-cors" }).catch(() => {});
 				};
 				if ("requestIdleCallback" in window) {
 					window.requestIdleCallback(warmup, { timeout: 2000 });
