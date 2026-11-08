@@ -3,7 +3,8 @@ import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-const LANDING_URL = "https://simaceito.site/";
+const LANDING_URL =
+  import.meta.env.VITE_LANDING_URL || "https://simaceito.rafaelpdev.com.br/";
 
 interface AuthLayoutProps {
   children: ReactNode;
